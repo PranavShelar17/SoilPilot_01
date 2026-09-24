@@ -4,13 +4,13 @@ import React, { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { soilHealthService } from "@/services/soilHealthService";
+import { reportService } from "@/services/reportService";
 import { SoilHealthReport } from "@/types/soilHealth";
 import { SoilReportHeader } from "./SoilReportHeader";
 import { FarmerSampleInfoTable } from "./FarmerSampleInfoTable";
 import { SoilParameterTable } from "./SoilParameterTable";
 import { SoilHealthSummaryCards } from "./SoilHealthSummaryCards";
 import { SoilReportFooter } from "./SoilReportFooter";
-import { downloadSoilHealthCardPdf, downloadDetailedReportPdf } from "@/lib/pdfGenerator";
 import Link from "next/link";
 import {
   Download,
@@ -37,6 +37,8 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
   const [report, setReport] = useState<SoilHealthReport | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [downloadingCard, setDownloadingCard] = useState<boolean>(false);
+  const [downloadingDetailed, setDownloadingDetailed] = useState<boolean>(false);
 
   const activeFieldId = fieldIdOverride || field?.id || (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-104");
 
@@ -161,20 +163,56 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
 
           <button
             type="button"
-            onClick={() => downloadSoilHealthCardPdf(report, locale)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-soil-primary text-white rounded-lg hover:bg-soil-primaryHover transition-colors shadow-xs"
+            disabled={downloadingCard}
+            onClick={async () => {
+              try {
+                setDownloadingCard(true);
+                await reportService.downloadSoilHealthCardPdf(activeFieldId, locale);
+              } catch (err) {
+                console.error("PDF download failed:", err);
+              } finally {
+                setDownloadingCard(false);
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-soil-primary text-white rounded-lg hover:bg-soil-primaryHover transition-colors shadow-xs disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>{t("soilHealthCard.downloadCard")}</span>
+            {downloadingCard ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>
+              {downloadingCard
+                ? t("reports.generatingPdf") || "Generating..."
+                : t("soilHealthCard.downloadCard")}
+            </span>
           </button>
 
           <button
             type="button"
-            onClick={() => downloadDetailedReportPdf(report, locale)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors shadow-xs"
+            disabled={downloadingDetailed}
+            onClick={async () => {
+              try {
+                setDownloadingDetailed(true);
+                await reportService.downloadDetailedReportPdf(activeFieldId, locale);
+              } catch (err) {
+                console.error("Detailed PDF download failed:", err);
+              } finally {
+                setDownloadingDetailed(false);
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors shadow-xs disabled:opacity-50"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>{t("soilHealthCard.downloadReport")}</span>
+            {downloadingDetailed ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Download className="w-3.5 h-3.5" />
+            )}
+            <span>
+              {downloadingDetailed
+                ? t("reports.generatingPdf") || "Generating..."
+                : t("soilHealthCard.downloadReport")}
+            </span>
           </button>
 
           <button

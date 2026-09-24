@@ -6,6 +6,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.dsm import router as dsm_router
 from app.api.v1.soil_health import router as soil_health_router
 from app.api.v1.recommendations import router as recommendations_router
+from app.api.v1.reports import router as reports_router
 
 api_v1_router = APIRouter()
 
@@ -27,4 +28,7 @@ api_v1_router.include_router(soil_health_router)
 
 # Phase 8 Soil-Based Farmer Recommendations endpoints
 api_v1_router.include_router(recommendations_router)
+
+# Phase 9 Reports & PDF Generation endpoints
+api_v1_router.include_router(reports_router)
 

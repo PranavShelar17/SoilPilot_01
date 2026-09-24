@@ -10,6 +10,7 @@ export interface SoilParameter {
   interpretation_mr?: string;
   reference_range: string;
   source: 'LAB OBSERVATION' | 'DSM PREDICTION' | 'IMPORTED DATA' | 'NOT AVAILABLE' | string;
+  source_type?: string;
 }
 
 export interface SoilReportFieldInfo {

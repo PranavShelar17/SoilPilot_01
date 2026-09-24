@@ -571,12 +571,13 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
       {/* Demo helper quick pill */}
       <div className="pt-3 border-t border-surface-border text-center">
         <button
+          id="quick-demo-btn"
           type="button"
           onClick={handleFillDemo}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-soil-cream text-soil-primary hover:bg-soil-beige/80 transition-colors text-xs font-semibold border border-soil-secondary/40 shadow-xs cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5 text-soil-secondary" />
-          <span>Quick Demo: Baramati → Malegaon Bk → Gat 123</span>
+          <span>Quick Demo: Baramati → Malegaon Bk → Gat 104</span>
         </button>
       </div>
     </div>
