@@ -10,467 +10,33 @@
   "features": [
     {
       "type": "Feature",
+      "id": "104",
       "properties": {
         "gat_no": "104",
-        "source_name": "104 (Mapped from KML demo boundary)",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 1.96,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.50258563114414,
-              18.15303222547103
-            ],
-            [
-              74.50433835671507,
-              18.15256431748874
-            ],
-            [
-              74.5045273748091,
-              18.15340629053676
-            ],
-            [
-              74.50272524626017,
-              18.1538200908259
-            ],
-            [
-              74.50258563114414,
-              18.15303222547103
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "12",
-        "source_name": "12",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 16.2,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.49996888807891,
-              18.16569862955205
-            ],
-            [
-              74.50029570068004,
-              18.16837403058272
-            ],
-            [
-              74.49928283965754,
-              18.16843308125197
-            ],
-            [
-              74.49693050588859,
-              18.1683756441843
-            ],
-            [
-              74.49617360219447,
-              18.1682041192779
-            ],
-            [
-              74.49506929712715,
-              18.16834437611668
-            ],
-            [
-              74.49450318433108,
-              18.16585886315412
-            ],
-            [
-              74.49996888807891,
-              18.16569862955205
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "13",
-        "source_name": "13",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 5.14,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.49995000882895,
-              18.16573928221773
-            ],
-            [
-              74.5018702039499,
-              18.1655571190461
-            ],
-            [
-              74.50183236626263,
-              18.16701534855015
-            ],
-            [
-              74.50168948339721,
-              18.16706183473978
-            ],
-            [
-              74.50171257791264,
-              18.16819139785067
-            ],
-            [
-              74.50029126632951,
-              18.16835296155303
-            ],
-            [
-              74.49995000882895,
-              18.16573928221773
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "14",
-        "source_name": "14",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 10.19,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.5019073003929,
-              18.165567658888
-            ],
-            [
-              74.50195614053288,
-              18.16556295891748
-            ],
-            [
-              74.50386130312798,
-              18.16543151129709
-            ],
-            [
-              74.50515176530455,
-              18.16541695238036
-            ],
-            [
-              74.50535271322283,
-              18.16781676133205
-            ],
-            [
-              74.50172201344773,
-              18.16816876033718
-            ],
-            [
-              74.50171002508567,
-              18.16709030153785
-            ],
-            [
-              74.50184195244726,
-              18.16703638448965
-            ],
-            [
-              74.5019073003929,
-              18.165567658888
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "15",
-        "source_name": "15",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 3.92,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.50535904525724,
-              18.16778611722695
-            ],
-            [
-              74.5051803072321,
-              18.16542997607445
-            ],
-            [
-              74.50666067567231,
-              18.16542440770678
-            ],
-            [
-              74.50682261403597,
-              18.1675880950499
-            ],
-            [
-              74.50535904525724,
-              18.16778611722695
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "16",
-        "source_name": "16",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 12.69,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.50639715507198,
-              18.16131959565499
-            ],
-            [
-              74.5066559879252,
-              18.16539361121736
-            ],
-            [
-              74.50388798433745,
-              18.16540487825903
-            ],
-            [
-              74.5036807860697,
-              18.16160758521256
-            ],
-            [
-              74.50639715507198,
-              18.16131959565499
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "17",
-        "source_name": "17",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 7.79,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.51363361220871,
-              18.15880618229697
-            ],
-            [
-              74.51375159483896,
-              18.16175028150262
-            ],
-            [
-              74.51154582044384,
-              18.16193630441714
-            ],
-            [
-              74.51126890025648,
-              18.15918788248459
-            ],
-            [
-              74.51125799283489,
-              18.15914132059505
-            ],
-            [
-              74.51125831342348,
-              18.15911803073591
-            ],
-            [
-              74.51363361220871,
-              18.15880618229697
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "18",
-        "source_name": "18",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 2.69,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.51482442369002,
-              18.1539751792331
-            ],
-            [
-              74.51516646163154,
-              18.1591121140181
-            ],
-            [
-              74.5150761534589,
-              18.15918118236322
-            ],
-            [
-              74.51471465257498,
-              18.15912225123006
-            ],
-            [
-              74.51439176698388,
-              18.15391297397625
-            ],
-            [
-              74.51482442369002,
-              18.1539751792331
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "20",
-        "source_name": "20",
-        "village": "Malegaon",
-        "taluka": "Baramati",
-        "district": "Pune",
-        "state": "Maharashtra",
-        "area": 9.93,
-        "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              74.51484321572813,
-              18.15398417985131
-            ],
-            [
-              74.515390306752,
-              18.15393167091786
-            ],
-            [
-              74.51550075150965,
-              18.15438857872813
-            ],
-            [
-              74.51578863737178,
-              18.1543983780062
-            ],
-            [
-              74.51579471532855,
-              18.15425980804724
-            ],
-            [
-              74.5158412676791,
-              18.1542143226055
-            ],
-            [
-              74.51660183923468,
-              18.15409858154876
-            ],
-            [
-              74.51689085419133,
-              18.15882493137789
-            ],
-            [
-              74.51594278259958,
-              18.1589954182854
-            ],
-            [
-              74.51516656819379,
-              18.15915259280509
-            ],
-            [
-              74.51484321572813,
-              18.15398417985131
-            ]
-          ]
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "gat_no": "21",
-        "source_name": "21",
-        "village": "Malegaon",
+        "source_name": "Gat 104 / 21 (Malegaon Bk Primary Demonstration Field)",
+        "village": "Malegaon Bk",
         "taluka": "Baramati",
         "district": "Pune",
         "state": "Maharashtra",
         "area": 1.78,
+        "area_ha": 1.78,
+        "area_acres": 4.4,
+        "area_sqm": 17799.2,
         "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
+        "centroid_lat": 18.153204,
+        "centroid_lon": 74.503556,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.1,
+          "soc": 1.58,
+          "nitrogen": 14.29,
+          "bd": 1.53,
+          "ndvi": 0.46,
+          "evi": 0.28,
+          "elevation": 556.78,
+          "uncertainty": 6.89
+        }
       },
       "geometry": {
         "type": "Polygon",
@@ -478,23 +44,28 @@
           [
             [
               74.50258563114414,
-              18.15303222547103
+              18.15303222547103,
+              0.0
             ],
             [
               74.50433835671507,
-              18.15256431748874
+              18.15256431748874,
+              0.0
             ],
             [
               74.5045273748091,
-              18.15340629053676
+              18.15340629053676,
+              0.0
             ],
             [
               74.50272524626017,
-              18.1538200908259
+              18.1538200908259,
+              0.0
             ],
             [
               74.50258563114414,
-              18.15303222547103
+              18.15303222547103,
+              0.0
             ]
           ]
         ]
@@ -502,17 +73,690 @@
     },
     {
       "type": "Feature",
+      "id": "12",
+      "properties": {
+        "gat_no": "12",
+        "source_name": "Gat 12 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 16.18,
+        "area_ha": 16.18,
+        "area_acres": 39.98,
+        "area_sqm": 161831.8,
+        "area_unit": "hectare",
+        "centroid_lat": 18.167059,
+        "centroid_lon": 74.497514,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.38,
+          "nitrogen": 12.3,
+          "bd": 1.57,
+          "ndvi": 0.31,
+          "evi": 0.19,
+          "elevation": 574.19,
+          "uncertainty": 8.79
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.49996888807891,
+              18.16569862955205,
+              0.0
+            ],
+            [
+              74.50029570068004,
+              18.16837403058272,
+              0.0
+            ],
+            [
+              74.49928283965754,
+              18.16843308125197,
+              0.0
+            ],
+            [
+              74.49693050588859,
+              18.1683756441843,
+              0.0
+            ],
+            [
+              74.49617360219447,
+              18.1682041192779,
+              0.0
+            ],
+            [
+              74.49506929712715,
+              18.16834437611668,
+              0.0
+            ],
+            [
+              74.49450318433108,
+              18.16585886315412,
+              0.0
+            ],
+            [
+              74.49996888807891,
+              18.16569862955205,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "13",
+      "properties": {
+        "gat_no": "13",
+        "source_name": "Gat 13 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 5.13,
+        "area_ha": 5.13,
+        "area_acres": 12.68,
+        "area_sqm": 51298.3,
+        "area_unit": "hectare",
+        "centroid_lat": 18.166886,
+        "centroid_lon": 74.50095,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.33,
+          "nitrogen": 12.5,
+          "bd": 1.57,
+          "ndvi": 0.48,
+          "evi": 0.34,
+          "elevation": 571.23,
+          "uncertainty": 8.46
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.49995000882895,
+              18.16573928221773,
+              0.0
+            ],
+            [
+              74.5018702039499,
+              18.1655571190461,
+              0.0
+            ],
+            [
+              74.50183236626263,
+              18.16701534855015,
+              0.0
+            ],
+            [
+              74.50168948339721,
+              18.16706183473978,
+              0.0
+            ],
+            [
+              74.50171257791264,
+              18.16819139785067,
+              0.0
+            ],
+            [
+              74.50029126632951,
+              18.16835296155303,
+              0.0
+            ],
+            [
+              74.49995000882895,
+              18.16573928221773,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "14",
+      "properties": {
+        "gat_no": "14",
+        "source_name": "Gat 14 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 10.17,
+        "area_ha": 10.17,
+        "area_acres": 25.13,
+        "area_sqm": 101724.4,
+        "area_unit": "hectare",
+        "centroid_lat": 18.166761,
+        "centroid_lon": 74.50351,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.35,
+          "nitrogen": 12.75,
+          "bd": 1.57,
+          "ndvi": 0.42,
+          "evi": 0.26,
+          "elevation": 569.28,
+          "uncertainty": 8.08
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.5019073003929,
+              18.165567658888,
+              0.0
+            ],
+            [
+              74.50195614053288,
+              18.16556295891748,
+              0.0
+            ],
+            [
+              74.50386130312798,
+              18.16543151129709,
+              0.0
+            ],
+            [
+              74.50515176530455,
+              18.16541695238036,
+              0.0
+            ],
+            [
+              74.50535271322283,
+              18.16781676133205,
+              0.0
+            ],
+            [
+              74.50172201344773,
+              18.16816876033718,
+              0.0
+            ],
+            [
+              74.50171002508567,
+              18.16709030153785,
+              0.0
+            ],
+            [
+              74.50184195244726,
+              18.16703638448965,
+              0.0
+            ],
+            [
+              74.5019073003929,
+              18.165567658888,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "15",
+      "properties": {
+        "gat_no": "15",
+        "source_name": "Gat 15 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 3.91,
+        "area_ha": 3.91,
+        "area_acres": 9.66,
+        "area_sqm": 39130.5,
+        "area_unit": "hectare",
+        "centroid_lat": 18.166558,
+        "centroid_lon": 74.505995,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.33,
+          "nitrogen": 13.32,
+          "bd": 1.57,
+          "ndvi": 0.39,
+          "evi": 0.24,
+          "elevation": 568.53,
+          "uncertainty": 7.5
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.50535904525724,
+              18.16778611722695,
+              0.0
+            ],
+            [
+              74.5051803072321,
+              18.16542997607445,
+              0.0
+            ],
+            [
+              74.50666067567231,
+              18.16542440770678,
+              0.0
+            ],
+            [
+              74.50682261403597,
+              18.1675880950499,
+              0.0
+            ],
+            [
+              74.50535904525724,
+              18.16778611722695,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "16",
+      "properties": {
+        "gat_no": "16",
+        "source_name": "Gat 16 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 12.67,
+        "area_ha": 12.67,
+        "area_acres": 31.31,
+        "area_sqm": 126703.6,
+        "area_unit": "hectare",
+        "centroid_lat": 18.163435,
+        "centroid_lon": 74.505172,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.31,
+          "nitrogen": 13.37,
+          "bd": 1.57,
+          "ndvi": 0.33,
+          "evi": 0.22,
+          "elevation": 565.63,
+          "uncertainty": 7.55
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.50639715507198,
+              18.16131959565499,
+              0.0
+            ],
+            [
+              74.5066559879252,
+              18.16539361121736,
+              0.0
+            ],
+            [
+              74.50388798433745,
+              18.16540487825903,
+              0.0
+            ],
+            [
+              74.5036807860697,
+              18.16160758521256,
+              0.0
+            ],
+            [
+              74.50639715507198,
+              18.16131959565499,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "17",
+      "properties": {
+        "gat_no": "17",
+        "source_name": "Gat 17 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 7.78,
+        "area_ha": 7.78,
+        "area_acres": 19.22,
+        "area_sqm": 77765.7,
+        "area_unit": "hectare",
+        "centroid_lat": 18.160384,
+        "centroid_lon": 74.512554,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.2,
+          "soc": 1.62,
+          "nitrogen": 13.54,
+          "bd": 1.57,
+          "ndvi": 0.4,
+          "evi": 0.23,
+          "elevation": 568.81,
+          "uncertainty": 6.38
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.51363361220871,
+              18.15880618229697,
+              0.0
+            ],
+            [
+              74.51375159483896,
+              18.16175028150262,
+              0.0
+            ],
+            [
+              74.51154582044384,
+              18.16193630441714,
+              0.0
+            ],
+            [
+              74.51126890025648,
+              18.15918788248459,
+              0.0
+            ],
+            [
+              74.51125799283489,
+              18.15914132059505,
+              0.0
+            ],
+            [
+              74.51125831342348,
+              18.15911803073591,
+              0.0
+            ],
+            [
+              74.51363361220871,
+              18.15880618229697,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "18",
+      "properties": {
+        "gat_no": "18",
+        "source_name": "Gat 18 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 2.68,
+        "area_ha": 2.68,
+        "area_acres": 6.62,
+        "area_sqm": 26848.6,
+        "area_unit": "hectare",
+        "centroid_lat": 18.156571,
+        "centroid_lon": 74.514777,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.24,
+          "soc": 1.45,
+          "nitrogen": 13.55,
+          "bd": 1.58,
+          "ndvi": 0.51,
+          "evi": 0.32,
+          "elevation": 566.29,
+          "uncertainty": 8.05
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.51482442369002,
+              18.1539751792331,
+              0.0
+            ],
+            [
+              74.51516646163154,
+              18.1591121140181,
+              0.0
+            ],
+            [
+              74.5150761534589,
+              18.15918118236322,
+              0.0
+            ],
+            [
+              74.51471465257498,
+              18.15912225123006,
+              0.0
+            ],
+            [
+              74.51439176698388,
+              18.15391297397625,
+              0.0
+            ],
+            [
+              74.51482442369002,
+              18.1539751792331,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "20",
+      "properties": {
+        "gat_no": "20",
+        "source_name": "Gat 20 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 9.92,
+        "area_ha": 9.92,
+        "area_acres": 24.51,
+        "area_sqm": 99154.9,
+        "area_unit": "hectare",
+        "centroid_lat": 18.156557,
+        "centroid_lon": 74.515862,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.24,
+          "soc": 1.42,
+          "nitrogen": 13.54,
+          "bd": 1.58,
+          "ndvi": 0.5,
+          "evi": 0.32,
+          "elevation": 566.27,
+          "uncertainty": 8.03
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.51484321572813,
+              18.15398417985131,
+              0.0
+            ],
+            [
+              74.515390306752,
+              18.15393167091786,
+              0.0
+            ],
+            [
+              74.51550075150965,
+              18.15438857872813,
+              0.0
+            ],
+            [
+              74.51578863737178,
+              18.1543983780062,
+              0.0
+            ],
+            [
+              74.51579471532855,
+              18.15425980804724,
+              0.0
+            ],
+            [
+              74.5158412676791,
+              18.1542143226055,
+              0.0
+            ],
+            [
+              74.51660183923468,
+              18.15409858154876,
+              0.0
+            ],
+            [
+              74.51689085419133,
+              18.15882493137789,
+              0.0
+            ],
+            [
+              74.51594278259958,
+              18.1589954182854,
+              0.0
+            ],
+            [
+              74.51516656819379,
+              18.15915259280509,
+              0.0
+            ],
+            [
+              74.51484321572813,
+              18.15398417985131,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "21",
+      "properties": {
+        "gat_no": "21",
+        "source_name": "Gat 21 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
+        "taluka": "Baramati",
+        "district": "Pune",
+        "state": "Maharashtra",
+        "area": 1.78,
+        "area_ha": 1.78,
+        "area_acres": 4.4,
+        "area_sqm": 17799.2,
+        "area_unit": "hectare",
+        "centroid_lat": 18.153204,
+        "centroid_lon": 74.503556,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.1,
+          "soc": 1.58,
+          "nitrogen": 14.29,
+          "bd": 1.53,
+          "ndvi": 0.46,
+          "evi": 0.28,
+          "elevation": 556.78,
+          "uncertainty": 6.89
+        }
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.50258563114414,
+              18.15303222547103,
+              0.0
+            ],
+            [
+              74.50433835671507,
+              18.15256431748874,
+              0.0
+            ],
+            [
+              74.5045273748091,
+              18.15340629053676,
+              0.0
+            ],
+            [
+              74.50272524626017,
+              18.1538200908259,
+              0.0
+            ],
+            [
+              74.50258563114414,
+              18.15303222547103,
+              0.0
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "22",
       "properties": {
         "gat_no": "22",
-        "source_name": "22",
-        "village": "Malegaon",
+        "source_name": "Gat 22 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
         "taluka": "Baramati",
         "district": "Pune",
         "state": "Maharashtra",
         "area": 1.49,
+        "area_ha": 1.49,
+        "area_acres": 3.68,
+        "area_sqm": 14919.2,
         "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
+        "centroid_lat": 18.15401,
+        "centroid_lon": 74.504117,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.1,
+          "soc": 1.6,
+          "nitrogen": 14.29,
+          "bd": 1.53,
+          "ndvi": 0.41,
+          "evi": 0.26,
+          "elevation": 556.9,
+          "uncertainty": 6.92
+        }
       },
       "geometry": {
         "type": "Polygon",
@@ -520,23 +764,28 @@
           [
             [
               74.50454953598738,
-              18.15339211604346
+              18.15339211604346,
+              0.0
             ],
             [
               74.5049229524737,
-              18.15428129470472
+              18.15428129470472,
+              0.0
             ],
             [
               74.5036411227396,
-              18.15467161671715
+              18.15467161671715,
+              0.0
             ],
             [
               74.5033824176203,
-              18.15364444922936
+              18.15364444922936,
+              0.0
             ],
             [
               74.50454953598738,
-              18.15339211604346
+              18.15339211604346,
+              0.0
             ]
           ]
         ]
@@ -544,17 +793,33 @@
     },
     {
       "type": "Feature",
+      "id": "25",
       "properties": {
         "gat_no": "25",
-        "source_name": "25",
-        "village": "Malegaon",
+        "source_name": "Gat 25 (Baramati / Malegaon Survey)",
+        "village": "Malegaon Bk",
         "taluka": "Baramati",
         "district": "Pune",
         "state": "Maharashtra",
         "area": 5.35,
+        "area_ha": 5.35,
+        "area_acres": 13.22,
+        "area_sqm": 53480.8,
         "area_unit": "hectare",
-        "source": "DEMO KML",
-        "is_demo": true
+        "centroid_lat": 18.155378,
+        "centroid_lon": 74.503823,
+        "source": "CADASTRAL KML (DSM Pilot)",
+        "is_demo": true,
+        "soil_summary": {
+          "ph": 7.18,
+          "soc": 1.58,
+          "nitrogen": 13.48,
+          "bd": 1.55,
+          "ndvi": 0.41,
+          "evi": 0.26,
+          "elevation": 558.86,
+          "uncertainty": 6.33
+        }
       },
       "geometry": {
         "type": "Polygon",
@@ -562,55 +827,68 @@
           [
             [
               74.50276210823368,
-              18.15381354267139
+              18.15381354267139,
+              0.0
             ],
             [
               74.50335092164102,
-              18.15366666100259
+              18.15366666100259,
+              0.0
             ],
             [
               74.5036498292965,
-              18.15465613748359
+              18.15465613748359,
+              0.0
             ],
             [
               74.50493808634818,
-              18.15427377817854
+              18.15427377817854,
+              0.0
             ],
             [
               74.5051420583458,
-              18.15467676161233
+              18.15467676161233,
+              0.0
             ],
             [
               74.50507186474309,
-              18.15522774329985
+              18.15522774329985,
+              0.0
             ],
             [
               74.5043982696265,
-              18.15559461395498
+              18.15559461395498,
+              0.0
             ],
             [
               74.50455891321621,
-              18.15658645461548
+              18.15658645461548,
+              0.0
             ],
             [
               74.50364446582941,
-              18.15709301299558
+              18.15709301299558,
+              0.0
             ],
             [
               74.50332736166423,
-              18.15712682381674
+              18.15712682381674,
+              0.0
             ],
             [
               74.5028608410783,
-              18.15455493034969
+              18.15455493034969,
+              0.0
             ],
             [
               74.50271433637543,
-              18.15384939850814
+              18.15384939850814,
+              0.0
             ],
             [
               74.50276210823368,
-              18.15381354267139
+              18.15381354267139,
+              0.0
             ]
           ]
         ]

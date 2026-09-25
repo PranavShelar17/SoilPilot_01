@@ -17,6 +17,7 @@ import {
   Info,
   ShieldAlert,
 } from "lucide-react";
+import { CadastralSoilExplorer } from "@/components/map/CadastralSoilExplorer";
 
 export default function SoilMapPage() {
   const { t, language } = useI18n();
@@ -25,6 +26,7 @@ export default function SoilMapPage() {
   const [layers, setLayers] = useState<DSMLayerConfig[]>(DSM_LAYER_LIST);
   const [activeLayerId, setActiveLayerId] = useState<DSMLayerId>("farm_boundary");
   const [layerOpacity, setLayerOpacity] = useState<number>(0.75);
+  const [viewMode, setViewMode] = useState<"cadastral" | "simple">("cadastral");
 
   useEffect(() => {
     async function loadLayers() {
@@ -74,11 +76,37 @@ export default function SoilMapPage() {
               <ShieldAlert className="w-3 h-3 text-amber-600" />
               <span>{t("dashboard.demoNotice") ? "DEMO DATA" : "DEMO DATA"}</span>
             </div>
+
+            {/* View Mode Switcher */}
+            <div className="flex items-center rounded-xl bg-surface-subtle border border-surface-border p-1 gap-1 shadow-xs text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setViewMode("cadastral")}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  viewMode === "cadastral"
+                    ? "bg-soil-primary text-white shadow-xs font-bold"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                {t("soilMap.cadastralView") || "Cadastral DSM Explorer"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("simple")}
+                className={`px-3 py-1 rounded-lg transition-all ${
+                  viewMode === "simple"
+                    ? "bg-soil-primary text-white shadow-xs font-bold"
+                    : "text-text-muted hover:text-text-main"
+                }`}
+              >
+                {t("soilMap.standardView") || "Simple Boundary View"}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Notice for Pending Layers */}
-        {activeLayer.status === "pending" && (
+        {activeLayer.status === "pending" && viewMode === "simple" && (
           <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-900 flex items-start gap-3 shadow-xs">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-xs space-y-0.5">
@@ -94,67 +122,71 @@ export default function SoilMapPage() {
         )}
 
         {/* Main Map Viewer & Sidebar Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          {/* Layer Selector (Left column on Desktop, Stacked on Mobile) */}
-          <div className="lg:col-span-1 order-2 lg:order-1 space-y-4">
-            <DSMLayerSelector
-              layers={layers}
-              activeLayerId={activeLayerId}
-              onSelectLayer={(id) => setActiveLayerId(id)}
-            />
-
-            {/* Farm specific metadata info card */}
-            <div className="bg-white rounded-2xl border border-surface-border p-4 shadow-card text-xs space-y-2.5">
-              <div className="flex items-center gap-1.5 text-text-main font-bold border-b border-surface-border/60 pb-2">
-                <Info className="w-4 h-4 text-soil-primary" />
-                <span>{t("dsm.info.fieldSummary") || "Field Summary"}</span>
-              </div>
-
-              <div className="space-y-1.5 text-[11px]">
-                <div className="flex justify-between py-0.5 border-b border-surface-subtle">
-                  <span className="text-text-muted">{t("geo.village") || "Village"}:</span>
-                  <span className="font-semibold text-text-main">{villageDisplay}</span>
-                </div>
-                <div className="flex justify-between py-0.5 border-b border-surface-subtle">
-                  <span className="text-text-muted">{t("geo.taluka") || "Taluka"}:</span>
-                  <span className="font-semibold text-text-main">{talukaDisplay}</span>
-                </div>
-                <div className="flex justify-between py-0.5 border-b border-surface-subtle">
-                  <span className="text-text-muted">{t("geo.gatNo") || "Gat No."}:</span>
-                  <span className="font-bold text-soil-primary">{gatDisplay}</span>
-                </div>
-                <div className="flex justify-between py-0.5 border-b border-surface-subtle">
-                  <span className="text-text-muted">{t("myFarm.fieldArea") || "Area"}:</span>
-                  <span className="font-semibold text-text-main">{areaDisplay}</span>
-                </div>
-                <div className="flex justify-between py-0.5">
-                  <span className="text-text-muted">{t("map.source") || "Source"}:</span>
-                  <span className="font-semibold text-text-main">{activeLayer.sourceType}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Map Viewer Container with Floating Legend */}
-          <div className="lg:col-span-3 order-1 lg:order-2 relative">
-            <div className="relative w-full rounded-2xl overflow-hidden shadow-card border border-surface-border bg-slate-900">
-              <FarmMap
-                className="h-[480px] sm:h-[580px] lg:h-[640px]"
-                dsmLayer={activeLayer}
-                dsmOpacity={layerOpacity}
+        {viewMode === "cadastral" ? (
+          <CadastralSoilExplorer initialGat={gatDisplay} />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            {/* Layer Selector (Left column on Desktop, Stacked on Mobile) */}
+            <div className="lg:col-span-1 order-2 lg:order-1 space-y-4">
+              <DSMLayerSelector
+                layers={layers}
+                activeLayerId={activeLayerId}
+                onSelectLayer={(id) => setActiveLayerId(id)}
               />
 
-              {/* Floating Map Legend (Bottom Right on Desktop, Collapsible) */}
-              <div className="absolute bottom-6 right-4 z-20 pointer-events-auto">
-                <MapLegend
-                  layer={activeLayer}
-                  opacity={layerOpacity}
-                  onOpacityChange={setLayerOpacity}
+              {/* Farm specific metadata info card */}
+              <div className="bg-white rounded-2xl border border-surface-border p-4 shadow-card text-xs space-y-2.5">
+                <div className="flex items-center gap-1.5 text-text-main font-bold border-b border-surface-border/60 pb-2">
+                  <Info className="w-4 h-4 text-soil-primary" />
+                  <span>{t("dsm.info.fieldSummary") || "Field Summary"}</span>
+                </div>
+
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between py-0.5 border-b border-surface-subtle">
+                    <span className="text-text-muted">{t("geo.village") || "Village"}:</span>
+                    <span className="font-semibold text-text-main">{villageDisplay}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-surface-subtle">
+                    <span className="text-text-muted">{t("geo.taluka") || "Taluka"}:</span>
+                    <span className="font-semibold text-text-main">{talukaDisplay}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-surface-subtle">
+                    <span className="text-text-muted">{t("geo.gatNo") || "Gat No."}:</span>
+                    <span className="font-bold text-soil-primary">{gatDisplay}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-surface-subtle">
+                    <span className="text-text-muted">{t("myFarm.fieldArea") || "Area"}:</span>
+                    <span className="font-semibold text-text-main">{areaDisplay}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5">
+                    <span className="text-text-muted">{t("map.source") || "Source"}:</span>
+                    <span className="font-semibold text-text-main">{activeLayer.sourceType}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Map Viewer Container with Floating Legend */}
+            <div className="lg:col-span-3 order-1 lg:order-2 relative">
+              <div className="relative w-full rounded-2xl overflow-hidden shadow-card border border-surface-border bg-slate-900">
+                <FarmMap
+                  className="h-[480px] sm:h-[580px] lg:h-[640px]"
+                  dsmLayer={activeLayer}
+                  dsmOpacity={layerOpacity}
                 />
+
+                {/* Floating Map Legend (Bottom Right on Desktop, Collapsible) */}
+                <div className="absolute bottom-6 right-4 z-20 pointer-events-auto">
+                  <MapLegend
+                    layer={activeLayer}
+                    opacity={layerOpacity}
+                    onOpacityChange={setLayerOpacity}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </ProtectedRoute>
   );

@@ -1,0 +1,629 @@
+=== PAGE 1 ===
+Pune District Digital Soil Mapping and Gat-wise Digital Soil Health Card System 
+ 
+Comprehensive Technical Project Proposal & Operational Implementation Framework  
+Platform: Google Earth Engine (GEE) + Python | Sampling: Conditioned Latin Hypercube (cLHS) | Spatial 
+Resolution: Cadastral Gat/Parcel Level 
+Executive Summary 
+This technical report presents a scientifically structured framework for developing a district-scale Digital Soil 
+Mapping (DSM) and Gat -wise Digital Soil Health Card system for Pune District using an integrated Google 
+Earth Engine (GEE) and Python workflow . The framework combines quality -controlled laboratory soil 
+observations, systematically designed additional field sampling, satellite observations, terrain, climate, 
+land-cover and parent -material information, followed by spatially robust machine -learning modelling and 
+uncertainty assessment. The methodology is explicitly grounded in the SCORPAN framework and 
+incorporates lessons from the systematic review of Indian DSM by Dash et al. (2022).  
+A central component is representative and adaptive sampling rather than a fixed samples -per-hectare rule. 
+Existing observations will first be audited for coordinate quality, depth consistency, analytical methods, units, 
+duplication, outliers and spatial cl ustering. Environmental representativeness will then be assessed, and 
+cLHS or partitioned/stratified cLHS will be used where justified. Bhattacharyya distance and/or Jensen –
+Shannon divergence will quantify feature-space representation, while learning curves based on R², RMSE and 
+MAE will support the practical sample -size decision. This directly addresses the Indian DSM gaps identified 
+by Dash et al. (2022), including poor sampling density, limited independent validation, limited comparative 
+modelling and insufficient uncertainty mapping. 
+GEE will be used for satellite, terrain and climate covariate preparation and extraction at soil locations. 
+Python will be used for cLHS, feature -space analysis, sample -size optimization, machine -learning 
+comparison, spatial validation and uncertainty anal ysis. Final validated predictions will be generated at the 
+selected analysis resolution and intersected with authoritative Gat/parcel boundaries to provide transparent 
+Gat-wise soil information, clearly distinguishing laboratory observations from model estimates. 
+Evidence Base and Methodological Rationale 
+The present revision incorporates the systematic review by Dash, Panigrahi and Mishra (2022), “Identifying 
+opportunities to improve digital soil mapping in India”, published in Geoderma Regional. The review screened 
+35 peer -reviewed SCORPAN -based DSM studi es in India and identified recurring gaps that are directly 
+relevant to the proposed Pune District implementation. 
+ 
+ 
+ 
+
+=== PAGE 2 ===
+Key evidence incorporated into this report: 
+ 
+Identified Research Gap 
+in India (Dash et al., 2022) Current Indian DSM Status Proposed Pune District Technical 
+Solution 
+Spatial Resolution & 
+Landholding Scale 
+Most studies operate at 
+coarse/regional scales (>250m - 
+1000m), ineffective for 1.08 ha 
+smallholders. 
+High-resolution Sentinel -2 (10m) + DEM 
+derivatives (10m-30m) integrated directly 
+with cadastral Gat polygons. 
+Sampling Methodology 
+Utilizes random (58%), stratified 
+random (31%), and grid (11%) 
+sampling, often lacking a 
+framework for adequate density. 
+Uses environmental representativeness 
+and spatially robust validation rather than 
+a single fixed sampling-density rule. 
+Mapping Depth 
+80% of studies focus only on 
+surface soil, while just 20% map 
+multiple depths. 
+Employs depth -standardized modelling 
+with harmonized depth intervals and 
+explicit depth metadata. 
+Environmental Covariate 
+Scope 
+Rely heavily on Organism (O) and 
+Relief (R) (29% use only these), 
+neglecting Soil (S), Climate (C), 
+and Parent Material (P). 
+Utilizes a broad, screened SCORPAN 
+stack (multi-temporal Sentinel-2 indices, 
+CHIRPS/ERA5 climate, GSI lithology, and 
+legacy soil layers). 
+Target Variables 
+Focuses predominantly on soil 
+carbon, depth, separates, 
+macro-nutrients, pH, and EC; 
+categorical soil classes are less 
+explored. 
+Incorporates the GlobalSoilMap  
+reference set (effective depth, sand, silt, 
+clay, coarse fragments, effective CEC, 
+bulk density, AWC, etc.). 
+Legacy Data Integration 
+Legacy data is valuable but often 
+suffers from unstandardized 
+sampling/analytical techniques 
+and non -static temporal 
+mismatches. 
+Treats legacy data as evidence requiring 
+strict Quality Control (QC) and 
+harmonization, not automatically 
+equivalent to new observations. 
+Algorithm Evaluation & 
+Comparison 
+Regression kriging is most 
+frequent, but 86% of studies rely 
+on a single ML model without 
+benchmark testing. 
+Systematic multi -model benchmarking 
+comparing various models (e.g., Random 
+Forest, Support Vector Regression, 
+XGBoost). 
+Validation Methodology 
+76% use simple random data 
+splitting (causing spatial 
+autocorrelation bias); only a 
+small proportion (5%) use 
+independent validation. 
+Prioritizes Spatial Block Cross -Validation 
+and/or a 1000 -point spatially 
+independent hold-out test set. 
+Uncertainty Quantification 
+66% of Indian DSM articles 
+provide no spatial uncertainty or 
+confidence maps. 
+Deploys Quantile Regression Forests 
+(QRF) to generate 90% prediction 
+intervals and spatial confidence maps. 
+Practical Extension Utility 
+Maps remain in academic 
+literature or non -downloadable 
+formats without direct farmer 
+linkage. 
+Gat-wise web/mobile retrieval interface: 
+Farmer enters Village + Gat No. to get an 
+instant calibrated Soil Health Card & 
+STCR dosage. 
+ 
+
+=== PAGE 3 ===
+1. Project Vision 
+To establish a scientifically validated Pune District Digital Soil Intelligence Platform that converts laboratory 
+soil observations, satellite data and environmental information into spatially explicit, Gat -wise digital soil 
+information accessible to farmers and agricultural institutions. 
+2. Main Goal 
+To develop Digital Soil Maps for priority soil -health parameters across Pune District and create a digital 
+service in which an authorized user can retrieve Gat -wise soil information by selecting a village and Gat 
+number.  
+3. Specific Objectives 
+1. Ingest, clean, and harmonize all existing village -level soil sample datasets into a georeferenced Master 
+Soil Database. 
+2. Develop a cloud-based environmental covariate extraction pipeline in GEE covering all SCORPAN factors 
+for Pune District. 
+3. Use cLHS or partitioned/stratified cLHS where justified by environmental heterogeneity. 
+4. Determine the mathematical optimum sample size using Bhattacharyya Distance (Khan et al., 2023) and 
+Jensen-Shannon Divergence (Saurette et al., 2024). 
+5. Begin operational implementation in Baramati Tehsil and validate the complete end -to-end workflow 
+before district-wide expansion. 
+6. Train and benchmark multiple ML models (RF, SVR, XGBoost) and quantify spatial uncertainty using 
+Quantile Regression Forests. 
+7. Spatially intersect DSM raster outputs with cadastral Gat shapefiles in PostGIS to generate parcel -level 
+statistics and automated Soil Health Cards. 
+4. Detailed Sampling Methodology: cLHS and PcLHS 
+Conditioned Latin Hypercube Sampling (cLHS) is an advanced stratified random sampling strategy that draws 
+sample locations from multivariate environmental covariates such that the marginal distribution of each 
+covariate and the multivariate correlation structure are maximally preserved (Minasny and McBratney, 2006; 
+Moharana et al., 2024). 
+4.1 Step-by-Step cLHS / PcLHS Implementation 
+Phase 1: Project Initiation & Data Collation 
+• Step 1: Project Setup & Boundary 
+o Establish the boundaries for Pune District, including taluka, village, and Gat/parcel 
+databases. 
+• Step 2: Existing Soil Data 
+o Compile legacy laboratory samples along with their coordinates, depth information, and 
+analytical methods, followed by strict quality control (QC). 
+ 
+
+=== PAGE 4 ===
+Phase 2: Feature Engineering & Pre-processing 
+• Step 3: GEE Environmental Covariates (Feature Stack Construction) 
+o Extract and align multi -temporal Sentinel -2 imagery (NDVI, EVI, NDMI, SAVI) and high -
+resolution DEM derivatives (Elevation, Slope, Aspect, TWI, TPI, TRI, MRVBF, MRRTF). 
+o Integrate bioclimatic grids, land use/land cover (LULC), and geology data to export a 
+normalized raster stack. 
+• Step 4: Covariate Screening (Multicollinearity) 
+o Calculate the Variance Inflation Factor (VIF) and correlation matrices in Python. 
+o Systematically eliminate collinear variables with a VIF > 10 to avoid feature redundancy and 
+model overfitting. 
+Phase 3: Advanced Sampling Strategy (cLHS / PcLHS) 
+• Step 5: Representativeness Analysis (Evaluating Legacy Coverage) 
+o Project existing Pune soil sample locations into the complete multivariate environmental 
+feature space. 
+o Identify physiographic and vegetative zones that are currently under-represented. 
+• Step 6: Stratification / PcLHS Decision (Regionalization) 
+o Address Pune District's spatial heterogeneity (e.g., Western Ghats, transition zone, and 
+eastern plains) by applying REDCAP (Regionalization with Dynamically Constrained 
+Agglomerative Clustering and Partitioning). 
+o Partition the district into continuous homogeneous clusters to define zones and reduce 
+prediction errors compared to global sampling. 
+• Step 7: cLHS Sample-Size Optimization 
+o Run iterative candidate designs for sample sizes (n = 50 to 1500). 
+o Calculate divergence metrics, specifically Bhattacharyya Distance and Jensen -Shannon 
+Divergence (D_JS), to perform plateau analysis. 
+o Identify the unit -invariant knee/elbow point where the cumulative distribution function 
+reaches >=95% similarity with the district population. 
+• Step 8: cLHS/PcLHS Point Selection 
+o Execute annealing optimization in Python (clhs -py) for 5000 iterations to allocate precise 
+spatial coordinates for additional sampling. 
+o Apply operational accessibility constraints, such as buffers along road networks and field 
+access routes. 
+• Step 9: Field & Laboratory Sampling 
+o Use a standardized Standard Operating Procedure (SOP) to collect 0 -15 cm composite soil 
+samples at the generated coordinates via GPS. 
+o Analyze the collected samples for 12 essential parameters using standard wet chemistry and 
+spectroscopic protocols. 
+Phase 4: Modeling & Delivery 
+• Step 10: Python Machine Learning 
+o Train spatial prediction models using algorithms such as Random Forest (RF), Support Vector 
+Regression (SVR), and Gradient Boosting. 
+
+=== PAGE 5 ===
+o Implement spatial validation to assess model accuracy. 
+ 
+• Step 11: Digital Soil Maps 
+o Generate spatial predictions and quantify uncertainty. 
+o Conduct extrapolation checks to ensure model reliability across the boundary. 
+• Step 12: Gat-wise Digital Soil Health Card 
+o Extract parcel statistics to generate a digital report for individual landholdings. 
+o Include confidence intervals within the report to support farmer decision-making. 
+4.2 Complete Methodology: Graphical Representation 
+ 
+Figure 1. Integrated end-to-end methodology for Pune District DSM and Gat-wise Digital Soil Health Card 
+development. 
+5. Scientific Framework: SCORPAN 
+Digital Soil Mapping predicts the spatial distribution of soil properties by establishing relationships between 
+measured soil observations and environmental variables. The conceptual basis is commonly described 
+through the SCORPAN framework: soil information (S), climate (C), organisms/vegetation (O), relief (R), 
+parent material (P), age/time (A) and spatial position (N) (McBratney et al., 2003). 
+
+
+=== PAGE 6 ===
+ 
+Factor Pune DSM examples 
+S – Soil Legacy laboratory observations and validated soil information 
+C – Climate Rainfall and temperature summaries 
+O – Organisms Vegetation indices and land-cover information 
+R – Relief Elevation, slope, aspect and terrain indices 
+P – Parent material Geology and lithology 
+A – Age Time-related information where relevant 
+N – Spatial position Spatial structure used cautiously 
+6. Integrated GEE + Python Architecture 
+Component Platform Main role 
+Satellite processing GEE Sentinel/Landsat composites and indices 
+Terrain and climate GEE Environmental covariates 
+Covariate extraction GEE Extract values at soil points 
+cLHS Python Representative sample selection 
+Sample-size optimization Python Distribution metrics and learning curves 
+ML modeling Python RF, SVR and boosting comparison 
+Spatial validation Python Spatial CV and independent testing 
+DSM maps GEE/Python/GIS Prediction and uncertainty 
+Gat reporting GIS/PostGIS/Web Parcel-level statistics and reports 
+7. Data Required 
+Category Required data 
+Administrative Pune district, taluka and village boundaries 
+Gat/parcel Authoritative Gat polygons and unique Gat numbers 
+Soil observations Coordinates, depth, date, laboratory values, methods and units 
+Satellite Sentinel-2/Landsat time series 
+Terrain DEM, elevation, slope, aspect and derivatives 
+Climate Rainfall and temperature 
+LULC Land-use/land-cover 
+Parent material Geology/lithology 
+External soil products SoilGrids and suitable local/open soil datasets 
+8. Detailed Procedure in Google Earth Engine 
+8.1 Study Area 
+Import and verify the Pune District boundary. Prepare taluka/village boundaries for reporting. Keep Gat 
+boundaries as a dedicated parcel layer for the final reporting stage. 
+• Verify Pune District, taluka, village and Baramati administrative boundaries. 
+• Prepare Sentinel -2 Surface Reflectance imagery with cloud/cloud -shadow masking and scientifically 
+justified seasonal/annual composites. 
+
+=== PAGE 7 ===
+• Calculate relevant vegetation/moisture indices such as NDVI, EVI, NDMI and SAVI; retain only useful, non-
+redundant predictors. 
+• Prepare DEM-derived elevation, slope, aspect and other terrain variables where justified. 
+• Prepare climate summaries and document temporal period and spatial resolution. 
+• Integrate LULC and parent-material/geology layers where available. 
+• Align extent, projection and analysis resolution and maintain layer metadata. 
+• Extract covariates at cleaned soil sample locations and export the modelling table to Python. 
+9. Existing Soil Data Quality Control 
+• Assign a permanent unique Sample_ID. 
+• Validate coordinates and record coordinate reference system and positional quality where available. 
+• Standardize or harmonize sampling depths while retaining original depth information. 
+• Standardize units and document laboratory analytical methods. 
+• Record sample date, source, village, taluka, Gat number and land-use/crop information where available. 
+• Review duplicates, outliers and implausible observations using documented rules. 
+• Assess spatial clustering and identify areas with insufficient representation. 
+• Maintain QA/QC and chain-of-custody records for all new field observations. 
+10. Sampling Design and Sample-Size Decision 
+10.1 Representativeness Assessment 
+Existing observations will first be projected into the selected environmental feature space. Their marginal and 
+multivariate distributions will be compared with the candidate population to identify environmental and 
+geographic gaps. This step determines wh ether additional sampling is necessary and where it is most 
+valuable. 
+10.2 Heterogeneity and Partitioning 
+Pune District contains substantial environmental variation. Partitioned cLHS/PcLHS  will therefore be used 
+only if analysis demonstrates that separate environmental populations or zones are justified. Regionalization 
+may use physiography, agro-environmental zones, terrain/landscape clustering or other documented criteria. 
+10.3 Sample-Size Optimization 
+Candidate additional sample sizes will be evaluated using repeated sampling designs. Bhattacharyya 
+distance and/or Jensen –Shannon divergence will assess representation, while model learning curves using 
+R², RMSE and MAE will assess whether additional obser vations materially improve prediction. The selected 
+sample size will balance representation, predictive stability, uncertainty, budget and field feasibility. 
+No universal number such as one sample per hectare will be adopted as the scientific basis for Pune District. 
+The Baramati pilot will generate an evidence-based sampling requirement for Baramati; the requirement will 
+then be reviewed for each expansion unit. 
+
+=== PAGE 8 ===
+10.4 cLHS/PcLHS Point Selection 
+After the sampling requirement is approved, cLHS/PcLHS  will select locations representing the chosen 
+environmental covariates. Optimization settings and random seeds will be documented for reproducibility. 
+Accessibility constraints will be applied after environmental selection, and inaccessible locations will  be 
+replaced using nearby environmental feature-space equivalents rather than arbitrary relocation. 
+11. Field and Laboratory Protocol 
+• Use the project-approved standardized sampling SOP and target depth interval. 
+• Record actual GPS coordinates at the sampling location. 
+• Record village, taluka, Gat number, land use/crop, irrigation status where relevant, date, depth and field 
+observations. 
+• Use permanent Sample_ID and complete chain-of-custody documentation. 
+• If a selected point is inaccessible, document the replacement and its environmental equivalence. 
+• Analyze core soil-health parameters using one approved project SOP or formally harmonized laboratory 
+methods. 
+• Record analytical method, units, laboratory, analyst/date, detection/reporting limits where applicable 
+and QA/QC information. 
+• Perform duplicate and outlier review before observations enter the DSM training database. 
+12. Priority Soil Parameters 
+Group Parameters 
+Core pH, EC, Organic Carbon/SOC 
+Primary nutrients Available N, P and K 
+Secondary S, Ca and Mg where reliable 
+Micronutrients Zn, Fe, Mn, Cu and B where required 
+Physical Sand, silt, clay, texture and bulk density where 
+available 
+Advanced CEC and other indicators where sufficient 
+observations exist 
+ 
+The exact parameter set for the Baramati pilot should be frozen before sampling. Only parameters with 
+adequate, quality-controlled observations and suitable predictor relationships should be taken forward to 
+predictive mapping. 
+13. Python Machine Learning and Statistical Analysis 
+The training table will combine laboratory-tested soil observations with environmental covariates extracted 
+from GEE. Each soil property should normally be modeled separately. 
+Model Role 
+Random Forest Regressor Primary nonlinear DSM benchmark 
+
+=== PAGE 9 ===
+SVR Nonlinear comparison; requires appropriate scaling 
+Gradient Boosting/XGBoost Strong comparative predictive model 
+Simple baseline Optional benchmark 
+ 
+Model selection should be based on spatially robust performance rather than deciding in advance that one 
+algorithm is universally best. 
+Each soil property will normally be modelled separately. Hyperparameters will be tuned using training data 
+only. Model selection will be based on spatially robust performance rather than an assumed universally best 
+algorithm. 
+• Spatial block cross-validation to reduce spatial autocorrelation bias. 
+• Spatially separated independent hold-out data where feasible. 
+• Metrics: R², RMSE, MAE and Bias/Mean Error. 
+• Residual diagnostics and examination of model failure areas. 
+• Prediction uncertainty/confidence estimation where implemented. 
+• Extrapolation/domain checks to identify areas outside the training feature space. 
+14. SoilGrids and Other External Soil Data 
+SoilGrids and similar products are modelled estimates and will not be treated as ground truth. Pune 
+laboratory observations remain the primary ground evidence, followed by validated new field observations. 
+External products may be used for benchmarking, pattern com parison or as ancillary predictors only after 
+independent testing and appropriate harmonization. 
+15. Digital Soil Map Production 
+• Select the best validated model separately for each soil property. 
+• Prepare the final predictor stack for the relevant implementation unit. 
+• Generate predictions over the approved analysis grid. 
+• Generate uncertainty/confidence layers. 
+• Perform extrapolation checks and flag low-support areas. 
+• Document depth, units, time period, resolution, predictor version and model version. 
+• Retain a clear distinction between observed soil values and model predictions. 
+16. Gat-wise Digital Soil Health Card 
+Authoritative Gat polygons will be overlaid with validated DSM layers. Because a Gat can contain multiple 
+prediction cells, parcel -level statistics such as median/mean values and uncertainty measures will be 
+calculated. Gat -level reporting is a reporting a nd decision -support layer; it does not imply that the soil 
+property was directly measured at every location within the Gat. 
+• Village and Gat number 
+
+=== PAGE 10 ===
+• Gat area and location 
+• pH, EC, SOC/OC and mapped nutrient estimates 
+• Status category using approved soil-health thresholds 
+• Within-Gat variability where useful 
+• Prediction confidence/uncertainty 
+• Model version and date 
+• Explicit label identifying laboratory-observed versus model-estimated values 
+User flow: Select Village → Enter Gat Number → Retrieve Gat → Overlay DSM layers → Calculate Gat statistics 
+→ Generate Digital Soil Health Card. 
+17. Technology Architecture 
+Component Platform Main Role 
+Environmental processing Google Earth Engine Satellite, terrain, climate and 
+covariate preparation 
+Sampling & statistics Python 
+cLHS/PcLHS, 
+representativeness, sample-size 
+analysis and learning curves 
+Machine learning Python RF, SVR, boosting/XGBoost and 
+validation 
+Spatial database PostgreSQL/PostGIS Gat geometry, soil observations, 
+predictions and parcel statistics 
+GIS/map services GIS/Web services Visualization and map delivery 
+Application layer API + Web/Mobile Village/Gat query and Soil 
+Health Card retrieval 
+Reproducibility Version control + metadata Dataset, code, model and report 
+versioning 
+18. Implementation Timeline – Pune District with Baramati as the First Operational Unit 
+The original single 12-month district timeline has been revised because the project will not attempt full Pune 
+field implementation at once. Pune -wide framework and data preparation will start first, while Baramati will 
+be the first complete pilot. After B aramati validation, the workflow will be scaled to additional talukas and 
+then consolidated at district level. 
+ 
+Phase / Period Geographic 
+Scope Major Activities Key Deliverables 
+Phase 0 – Month 1 Pune District + 
+Baramati 
+Project inception; 
+administrative/Gat data inventory; 
+existing soil-data inventory; SOP 
+and metadata finalization; 
+database design; identify Baramati 
+data sources. 
+Approved project 
+framework, data 
+inventory, SOP and 
+database schema 
+
+=== PAGE 11 ===
+Phase 1 – Months 1–2 Baramati 
+Baramati soil-data QC; 
+coordinate/depth/unit/method 
+harmonization; GEE covariate 
+stack; preliminary 
+representativeness and spatial-gap 
+analysis. 
+Baramati QC soil 
+database, covariate 
+stack and gap 
+assessment 
+Phase 2 – Months 2–3 Baramati 
+Heterogeneity assessment; 
+cLHS/PcLHS decision; candidate 
+sample-size evaluation using 
+distribution metrics and learning 
+curves; final sampling design. 
+Approved Baramati 
+sample requirement 
+and sampling 
+locations 
+Phase 3 – Months 3–5 Baramati 
+Field sampling, GPS capture, 
+laboratory analysis, QA/QC and 
+database integration. 
+Validated Baramati 
+field/lab dataset 
+Phase 4 – Months 5–7 Baramati 
+Property-wise RF/SVR/XGBoost 
+modelling; spatial cross-validation; 
+independent validation where 
+feasible; uncertainty and 
+extrapolation assessment. 
+Validated Baramati 
+models and 
+performance report 
+Phase 5 – Months 7–8 Baramati 
+Generate DSM layers; Gat overlay; 
+parcel statistics; Digital Soil Health 
+Card prototype; user testing. 
+Baramati DSM + Gat-
+wise Soil Health Card 
+pilot 
+Phase 6 – Months 8–9 
+Pune District / 
+selected next 
+talukas 
+Review Baramati lessons; update 
+SOP/pipeline; prioritize next 
+talukas; run legacy-data and 
+representativeness checks for each 
+selected unit. 
+Scale-up plan and 
+updated sampling 
+designs 
+Phase 7 – Months 9–
+11 
+Additional 
+talukas 
+Sequential sampling, laboratory 
+analysis, modelling and validation 
+using the standardized pipeline; 
+adaptive sampling where required. 
+Validated taluka DSM 
+outputs 
+Phase 8 – Months 11–
+12+ Pune District 
+Harmonize taluka outputs; district-
+level validation and uncertainty 
+review; integrate Gat-wise 
+reporting; finalize platform and 
+SOPs. 
+Pune District DSM 
+framework, integrated 
+reporting system and 
+final implementation 
+documentation 
+ 
+19. Detailed Baramati Pilot Work Plan 
+Week / Period Activity Decision / Output 
+Weeks 1–2 
+Collect all available Baramati 
+soil records and Gat/village 
+boundaries; establish Master 
+Soil Database. 
+Complete inventory and data 
+structure 
+
+=== PAGE 12 ===
+Weeks 2–4 
+QC coordinates, depth, units, 
+methods, duplicates/outliers 
+and spatial clustering. 
+QC-approved legacy dataset 
+Weeks 2–5 
+Prepare Baramati satellite, 
+terrain, climate, LULC and 
+parent-material covariates in 
+GEE. 
+Initial covariate stack 
+Weeks 4–6 
+Assess feature-space 
+representativeness and spatial 
+gaps; evaluate heterogeneity. 
+Sampling strategy decision 
+Weeks 5–7 
+Run candidate sample-size 
+designs; compare distribution 
+metrics and learning curves. 
+Evidence-based sample-size 
+recommendation 
+Weeks 7–8 
+Run cLHS/PcLHS and 
+accessibility checks; finalize 
+field points. 
+Approved sampling map/list 
+Weeks 9–16 
+Field collection, laboratory 
+analysis, QA/QC and data 
+integration. 
+New validated observations 
+Weeks 17–24 Train/tune candidate models 
+and conduct spatial validation. 
+Model comparison and selected 
+model 
+Weeks 23–28 
+Generate DSM and uncertainty 
+maps; conduct extrapolation 
+checks. 
+Validated Baramati DSM 
+Weeks 27–32 
+Gat overlay, parcel statistics 
+and Digital Soil Health Card 
+prototype. 
+Operational Baramati pilot 
+Weeks 31–34 
+Technical review, user testing 
+and documentation of lessons 
+for scale-up. 
+Baramati pilot completion and 
+Pune scale-up SOP 
+20. Expansion Strategy After Baramati 
+• Use Baramati to validate the complete workflow, software pipeline, database structure, field SOP and 
+reporting format. 
+• For every new taluka, repeat only the necessary data-audit and representativeness checks. 
+• Reuse common Pune -wide covariate definitions, metadata standards, code modules and validation 
+protocols. 
+• Adapt sampling intensity when the new taluka has different environmental heterogeneity or legacy -data 
+coverage. 
+• Maintain a common model/data versioning system so taluka outputs remain traceable. 
+• Integrate taluka-level outputs into the district platform only after quality and validation checks. 
+
+=== PAGE 13 ===
+21. Research Gaps Addressed 
+• Standardized and traceable soil database development. 
+• Empirical sampling-density determination instead of fixed density assumptions. 
+• Integration of relevant SCORPAN environmental covariates. 
+• Comparative machine-learning evaluation. 
+• Spatially robust validation and independent testing where feasible. 
+• Prediction uncertainty and extrapolation assessment. 
+• Gat-wise translation of validated predictions into an end-user service. 
+22. Expected Outputs 
+Output Description 
+Master Soil Database QC and harmonized Pune/implementation-unit soil observations 
+with metadata 
+Environmental Covariate Stack Documented GEE predictor layers 
+Sampling Design Evidence-based cLHS/PcLHS locations and sample-size 
+rationale 
+Laboratory Dataset Validated new observations with QA/QC 
+Model Performance Report Spatial validation metrics, residual diagnostics and model 
+selection 
+Digital Soil Maps Validated soil-property prediction layers with uncertainty 
+Gat-wise Soil Health Cards Parcel-level soil estimates with confidence and 
+observed/modelled labels 
+Web/Mobile Prototype Village + Gat based retrieval interface 
+SOP & Scale-up Framework Reusable process for expansion from Baramati to Pune District 
+26. References 
+McBratney, A.B., Mendonça Santos, M.L. and Minasny, B. (2003). On digital soil mapping. Geoderma, 117, 
+3–52. 
+Minasny, B. and McBratney, A.B. (2006). A conditioned Latin hypercube method for sampling in the 
+presence of ancillary information. Computers & Geosciences, 32, 1378–1388. 
+Khan, A., Aitkenhead, M., Stark, C.R. and Jorat, M.E. (2023). Optimal sampling using Conditioned Latin 
+Hypercube for digital soil mapping: An approach using Bhattacharyya distance. Geoderma, 439, 116660. 
+Huang, B., Yang, G., Lei, J. and Wang, X. (2025). A partitioned conditioned Latin hypercube sampling method 
+considering spatial heterogeneity in digital soil mapping. Scientific Reports, 15, 12851. 
+Saurette, D.D., Heck, R.J., Gillespie, A.W., Berg, A.A. and Biswas, A. (2024). Sample Size Optimization for 
+Digital Soil Mapping: An Empirical Example. Land, 13, 365. 
+
+=== PAGE 14 ===
+Moharana, P.C., Yadav, B., Meena, R.L., Nogiya, M., Malav, L.C., Tailor, B.L., Biswas, H. and Patil, N.G. 
+(2024). Sampling Strategy for Digital Soil Mapping in the Thar Desert Region of India: A Conditioned Latin 
+Hypercube Sampling Approach. Journal of the Indian Society of Soil Science, 72(2), 133–144. 
+Dash, P.K., Panigrahi, N. and Mishra, A. (2022). Identifying opportunities to improve digital soil mapping in 
+India: A systematic review. Geoderma Regional, 28, e00478. https://doi.org/10.1016/j.geodrs.2021.e00478. 
+ 
+

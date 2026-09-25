@@ -417,55 +417,78 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
     const currentDsmSourceId = "dsm-raster-source";
     const currentDsmLayerId = "dsm-raster-layer";
 
-    // If active layer is farm_boundary (or no layer / pending without tiles), hide/remove raster layer
-    if (!dsmLayer || dsmLayer.id === "farm_boundary" || !dsmLayer.rasterTileUrl) {
+    // If active layer is farm_boundary (or no layer / pending without tiles or image), hide/remove raster layer
+    if (!dsmLayer || dsmLayer.id === "farm_boundary" || (!dsmLayer.rasterTileUrl && !dsmLayer.imageUrl)) {
       if (map.getLayer(currentDsmLayerId)) {
         map.setLayoutProperty(currentDsmLayerId, "visibility", "none");
       }
       return;
     }
 
-    // When real raster tile URL exists
-    if (dsmLayer.rasterTileUrl) {
-      if (!map.getSource(currentDsmSourceId)) {
-        map.addSource(currentDsmSourceId, {
-          type: "raster",
-          tiles: [dsmLayer.rasterTileUrl],
-          tileSize: 256,
-          bounds: dsmLayer.rasterBounds,
-        });
-
-        // Insert DSM raster below the farm boundaries so the boundary is always visible
-        const beforeLayerId = map.getLayer("all-plots-fill")
-          ? "all-plots-fill"
-          : map.getLayer("farm-field-fill")
-          ? "farm-field-fill"
-          : undefined;
-
-        map.addLayer(
-          {
-            id: currentDsmLayerId,
-            type: "raster",
-            source: currentDsmSourceId,
-            paint: {
-              "raster-opacity": dsmOpacity,
-              "raster-fade-duration": 200,
-            },
-            layout: {
-              visibility: "visible",
-            },
-          },
-          beforeLayerId
-        );
-      } else {
-        // Source already exists, update visibility & opacity
-        if (map.getLayer(currentDsmLayerId)) {
-          map.setLayoutProperty(currentDsmLayerId, "visibility", "visible");
-          map.setPaintProperty(currentDsmLayerId, "raster-opacity", dsmOpacity);
-        }
-      }
+    // Clean up existing source/layer if switching between different layer image URLs or tile URLs
+    if (map.getLayer(currentDsmLayerId)) {
+      map.removeLayer(currentDsmLayerId);
     }
-  }, [dsmLayer, dsmOpacity, mapLoaded]);
+    if (map.getSource(currentDsmSourceId)) {
+      map.removeSource(currentDsmSourceId);
+    }
+
+    // Insert DSM raster below the farm boundaries so the boundary is always visible
+    const beforeLayerId = map.getLayer("all-plots-fill")
+      ? "all-plots-fill"
+      : map.getLayer("farm-field-fill")
+      ? "farm-field-fill"
+      : undefined;
+
+    if (dsmLayer.imageUrl && dsmLayer.imageCoordinates) {
+      // Direct high-resolution GeoTIFF rendered PNG overlay
+      map.addSource(currentDsmSourceId, {
+        type: "image",
+        url: dsmLayer.imageUrl,
+        coordinates: dsmLayer.imageCoordinates,
+      });
+
+      map.addLayer(
+        {
+          id: currentDsmLayerId,
+          type: "raster",
+          source: currentDsmSourceId,
+          paint: {
+            "raster-opacity": dsmOpacity,
+            "raster-fade-duration": 200,
+          },
+          layout: {
+            visibility: "visible",
+          },
+        },
+        beforeLayerId
+      );
+    } else if (dsmLayer.rasterTileUrl) {
+      // Standard raster tile service
+      map.addSource(currentDsmSourceId, {
+        type: "raster",
+        tiles: [dsmLayer.rasterTileUrl],
+        tileSize: 256,
+        bounds: dsmLayer.rasterBounds,
+      });
+
+      map.addLayer(
+        {
+          id: currentDsmLayerId,
+          type: "raster",
+          source: currentDsmSourceId,
+          paint: {
+            "raster-opacity": dsmOpacity,
+            "raster-fade-duration": 200,
+          },
+          layout: {
+            visibility: "visible",
+          },
+        },
+        beforeLayerId
+      );
+    }
+  }, [dsmLayer?.id, dsmLayer?.imageUrl, dsmLayer?.rasterTileUrl, dsmOpacity, mapLoaded]);
 
   // Handle Basemap Switching (Satellite <-> Street)
   const handleBasemapChange = (type: "satellite" | "street") => {

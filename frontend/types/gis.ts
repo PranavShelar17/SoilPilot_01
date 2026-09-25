@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Digital Soil Mapping (DSM) Layer Definitions and Types.
  * SoilPilot Phase 6
  */
@@ -10,7 +10,9 @@ export type DSMLayerId =
   | "elevation"
   | "nitrogen"
   | "soc"
-  | "ndvi";
+  | "ndvi"
+  | "evi"
+  | "uncertainty";
 
 export type DSMLayerStatus = "available" | "pending" | "unavailable";
 
@@ -42,6 +44,8 @@ export interface DSMLayerConfig {
   colorStops?: ColorStop[];
   rasterTileUrl?: string;
   rasterBounds?: [number, number, number, number];
+  imageUrl?: string;
+  imageCoordinates?: [[number, number], [number, number], [number, number], [number, number]];
   isDefault?: boolean;
 }
 
