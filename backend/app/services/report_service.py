@@ -48,8 +48,8 @@ class ReportService:
           3. Token belongs to the farmer who owns the field
         """
         norm_id = str(field_identifier).strip().lower()
-        if norm_id in ["demo-field-gat-104", "demo", "gat-104", "104"]:
-            return  # Demo field is always accessible for review
+        if norm_id.startswith("demo-field-gat-") or norm_id.startswith("demo") or norm_id in ["demo-field-gat-104", "demo", "gat-104", "104"]:
+            return  # Demo fields are always accessible for review
 
         # If session token is provided, enforce ownership
         if token_payload:

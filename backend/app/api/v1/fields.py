@@ -62,19 +62,24 @@ def get_field_by_gat(
     "/geojson",
     status_code=status.HTTP_200_OK,
     summary="Get Farm Plot Boundaries GeoJSON",
-    description="Returns normalized GeoJSON FeatureCollection of all farm plot boundaries for the specified village or taluka.",
+    description="Returns normalized GeoJSON FeatureCollection of farm plot boundaries. Filters strictly by gat_no for authenticated farmers.",
 )
 def get_fields_geojson(
     village_id: Optional[int] = Query(None, description="Optional ID of the Village"),
     village: Optional[str] = Query(None, description="Optional name of the Village (e.g. Malegaon)"),
     taluka: Optional[str] = Query(None, description="Optional name of the Taluka (e.g. Baramati)"),
+    gat_no: Optional[str] = Query(None, description="Optional cadastral Gat Number filter"),
+    token: Optional[str] = Depends(extract_token),
     db: Session = Depends(get_db),
 ) -> dict:
+    effective_gat = str(gat_no).strip() if gat_no else None
+
     return field_service.get_village_geojson(
         db,
         village_id=village_id,
         village_name=village,
         taluka_name=taluka,
+        gat_no=effective_gat,
     )
 
 

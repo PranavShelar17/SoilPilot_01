@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { fieldService, AuthorizedFieldResponse, GeoJSONGeometry } from "@/services/fieldService";
+import { dsmService } from "@/services/dsmService";
 import { MapLibreWrapper } from "./MapLibreWrapper";
 import {
   MapPinOff,
@@ -12,7 +13,6 @@ import {
   Loader2,
   Compass,
 } from "lucide-react";
-
 import { DSMLayerConfig } from "@/types/gis";
 
 interface FarmMapProps {
@@ -21,6 +21,36 @@ interface FarmMapProps {
   onFieldLoaded?: (field: AuthorizedFieldResponse) => void;
   dsmLayer?: DSMLayerConfig | null;
   dsmOpacity?: number;
+  selectedGat?: string | null;
+}
+
+/**
+ * Utility to parse standard WKT POLYGON ((lng lat, lng lat, ...)) into GeoJSON Polygon
+ */
+function parseWktToGeoJSON(wkt: string): GeoJSONGeometry | null {
+  if (!wkt) return null;
+  const match = wkt.match(/POLYGON\s*\(\((.*?)\)\)/i);
+  if (!match || !match[1]) return null;
+
+  try {
+    const rawCoords = match[1].split(",");
+    const coords: [number, number][] = [];
+    for (const item of rawCoords) {
+      const parts = item.trim().split(/\s+/).map(Number);
+      if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        coords.push([parts[0], parts[1]]);
+      }
+    }
+    if (coords.length > 2) {
+      return {
+        type: "Polygon",
+        coordinates: [coords],
+      };
+    }
+  } catch (err) {
+    console.warn("Failed to parse WKT:", err);
+  }
+  return null;
 }
 
 export const FarmMap: React.FC<FarmMapProps> = ({
@@ -29,6 +59,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({
   onFieldLoaded,
   dsmLayer,
   dsmOpacity = 0.75,
+  selectedGat: propSelectedGat,
 }) => {
   const { t } = useI18n();
   const { field: authField, farmer: authFarmer, location: authLocation } = useAuth();
@@ -47,44 +78,134 @@ export const FarmMap: React.FC<FarmMapProps> = ({
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch authenticated field with real KML geometry
-      const data = await fieldService.getAuthenticatedField();
-      if (data && data.geometry) {
-        setFieldData(data);
-        onFieldLoadedRef.current?.(data);
-      } else if (authField) {
-        const enriched: AuthorizedFieldResponse = {
-          ...(data || {}),
-          id: data?.id || authField.id,
-          gat_no: data?.gat_no || authField.gat_no,
-          area: data?.area ?? authField.area,
-          area_unit: data?.area_unit || authField.area_unit || "hectare",
-          village: data?.village || authLocation?.village || "Malegaon",
-          taluka: data?.taluka || authLocation?.taluka || "Baramati",
-          district: data?.district || authLocation?.district || "Pune",
-          state: data?.state || authLocation?.state || "Maharashtra",
-          farmer_name: data?.farmer_name || authFarmer?.name || null,
-          is_demo: data?.is_demo ?? authField.is_demo ?? true,
-          geometry: data?.geometry || null,
-        };
-        setFieldData(enriched);
-        onFieldLoadedRef.current?.(enriched);
-      } else {
-        setFieldData(data);
-        onFieldLoadedRef.current?.(data);
+      // 1. Determine active Gat priority: prop > URL ?gat= > localStorage > authField > default 13
+      const urlGat =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("gat")
+          : null;
+      const storedGat =
+        typeof window !== "undefined"
+          ? localStorage.getItem("soilpilot_selected_gat")
+          : null;
+
+      // 2. Fetch authenticated field with real backend KML/GIS geometry
+      let data: AuthorizedFieldResponse | null = null;
+      try {
+        data = await fieldService.getAuthenticatedField();
+      } catch (err) {
+        console.warn("Could not fetch /fields/me directly:", err);
       }
 
-      // 2. Fetch village all-plots GeoJSON for background boundaries
-      try {
-        const villagePlots = await fieldService.getVillageGeoJSON({
-          villageName: data?.village || authLocation?.village || "Malegaon",
-          taluka: data?.taluka || authLocation?.taluka || "Baramati",
-        });
-        if (villagePlots && villagePlots.features) {
-          setAllPlots(villagePlots);
+      const rawTarget =
+        propSelectedGat ||
+        urlGat ||
+        authField?.gat_no ||
+        data?.gat_no ||
+        authFarmer?.gat_number ||
+        storedGat ||
+        "13";
+
+      const cleanNum = rawTarget.replace(/[^\d]/g, "") || rawTarget.trim().toLowerCase();
+
+      let resolvedGeometry: GeoJSONGeometry | null = null;
+      let calculatedArea = data?.area ?? authField?.area ?? null;
+
+      // Check if authenticated field matches the target Gat
+      const authGatClean = (data?.gat_no || authField?.gat_no || "").replace(/[^\d]/g, "");
+      if (data?.geometry && (!cleanNum || authGatClean === cleanNum)) {
+        resolvedGeometry = data.geometry;
+        calculatedArea = data.area ?? calculatedArea;
+      }
+
+      // If not resolved or target Gat differs, look up in sample-gats.kml (12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 25)
+      if (!resolvedGeometry && cleanNum) {
+        try {
+          const { collection } = await dsmService.loadSampleGats();
+          const matchedFeature = collection.features.find((f) => {
+            const fName =
+              (f.properties?.name || "")
+                .replace(/[^\d]/g, "")
+                .trim()
+                .toLowerCase() || (f.properties?.name || "").trim().toLowerCase();
+            const fId =
+              (f.id || "").replace(/[^\d]/g, "").trim().toLowerCase() ||
+              (f.id || "").trim().toLowerCase();
+            return fName === cleanNum || fId === cleanNum;
+          });
+
+          if (matchedFeature && matchedFeature.geometry) {
+            resolvedGeometry = matchedFeature.geometry as GeoJSONGeometry;
+            if (matchedFeature.properties?.area_ha) {
+              calculatedArea = matchedFeature.properties.area_ha;
+            }
+          }
+        } catch (kmlErr) {
+          console.warn("Could not load geometry from sample gats:", kmlErr);
         }
-      } catch (err) {
-        console.warn("Could not load neighboring village plots:", err);
+      }
+
+      // If still not resolved, query backend by Gat
+      if (!resolvedGeometry && cleanNum) {
+        try {
+          const lookup = await fieldService.getFieldByGat({
+            gatNo: cleanNum,
+            villageName: data?.village || authLocation?.village || "Malegaon Kh",
+            taluka: data?.taluka || authLocation?.taluka || "Baramati",
+          });
+          if (lookup) {
+            calculatedArea = lookup.area ?? calculatedArea;
+            if (lookup.geometry_wkt) {
+              resolvedGeometry = parseWktToGeoJSON(lookup.geometry_wkt);
+            }
+          }
+        } catch (lookupErr) {
+          console.warn("Could not lookup field by gat:", lookupErr);
+        }
+      }
+
+      // Fallback area based on Gat 13 (5.14 Ha) or default
+      if (calculatedArea === null || calculatedArea === undefined) {
+        calculatedArea = cleanNum === "13" ? 5.14 : (data?.area ?? authField?.area ?? 1.49);
+      }
+
+      const enriched: AuthorizedFieldResponse = {
+        ...(data || {}),
+        id: data?.id || authField?.id || (cleanNum ? parseInt(cleanNum, 10) || 15 : 15),
+        gat_no: cleanNum || rawTarget,
+        area: calculatedArea,
+        area_unit: data?.area_unit || authField?.area_unit || "hectare",
+        village: data?.village || authLocation?.village || "Malegaon Kh",
+        taluka: data?.taluka || authLocation?.taluka || "Baramati",
+        district: data?.district || authLocation?.district || "Pune",
+        state: data?.state || authLocation?.state || "Maharashtra",
+        farmer_name: data?.farmer_name || authFarmer?.name || "Ramesh Patil (रमेश पाटील)",
+        is_demo: data?.is_demo ?? authField?.is_demo ?? true,
+        geometry: resolvedGeometry,
+      };
+
+      setFieldData(enriched);
+      onFieldLoadedRef.current?.(enriched);
+
+      // 3. Fetch village all-plots GeoJSON for background boundaries (Admin only)
+      const isAdmin =
+        authFarmer?.role === "admin" ||
+        (typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("admin") === "true");
+
+      if (isAdmin) {
+        try {
+          const villagePlots = await fieldService.getVillageGeoJSON({
+            villageName: data?.village || authLocation?.village || "Malegaon Kh",
+            taluka: data?.taluka || authLocation?.taluka || "Baramati",
+          });
+          if (villagePlots && villagePlots.features) {
+            setAllPlots(villagePlots);
+          }
+        } catch (err) {
+          console.warn("Could not load neighboring village plots:", err);
+        }
+      } else {
+        setAllPlots(null);
       }
     } catch (err: any) {
       console.error("Failed to load authenticated field map:", err);
@@ -94,7 +215,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({
           gat_no: authField.gat_no,
           area: authField.area,
           area_unit: authField.area_unit || "hectare",
-          village: authLocation?.village || "Malegaon",
+          village: authLocation?.village || "Malegaon Kh",
           taluka: authLocation?.taluka || "Baramati",
           district: authLocation?.district || "Pune",
           state: authLocation?.state || "Maharashtra",
@@ -110,11 +231,32 @@ export const FarmMap: React.FC<FarmMapProps> = ({
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authField?.id, authField?.gat_no, authLocation?.village, authLocation?.taluka]);
+  }, [
+    propSelectedGat,
+    authField?.id,
+    authField?.gat_no,
+    authField?.area,
+    authLocation?.village,
+    authLocation?.taluka,
+    authLocation?.district,
+    authLocation?.state,
+    authFarmer?.name,
+    authFarmer?.role,
+  ]);
 
   useEffect(() => {
     fetchField();
+
+    // Listen for storage changes from other tabs/components
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "soilpilot_selected_gat") {
+        fetchField();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [fetchField]);
 
   const mapHeightClass = previewMode
@@ -192,7 +334,9 @@ export const FarmMap: React.FC<FarmMapProps> = ({
           </p>
         </div>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-surface-border text-xs text-text-muted">
-          <span>{fieldData.village} • {t("geo.gatNo")} {fieldData.gat_no}</span>
+          <span>
+            {fieldData.village} • {t("geo.gatNo")} {fieldData.gat_no}
+          </span>
         </div>
       </div>
     );

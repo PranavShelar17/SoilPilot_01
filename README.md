@@ -305,3 +305,45 @@ To test reversibility:
 ## 16. Demo Data Policy
 
 Any data currently shown in the application is strictly **DEMO DATA** for prototype verification and does not represent official government cadastral records or laboratory analyses.
+
+---
+
+## Gat visualisation & Digital Soil Mapping layers (added)
+
+This adds real raster + KML/Gat visualisation to the Soil Map page (`/soil-map`), built from the
+`project_soil_full` DSM export (GeoTIFFs + `trial.kml`).
+
+### What was added
+
+- **`scripts/gis/export_dsm_web.py`** — converts the 8 DSM GeoTIFFs (NDVI, EVI, pH, SOC, Nitrogen, BD,
+  Elevation, Uncertainty) into a browser-ready bundle: a colour-ramped PNG overlay per layer, a compact
+  quantised `uint16` value grid (for the live pixel probe + zonal stats), and `manifest.json` describing
+  bounds/legend/stats. Output lands in `frontend/public/data/dsm/`. Re-run it whenever the source rasters
+  change:
+  ```bash
+  pip install numpy pillow matplotlib tifffile
+  python scripts/gis/export_dsm_web.py --src /path/to/tifs --kml /path/to/trial.kml
+  ```
+- **`lib/kml/`** — dependency-free KML/KMZ parsing (`parseKml.ts`), KMZ (ZIP) extraction using the
+  browser's native `DecompressionStream` (`readKmlFile.ts`), and KML export (`exportKml.ts`). Farmers can
+  upload their own `.kml`/`.kmz` Gat boundaries, or use the bundled sample.
+- **`lib/gis/`** — planar geometry helpers (area/centroid/bounds, `geometry.ts`), raster grid decoding and
+  zonal statistics (`rasterGrid.ts`), soil parameter classification thresholds (`soilClassification.ts`),
+  per-Gat statistics (`gatStats.ts`), and canvas-based raster clipping to a Gat's outline
+  (`rasterClip.ts`).
+- **`services/dsmService.ts`** — fetches the DSM manifest, merges it with the backend `/soil-layers`
+  catalogue, and lazily loads/caches each raster's value grid.
+- **`components/map/SoilMapViewer.tsx`** — MapLibre map: raster overlay (optionally clipped to the
+  selected Gat), all Gat boundaries with hover/selection states and labels, live pixel probe, satellite/
+  street basemap toggle, and the farmer's own field boundary as an extra outline.
+- **`components/gat/`** — `GatKmlPanel` (upload/search/select/export UI), `GatSoilHealthPanel` (per-Gat
+  soil matrix + a dependency-free SVG radar chart), `RadarChart`.
+- **`app/soil-map/page.tsx`** — rewritten to wire all of the above together.
+
+### Notes
+
+- All per-Gat statistics (mean/median/min/max/std/p10/p90, classification, confidence) are computed
+  **client-side** from the raster grids — verified to match the original `generate_map.py` output exactly
+  for all 11 sample Gats.
+- KML/KMZ parsing was fuzz-tested against empty files, invalid XML, point-only placemarks, namespaced
+  tags, `MultiGeometry`, polygons with holes, and duplicate names.

@@ -9,7 +9,7 @@ import { Sprout, Globe, LogOut, User } from "lucide-react";
 
 export const Header: React.FC = () => {
   const { language, setLanguage, t } = useI18n();
-  const { isAuthenticated, farmer, logout } = useAuth();
+  const { isAuthenticated, farmer, field, logout } = useAuth();
   const pathname = usePathname();
 
   const navItems = [
@@ -80,10 +80,15 @@ export const Header: React.FC = () => {
         {/* RIGHT: Controls (Active Farmer, Language Switcher, Logout) */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Active farmer badge if authenticated */}
-          {isAuthenticated && farmer && (
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-lg bg-surface-subtle border border-surface-border text-xs font-semibold text-text-main">
+          {isAuthenticated && (farmer || field) && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-subtle border border-surface-border text-xs font-semibold text-text-main shadow-xs">
               <User className="w-3.5 h-3.5 text-soil-primary" />
-              <span className="max-w-[140px] truncate">{farmer.name}</span>
+              <span className="max-w-[130px] truncate">{farmer?.name || "Farmer"}</span>
+              {field?.gat_no && (
+                <span className="px-2 py-0.5 rounded-md bg-soil-primaryLight text-soil-primary text-[11px] font-bold border border-soil-primary/20">
+                  Gat {field.gat_no}
+                </span>
+              )}
             </div>
           )}
 

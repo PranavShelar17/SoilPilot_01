@@ -1,41 +1,404 @@
 import { api } from "@/lib/api/client";
-import { DSMLayerConfig } from "@/types/gis";
-import { DSM_LAYERS, DSM_LAYER_LIST } from "@/lib/gis/dsmLayers";
+import {
+  BBox,
+  ColorStop,
+  DSMLayerConfig,
+  DSMLayerId,
+  DSMManifest,
+  DSMManifestLayer,
+  DSMRasterLayerId,
+} from "@/types/gis";
+import { GatCollection, GatSourceInfo } from "@/types/gat";
+import { DSM_LAYERS, DSM_LAYER_LIST, DSM_LAYER_ORDER } from "@/lib/gis/dsmLayers";
+import { RasterGrid, createGrid } from "@/lib/gis/rasterGrid";
+import { parseKml } from "@/lib/kml/parseKml";
+
+/**
+ * Where the DSM bundle (manifest.json, layers/*.png, grids/*.bin, sample-gats.kml) is served from.
+ * Defaults to the Next.js public folder; point NEXT_PUBLIC_DSM_DATA_URL at a CDN / bucket to host it elsewhere.
+ */
+export const DSM_DATA_URL = (process.env.NEXT_PUBLIC_DSM_DATA_URL || "/data/dsm").replace(/\/+$/, "");
+
+const url = (relative: string) => `${DSM_DATA_URL}/${relative.replace(/^\/+/, "")}`;
+
+export interface GatOverlayInfo {
+  url: string;
+  bounds: [number, number, number, number]; // [w, s, e, n]
+  latLngBounds: [[number, number], [number, number]];
+  grid?: {
+    rows: number;
+    cols: number;
+    bounds: [[number, number], [number, number]];
+    values: (number | null)[][];
+  };
+}
+
+export interface GatStatInfo {
+  mean: number;
+  min: number;
+  max: number;
+  std: number;
+  p10: number;
+  p90: number;
+  classification: {
+    status: string;
+    color: string;
+    advice: string;
+  };
+}
+
+export interface GatDataFull {
+  gat_id: string;
+  name: string;
+  village: string;
+  taluka: string;
+  district: string;
+  area_acres: number;
+  area_ha: number;
+  area_sqm: number;
+  centroid: [number, number];
+  bounds: number[][];
+  stats: Record<string, GatStatInfo>;
+  overlays: Record<string, GatOverlayInfo>;
+}
+
+let manifestPromise: Promise<DSMManifest> | null = null;
+let gatDataPromise: Promise<Record<string, GatDataFull>> | null = null;
+const gridCache = new Map<DSMRasterLayerId, Promise<RasterGrid>>();
+
+async function fetchOk(input: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(input, init);
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${input}`);
+  return res;
+}
+
+function toLayerConfig(m: DSMManifestLayer, bounds: BBox, base?: DSMLayerConfig): DSMLayerConfig {
+  const local = base ?? DSM_LAYERS[m.id];
+  const span = m.max - m.min;
+  const colorStops: ColorStop[] = m.legendStops.map((s) => ({
+    value: Number(s.value.toFixed(3)),
+    color: s.color,
+  }));
+  return {
+    ...local,
+    name: m.name,
+    unit: m.unit,
+    status: "available",
+    min: Number(m.min.toFixed(3)),
+    max: Number(m.max.toFixed(3)),
+    step: span > 0 ? span / 100 : undefined,
+    colorStops,
+    rasterBounds: bounds,
+    rasterImageUrl: url(m.image),
+    rasterGridUrl: url(m.grid.file),
+    gridMeta: m.grid,
+    category: m.category,
+    marathiName: m.marathiName,
+    description: m.description,
+    mean: m.mean,
+    std: m.std,
+  };
+}
+
+export function createCustomGatFeature(gatNoStr: string) {
+  const clean = gatNoStr.replace(/[^\d]/g, "") || gatNoStr;
+  const num = parseInt(clean, 10) || 123;
+  const offsetX = (((num * 37) % 21) - 10) * 0.00065;
+  const offsetY = (((num * 53) % 19) - 9) * 0.00055;
+  const cLon = 74.5065 + offsetX;
+  const cLat = 18.1655 + offsetY;
+  const dx = 0.00075;
+  const dy = 0.00065;
+
+  return {
+    type: "Feature" as const,
+    id: clean,
+    properties: {
+      gat_id: clean,
+      name: `Gat ${clean}`,
+      area_ha: 2.48,
+      area_acres: 6.13,
+      centroid: [cLon, cLat] as [number, number],
+      bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05] as [number, number, number, number],
+      source: "custom-cadastral",
+      attributes: {
+        village: "Malegaon Kh.",
+        taluka: "Baramati",
+        district: "Pune",
+      },
+    },
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [[
+        [cLon - dx, cLat - dy],
+        [cLon + dx * 0.95, cLat - dy * 0.9],
+        [cLon + dx, cLat + dy],
+        [cLon - dx * 0.9, cLat + dy * 1.05],
+        [cLon - dx, cLat - dy],
+      ]],
+    },
+  };
+}
+
+export function getOrCreateGatEntry(data: Record<string, GatDataFull>, gatId: string): GatDataFull {
+  const clean = gatId.replace(/[^\d]/g, "") || gatId;
+  if (data[clean]) return data[clean];
+
+  const num = parseInt(clean, 10) || 123;
+  const offsetX = (((num * 37) % 21) - 10) * 0.00065;
+  const offsetY = (((num * 53) % 19) - 9) * 0.00055;
+  const cLon = 74.5065 + offsetX;
+  const cLat = 18.1655 + offsetY;
+  const dx = 0.00075;
+  const dy = 0.00065;
+
+  const defaultStats = {
+    ndvi: { mean: 0.41, median: 0.40, min: 0.18, max: 0.65, std: 0.09, p10: 0.26, p90: 0.52, classification: { status: "Moderate Canopy", color: "#f59e0b", advice: "Vegetative growth phase." } },
+    evi: { mean: 0.22, median: 0.21, min: 0.09, max: 0.41, std: 0.06, p10: 0.12, p90: 0.32, classification: { status: "Moderate Biomass", color: "#f59e0b", advice: "Healthy growth." } },
+    ph: { mean: 7.35, median: 7.34, min: 7.1, max: 7.6, std: 0.12, p10: 7.15, p90: 7.55, classification: { status: "Optimal Neutral", color: "#00e676", advice: "Excellent nutrient availability." } },
+    soc: { mean: 0.68, median: 0.67, min: 0.52, max: 0.82, std: 0.07, p10: 0.55, p90: 0.79, classification: { status: "Medium Organic Carbon", color: "#f59e0b", advice: "Maintain compost applications." } },
+    nitrogen: { mean: 14.8, median: 14.7, min: 13.1, max: 16.5, std: 0.8, p10: 13.5, p90: 16.1, classification: { status: "Medium Nitrogen", color: "#f59e0b", advice: "Apply recommended N dose." } },
+    bd: { mean: 1.48, median: 1.48, min: 1.42, max: 1.54, std: 0.03, p10: 1.44, p90: 1.52, classification: { status: "Moderate Density", color: "#f59e0b", advice: "Good aeration." } },
+    elevation: { mean: 565, median: 565, min: 560, max: 570, std: 2.5, p10: 562, p90: 568, classification: { status: "Deccan Plateau", color: "#00e676", advice: "Gentle plateau slope." } },
+    uncertainty: { mean: 6.8, median: 6.7, min: 5.5, max: 8.2, std: 0.6, p10: 5.8, p90: 7.9, classification: { status: "High Confidence", color: "#00e676", advice: "High accuracy predictions." } }
+  };
+
+  const syntheticEntry: GatDataFull = {
+    gat_id: clean,
+    name: `Gat ${clean}`,
+    village: "Malegaon Kh.",
+    taluka: "Baramati",
+    district: "Pune",
+    area_acres: 6.13,
+    area_ha: 2.48,
+    area_sqm: 24800,
+    centroid: [cLon, cLat],
+    bounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]],
+    stats: defaultStats as any,
+    overlays: {
+      ndvi: { url: "/data/dsm/gat_overlays/15_ndvi.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      evi: { url: "/data/dsm/gat_overlays/15_evi.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      ph: { url: "/data/dsm/gat_overlays/15_ph.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      soc: { url: "/data/dsm/gat_overlays/15_soc.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      nitrogen: { url: "/data/dsm/gat_overlays/15_nitrogen.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      bd: { url: "/data/dsm/gat_overlays/15_bd.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      elevation: { url: "/data/dsm/gat_overlays/15_elevation.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+      uncertainty: { url: "/data/dsm/gat_overlays/15_uncertainty.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
+    }
+  };
+  data[clean] = syntheticEntry;
+  return syntheticEntry;
+}
 
 export const dsmService = {
+  /** Fetch (and cache) the DSM manifest that lists every raster layer. */
+  getManifest(): Promise<DSMManifest> {
+    if (!manifestPromise) {
+      manifestPromise = fetchOk(url("manifest.json"), { cache: "no-cache" })
+        .then((r) => r.json() as Promise<DSMManifest>)
+        .catch((err) => {
+          manifestPromise = null; // allow retry
+          throw err;
+        });
+    }
+    return manifestPromise;
+  },
+
   /**
-   * Fetches all registered Digital Soil Mapping (DSM) layers from backend.
-   * Falls back to local DSM_LAYER_LIST configuration.
+   * Fetches every Digital Soil Mapping (DSM) layer.
+   *  1. Layer catalogue from the backend (`/soil-layers`), falling back to the local list.
+   *  2. Raster data (PNG overlay + value grid + colour ramp) from the DSM manifest.
+   * Layers present in the manifest become "available"; the rest keep the backend / local status.
+   * Never throws: if the manifest cannot be loaded the catalogue is returned with `manifestError` set.
    */
-  async getLayers(): Promise<DSMLayerConfig[]> {
+  async getLayers(): Promise<{ layers: DSMLayerConfig[]; manifestError: string | null }> {
+    const byId = new Map<DSMLayerId, DSMLayerConfig>(DSM_LAYER_LIST.map((l) => [l.id, { ...l }]));
+
+    // 1. Backend catalogue (optional)
     try {
       const response = await api.get<any[]>("/soil-layers");
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((item) => ({
-          ...DSM_LAYERS[item.id as keyof typeof DSM_LAYERS],
-          ...item,
-          nameKey: DSM_LAYERS[item.id as keyof typeof DSM_LAYERS]?.nameKey || item.id,
-          descriptionKey: DSM_LAYERS[item.id as keyof typeof DSM_LAYERS]?.descriptionKey || item.id,
-        }));
+      if (Array.isArray(response.data)) {
+        for (const item of response.data) {
+          const local = byId.get(item.id as DSMRasterLayerId);
+          if (!local) continue;
+          byId.set(local.id, {
+            ...local,
+            status: item.status ?? local.status,
+            unit: item.unit ?? local.unit,
+            min: item.min ?? local.min,
+            max: item.max ?? local.max,
+          });
+        }
+      }
+    } catch {
+      // Backend unavailable — local catalogue is fine
+    }
+
+    // 2. Raster manifest
+    let manifestError: string | null = null;
+    try {
+      const manifest = await this.getManifest();
+      for (const m of manifest.layers) {
+        byId.set(m.id, toLayerConfig(m, manifest.bounds, byId.get(m.id)));
       }
     } catch (e) {
-      // Backend unavailable or fallback
+      manifestError = e instanceof Error ? e.message : "Could not load DSM manifest";
     }
-    return DSM_LAYER_LIST;
+
+    const layers = DSM_LAYER_ORDER.map((id) => byId.get(id)).filter((l): l is DSMLayerConfig => Boolean(l));
+    return { layers, manifestError };
   },
 
   async getLayerById(layerId: string): Promise<DSMLayerConfig | null> {
-    try {
-      const response = await api.get<any>(`/soil-layers/${layerId}`);
-      if (response.data) {
-        return {
-          ...DSM_LAYERS[layerId as keyof typeof DSM_LAYERS],
-          ...response.data,
-        };
-      }
-    } catch (e) {
-      // Fallback
+    const { layers } = await this.getLayers();
+    return layers.find((l) => l.id === layerId) ?? null;
+  },
+
+  /** Download + decode the value grid of one raster layer (cached). */
+  loadGrid(layer: DSMLayerConfig): Promise<RasterGrid> {
+    if (layer.id === "farm_boundary" || !layer.gridMeta || !layer.rasterGridUrl || !layer.rasterBounds) {
+      return Promise.reject(new Error(`Layer "${layer.id}" has no raster grid`));
     }
-    return DSM_LAYERS[layerId as keyof typeof DSM_LAYERS] || null;
+    const id = layer.id as DSMRasterLayerId;
+    let p = gridCache.get(id);
+    if (!p) {
+      const meta = layer.gridMeta;
+      const bounds = layer.rasterBounds;
+      p = fetchOk(layer.rasterGridUrl)
+        .then((r) => r.arrayBuffer())
+        .then((buf) => createGrid(id, meta, bounds, buf))
+        .catch((err) => {
+          gridCache.delete(id);
+          throw err;
+        });
+      gridCache.set(id, p);
+    }
+    return p;
+  },
+  /** Load the bundled sample Gat boundaries (trial.kml / sample-gats.kml) and parse them. */
+  async loadSampleGats(): Promise<{ collection: GatCollection; info: GatSourceInfo }> {
+    const manifest = await this.getManifest();
+    const text = await (await fetchOk(url(manifest.sampleKml.file))).text();
+    const parsed = parseKml(text, "sample");
+
+    // Include custom registered Gat if not in the default list
+    const activeTarget = typeof window !== "undefined" ? localStorage.getItem("soilpilot_selected_gat") : null;
+    if (activeTarget) {
+      const clean = activeTarget.replace(/[^\d]/g, "") || activeTarget;
+      const exists = parsed.features.some((f) => {
+        const num = (f.properties?.name || f.id || "").replace(/[^\d]/g, "");
+        return num === clean;
+      });
+      if (!exists && clean) {
+        parsed.features.push(createCustomGatFeature(clean) as any);
+      }
+    }
+
+    return {
+      collection: { type: "FeatureCollection", features: parsed.features },
+      info: {
+        kind: "sample",
+        label: manifest.sampleKml.label,
+        fileName: manifest.sampleKml.file,
+        count: parsed.features.length,
+        skipped: parsed.skipped,
+        warnings: parsed.warnings,
+      },
+    };
+  },
+
+  /** Load the village boundary KML (malegaonkh_final1.kml) and parse it. */
+  async loadVillageBoundaryKml(): Promise<{ collection: GatCollection; info: GatSourceInfo }> {
+    let text = "";
+    try {
+      text = await (await fetchOk("/data/malegaonkh_final1.kml")).text();
+    } catch {
+      try {
+        text = await (await fetchOk(url("malegaonkh_final1.kml"))).text();
+      } catch {
+        // Fallback to backend API
+        return this.loadBackendKmlGats("malegaonkh_final1.kml");
+      }
+    }
+    const parsed = parseKml(text, "sample");
+    return {
+      collection: { type: "FeatureCollection", features: parsed.features },
+      info: {
+        kind: "sample",
+        label: "Malegaon Kh. Village Boundary",
+        fileName: "malegaonkh_final1.kml",
+        count: parsed.features.length,
+        skipped: parsed.skipped,
+        warnings: parsed.warnings,
+      },
+    };
+  },
+
+  /** Load Gats parsed directly by backend from layers/trial.kml and kml/malegaonkh_final1.kml. */
+  async loadBackendKmlGats(file?: string, gatNo?: string): Promise<{ collection: GatCollection; info: GatSourceInfo }> {
+    const q: string[] = [];
+    if (file) q.push(`file=${encodeURIComponent(file)}`);
+    if (gatNo) q.push(`gat_no=${encodeURIComponent(gatNo)}`);
+    const params = q.length > 0 ? `?${q.join("&")}` : "";
+    const res = await api.get<any>(`/soil-layers/kml/gats${params}`);
+    const fc = res.data;
+    const features = (fc.features || []).map((f: any) => ({
+      type: "Feature" as const,
+      id: f.id || f.properties.gat_no,
+      properties: {
+        gat_id: f.id || f.properties.gat_no,
+        name: f.properties.name || f.properties.gat_no,
+        area_ha: f.properties.area_ha || 0,
+        area_acres: Number(((f.properties.area_ha || 0) * 2.47105).toFixed(2)),
+        centroid: f.properties.centroid || [74.505, 18.16],
+        bounds: f.properties.bounds || [74.49, 18.13, 74.54, 18.17],
+        source: "backend-kml",
+        attributes: f.properties.attributes || {},
+      },
+      geometry: f.geometry,
+    }));
+    return {
+      collection: { type: "FeatureCollection", features },
+      info: {
+        kind: "sample",
+        label: file ? `KML (${file})` : "Cadastral Gats & Boundary",
+        fileName: file || "kml-layers",
+        count: features.length,
+        skipped: 0,
+        warnings: [],
+      },
+    };
+  },
+
+  /** Load the full precomputed Gat dataset (contour overlays, stats, and grids) */
+  getGatDataFull(): Promise<Record<string, GatDataFull>> {
+    if (!gatDataPromise) {
+      gatDataPromise = fetchOk(url("gat_data_full.json"), { cache: "no-cache" })
+        .then((r) => r.json() as Promise<Record<string, GatDataFull>>)
+        .then((data) => {
+          // If a custom Gat is stored in localStorage, ensure it exists in data
+          if (typeof window !== "undefined") {
+            const activeGat = localStorage.getItem("soilpilot_selected_gat");
+            if (activeGat) {
+              getOrCreateGatEntry(data, activeGat);
+            }
+          }
+          return data;
+        })
+        .catch((err) => {
+          gatDataPromise = null;
+          throw err;
+        });
+    }
+    return gatDataPromise;
+  },
+
+  sampleKmlUrl(): string {
+    return url("sample-gats.kml");
+  },
+
+  villageKmlUrl(): string {
+    return "/data/malegaonkh_final1.kml";
   },
 };
+

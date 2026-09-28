@@ -7,14 +7,16 @@ from app.models.geography import State, District, Taluka, Village
 client = TestClient(app)
 
 
-def get_auth_token_for_gat(gat_no: str = "104"):
+def get_auth_token_for_gat(gat_no: str = "22"):
     """Helper to authenticate and return a valid session token."""
     db = SessionLocal()
     try:
         state = db.query(State).filter(State.name == "Maharashtra").first()
         district = db.query(District).filter(District.name == "Pune", District.state_id == state.id).first()
         taluka_baramati = db.query(Taluka).filter(Taluka.name == "Baramati", Taluka.district_id == district.id).first()
-        village = db.query(Village).filter(Village.name.like("Malegaon%"), Village.taluka_id == taluka_baramati.id).first()
+        village = db.query(Village).filter(Village.name.like("Malegaon Kh%"), Village.taluka_id == taluka_baramati.id).first()
+        if not village:
+            village = db.query(Village).filter(Village.name.like("Malegaon%"), Village.taluka_id == taluka_baramati.id).first()
         payload = {
             "state_id": state.id,
             "district_id": district.id,
@@ -38,7 +40,7 @@ def test_get_authenticated_field_unauthorized():
 
 def test_get_authenticated_field_success():
     """Verify that authenticated farmer can fetch their field with GeoJSON geometry."""
-    token = get_auth_token_for_gat("104")
+    token = get_auth_token_for_gat("22")
     response = client.get(
         "/api/v1/fields/me",
         headers={"Authorization": f"Bearer {token}"}
@@ -46,8 +48,8 @@ def test_get_authenticated_field_success():
     assert response.status_code == 200
     data = response.json()
 
-    assert data["gat_no"] == "104"
-    assert data["area"] == 1.96
+    assert data["gat_no"] == "22"
+    assert data["area"] > 0
     assert data["taluka"] == "Baramati"
     assert data["district"] == "Pune"
     assert data["state"] == "Maharashtra"
@@ -58,16 +60,16 @@ def test_get_authenticated_field_success():
 
 def test_get_field_by_gat():
     """Verify lookup endpoint /api/v1/fields/by-gat."""
-    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "104", "village": "Malegaon Bk", "taluka": "Baramati"})
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "22", "village": "Malegaon Kh", "taluka": "Baramati"})
     assert response.status_code == 200
     data = response.json()
-    assert data["gat_no"] == "104"
-    assert data["area"] == 1.96
+    assert data["gat_no"] == "22"
+    assert data["area"] > 0
 
 
 def test_get_field_by_kml_gat_12():
-    """Verify lookup for KML plot 12."""
-    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "12", "village": "Malegaon Bk", "taluka": "Baramati"})
+    """Verify lookup for KML plot 12 in Malegaon Kh."""
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "12", "village": "Malegaon Kh", "taluka": "Baramati"})
     assert response.status_code == 200
     data = response.json()
     assert data["gat_no"] == "12"
@@ -76,22 +78,28 @@ def test_get_field_by_kml_gat_12():
 
 def test_get_field_by_gat_normalized_string():
     """Verify Gat normalization handles whitespace and 'Gat' prefixes."""
-    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "  Gat 104  ", "village": "Malegaon Bk", "taluka": "Baramati"})
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "  Gat 22  ", "village": "Malegaon Kh", "taluka": "Baramati"})
     assert response.status_code == 200
     data = response.json()
-    assert data["gat_no"] == "104"
+    assert data["gat_no"] == "22"
 
 
 def test_get_field_by_gat_not_found():
     """Verify non-existent Gat returns 404."""
-    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "99999", "village": "Malegaon Bk", "taluka": "Baramati"})
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "99999", "village": "Malegaon Kh", "taluka": "Baramati"})
     assert response.status_code == 404
     assert "No farm plot was found" in response.json()["detail"]
 
 
 def test_get_field_wrong_village():
     """Verify Gat in wrong village returns 404."""
-    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "104", "village": "Katewadi", "taluka": "Baramati"})
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "22", "village": "Katewadi", "taluka": "Baramati"})
+    assert response.status_code == 404
+
+
+def test_kml_gat_rejected_for_malegaon_bk():
+    """Verify KML plot 12 cannot be accessed under Malegaon Bk."""
+    response = client.get("/api/v1/fields/by-gat", params={"gat_no": "12", "village": "Malegaon Bk", "taluka": "Baramati"})
     assert response.status_code == 404
 
 

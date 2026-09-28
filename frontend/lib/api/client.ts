@@ -1,58 +1,38 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
+import axios, { AxiosInstance } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-
-export interface HealthCheckResponse {
-  status: string;
-  service: string;
-}
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 export const api: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  withCredentials: true,
+  baseURL,
   headers: {
     "Content-Type": "application/json",
-    Accept: "application/json",
   },
+  withCredentials: true,
 });
 
-// Request interceptor to attach bearer token if available in sessionStorage
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = sessionStorage.getItem("soilpilot_token");
-    if (token && !config.headers.Authorization) {
-      config.headers.Authorization = `Bearer ${token}`;
+// Intercept requests to attach session token if available in browser
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = sessionStorage.getItem("soilpilot_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
-  }
-  return config;
-});
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-// Response interceptor for centralized error handling and clean messaging
+// Intercept responses to handle auth expiration cleanly
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    const data = error.response?.data as any;
-    const detail = data?.detail;
-    const message =
-      (typeof detail === "string" ? detail : null) ||
-      data?.message ||
-      error.message ||
-      "An unexpected error occurred";
-
-    const enhancedError = new Error(message);
-    (enhancedError as any).status = error.response?.status;
-    (enhancedError as any).response = error.response;
-    return Promise.reject(enhancedError);
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      sessionStorage.removeItem("soilpilot_token");
+    }
+    return Promise.reject(error);
   }
 );
 
-export const apiClient = {
-  /**
-   * Health check endpoint verifying backend availability
-   */
-  async getHealth(): Promise<HealthCheckResponse> {
-    const response = await api.get<HealthCheckResponse>("/health");
-    return response.data;
-  },
-};
+export default api;

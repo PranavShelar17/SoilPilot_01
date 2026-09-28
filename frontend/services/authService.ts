@@ -4,6 +4,8 @@ export interface FarmerSession {
   id: number;
   name: string;
   farmer_code: string;
+  role?: string;
+  gat_number?: string;
 }
 
 export interface FieldSession {
@@ -29,6 +31,12 @@ export interface GatLoginPayload {
   gat_no: string;
 }
 
+export interface RegisterPayload extends GatLoginPayload {
+  full_name?: string;
+  mobile_number?: string;
+  preferred_language?: string;
+}
+
 export interface AuthSuccessResponse {
   success: boolean;
   message: string;
@@ -46,6 +54,17 @@ export interface CurrentSessionResponse {
 }
 
 export const authService = {
+  /**
+   * Register a new farmer and permanently save Gat Number in profile and database.
+   */
+  async register(payload: RegisterPayload): Promise<AuthSuccessResponse> {
+    const response = await api.post<AuthSuccessResponse>("/auth/register", payload);
+    if (typeof window !== "undefined" && response.data?.token) {
+      sessionStorage.setItem("soilpilot_token", response.data.token);
+    }
+    return response.data;
+  },
+
   /**
    * Access farm and establish session via administrative hierarchy & Gat Number.
    */

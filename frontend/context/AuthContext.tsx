@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   authService,
   GatLoginPayload,
+  RegisterPayload,
   FarmerSession,
   FieldSession,
   LocationSession,
@@ -17,6 +18,7 @@ interface AuthContextType {
   field: FieldSession | null;
   farmer: FarmerSession | null;
   location: LocationSession | null;
+  register: (payload: RegisterPayload) => Promise<AuthSuccessResponse>;
   login: (payload: GatLoginPayload) => Promise<AuthSuccessResponse>;
   logout: () => Promise<void>;
 }
@@ -43,6 +45,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setField(sessionData.field);
           setFarmer(sessionData.farmer);
           setLocation(sessionData.location);
+          if (typeof window !== "undefined" && sessionData.field?.gat_no) {
+            localStorage.setItem("soilpilot_selected_gat", sessionData.field.gat_no);
+          }
         }
       } catch (err) {
         if (isMounted) {
@@ -65,6 +70,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
+  const register = async (payload: RegisterPayload): Promise<AuthSuccessResponse> => {
+    setLoading(true);
+    try {
+      const res = await authService.register(payload);
+      setIsAuthenticated(true);
+      setField(res.field);
+      setFarmer(res.farmer);
+      setLocation(res.location);
+      if (typeof window !== "undefined") {
+        const activeGat = res.field?.gat_no || res.farmer?.gat_number || payload.gat_no;
+        if (activeGat) {
+          localStorage.setItem("soilpilot_selected_gat", activeGat);
+        }
+      }
+      return res;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async (payload: GatLoginPayload): Promise<AuthSuccessResponse> => {
     setLoading(true);
     try {
@@ -73,6 +98,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setField(res.field);
       setFarmer(res.farmer);
       setLocation(res.location);
+      if (typeof window !== "undefined") {
+        const activeGat = res.field?.gat_no || res.farmer?.gat_number || payload.gat_no;
+        if (activeGat) {
+          localStorage.setItem("soilpilot_selected_gat", activeGat);
+        }
+      }
       return res;
     } finally {
       setLoading(false);
@@ -86,6 +117,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (e) {
       // Ignore network errors on logout
     } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("soilpilot_selected_gat");
+      }
       setIsAuthenticated(false);
       setField(null);
       setFarmer(null);
@@ -103,6 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         field,
         farmer,
         location,
+        register,
         login,
         logout,
       }}

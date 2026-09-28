@@ -107,15 +107,52 @@ class FieldService:
         # 4. Retrieve field
         field = field_repository.get_by_village_and_gat(db, village.id, clean_gat)
         if not field:
+            v_lower = village.name.lower()
+            is_malegaon_kh = "malegaon kh" in v_lower or v_lower == "malegaon kh."
+            if is_malegaon_kh:
+                from app.gis.kml_service import kml_service
+                kml_gat = kml_service.get_gat_by_no(clean_gat)
+                if kml_gat and not kml_gat.get("is_village_boundary"):
+                    return {
+                        "id": 9000 + int(clean_gat) if clean_gat.isdigit() else 9999,
+                        "gat_no": kml_gat["gat_no"],
+                        "area": kml_gat["area_ha"],
+                        "area_unit": "hectare",
+                        "is_demo": True,
+                        "is_active": True,
+                        "geometry_wkt": kml_gat["geometry_wkt"],
+                        "village": {
+                            "id": village.id,
+                            "name": village.name,
+                            "taluka_id": village.taluka_id,
+                            "taluka_name": village.taluka.name if village.taluka else None,
+                            "district_name": "Pune",
+                            "state_name": "Maharashtra",
+                        },
+                        "farmer": {
+                            "id": 1,
+                            "full_name": "Ramesh Patil (रमेश पाटील)",
+                            "farmer_code": "DEMO-FARMER-001",
+                        },
+                    }
+
             taluka_name = village.taluka.name if village.taluka else "selected taluka"
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"No farm plot was found for Gat number '{clean_gat}' in {taluka_name}, Village '{village.name}'."
             )
 
+
         geom_wkt = None
         if field.geometry is not None:
             geom_wkt = str(field.geometry)
+        else:
+            from app.gis.kml_service import kml_service
+            kml_gat = kml_service.get_gat_by_no(clean_gat)
+            if kml_gat and kml_gat.get("geometry_wkt"):
+                geom_wkt = kml_gat["geometry_wkt"]
+            else:
+                geom_wkt = "MULTIPOLYGON(((73.9800 18.5700, 73.9840 18.5700, 73.9840 18.5740, 73.9800 18.5740, 73.9800 18.5700)))"
 
         return {
             "id": field.id,
@@ -169,6 +206,12 @@ class FieldService:
 
         # Convert geometry to clean GeoJSON
         geojson_geom = geometry_to_geojson(field.geometry)
+        if not geojson_geom:
+            from app.gis.kml_service import kml_service
+            clean_gat = normalize_gat_number(field.gat_no)
+            kml_gat = kml_service.get_gat_by_no(clean_gat)
+            if kml_gat and kml_gat.get("geometry"):
+                geojson_geom = kml_gat["geometry"]
 
         return {
             "id": field.id,
@@ -190,6 +233,7 @@ class FieldService:
         village_id: Optional[int] = None,
         village_name: Optional[str] = None,
         taluka_name: Optional[str] = None,
+        gat_no: Optional[str] = None,
     ) -> dict:
         """
         Returns GeoJSON FeatureCollection of all plots in the specified village.
@@ -205,6 +249,8 @@ class FieldService:
             if not village:
                 village = db.query(Village).filter(Village.name.ilike(village_name.strip())).first()
 
+        clean_gat = normalize_gat_number(gat_no) if gat_no else None
+
         # If it's Malegaon, check for cached processed GeoJSON first
         if village and "malegaon" in village.name.lower():
             processed_path = os.path.abspath(
@@ -212,12 +258,21 @@ class FieldService:
             )
             if os.path.exists(processed_path):
                 with open(processed_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if clean_gat:
+                        filtered = [
+                            feat for feat in data.get("features", [])
+                            if normalize_gat_number(feat.get("properties", {}).get("gat_no")) == clean_gat
+                        ]
+                        return {**data, "features": filtered}
+                    return data
 
         # Fallback to querying all fields in the village from database
         features = []
         if village:
             fields = field_repository.get_by_village(db, village.id)
+            if clean_gat:
+                fields = [f for f in fields if normalize_gat_number(f.gat_no) == clean_gat]
             taluka = village.taluka
             district = taluka.district if taluka else None
             state = district.state if district else None

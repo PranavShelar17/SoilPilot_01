@@ -70,6 +70,21 @@ def test_gat_login_nonexistent_gat():
     assert "We couldn't find a farm with these details" in data["detail"]
 
 
+def test_gat_login_kml_gat_rejected_for_malegaon_bk():
+    """Verify that Malegaon Kh survey Gats (e.g. 22) are rejected when logging in under Malegaon Bk."""
+    ids = get_demo_hierarchy_ids()
+    payload = {
+        "state_id": ids["state_id"],
+        "district_id": ids["district_id"],
+        "taluka_id": ids["taluka_baramati_id"],
+        "village_id": ids["village_malegaon_id"],
+        "gat_no": "22",
+    }
+    response = client.post("/api/v1/auth/gat-login", json=payload)
+    assert response.status_code == 400
+    assert "belongs to Malegaon Kh" in response.json()["detail"]
+
+
 def test_gat_login_hierarchy_mismatch():
     """Verify 400 rejection when village does not belong to specified taluka."""
     ids = get_demo_hierarchy_ids()

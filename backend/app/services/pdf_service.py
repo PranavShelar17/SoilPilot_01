@@ -776,15 +776,20 @@ class PDFService:
         story.append(Paragraph(rec_title, styles["section"]))
         story.append(Spacer(1, 1.5 * mm))
 
+        n_param = next((p for p in parameters if p.get("key") in ("available_nitrogen", "nitrogen")), None)
+        n_val_disp = f"{n_param['value']} kg/ha" if n_param and n_param.get("value") is not None else "176.5 kg/ha"
+        ph_param = next((p for p in parameters if p.get("key") in ("ph", "soil_reaction")), None)
+        ph_val_disp = f"{ph_param['value']:.2f}" if ph_param and isinstance(ph_param.get("value"), (int, float)) else "7.20"
+
         rec_text = (
-            "<b>नत्र व्यवस्थापन (Nitrogen Split):</b> नत्र प्रमाण कमी असल्याने शिफारशीत युरिया तीन ते चार हप्त्यांमध्ये विभागून द्यावा.<br/>"
-            "<b>सामू सुधारणा (pH Buffering):</b> मातीचा सामू ८.३८ (मध्यम विम्लधर्मी) असल्याने सेंद्रिय खते (शेणखत/कंपोस्ट) प्रति एकरी ३-५ टन वापरावी.<br/>"
+            f"<b>नत्र व्यवस्थापन (Nitrogen Split):</b> उपलब्ध नत्र प्रमाण कमी ({n_val_disp}) असल्याने शिफारशीत युरिया तीन ते चार हप्त्यांमध्ये विभागून द्यावा.<br/>"
+            f"<b>सामू स्थिती (Soil pH):</b> मातीचा सामू {ph_val_disp} (तटस्थ ते विम्लधर्मी) असल्याने सेंद्रिय खते (शेणखत/कंपोस्ट) प्रति एकरी ३-५ टन वापरावी.<br/>"
             "<b>सूक्ष्मअन्नद्रव्ये (Micronutrients):</b> जस्त (Zinc) आणि बोरॉन (Boron) कमतरतेवर मात करण्यासाठी माती परीक्षणानुसार फेरस/झिंक सल्फेटचा वापर करावा.<br/>"
             "<i>टीप: सविस्तर शेत-विशिष्ट खत शिफारशींसाठी SoilPilot वरील 'शिफारशी' (Recommendations) विभागाला भेट द्या.</i>"
             if is_mr
             else
-            "<b>Nitrogen Management:</b> Available Nitrogen is low (163 kg/ha). Apply nitrogenous fertilizers in 3-4 split applications to optimize uptake.<br/>"
-            "<b>pH Buffering:</b> Moderately alkaline pH (8.38). Incorporate 3-5 tonnes/acre well-rotted FYM/compost and green manuring to buffer alkalinity.<br/>"
+            f"<b>Nitrogen Management:</b> Available Nitrogen is low ({n_val_disp}). Apply nitrogenous fertilizers in 3-4 split applications to optimize uptake.<br/>"
+            f"<b>Soil Reaction (pH):</b> Soil reaction is optimal at pH {ph_val_disp}. Incorporate 3-5 tonnes/acre well-rotted FYM/compost and green manuring to sustain biology.<br/>"
             "<b>Micronutrient Enrichment:</b> Zinc (0.42 ppm) and Boron require basal supplementation with chelated fertilizers.<br/>"
             "<i>Note: For comprehensive crop-specific fertilizer schedules, consult the SoilPilot Recommendations module (/recommendations).</i>"
         )

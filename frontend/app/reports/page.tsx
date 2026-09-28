@@ -45,9 +45,13 @@ export default function ReportsPage() {
   const [cardDownloadState, setCardDownloadState] = useState<ButtonState>("idle");
   const [detailedDownloadState, setDetailedDownloadState] = useState<ButtonState>("idle");
 
+  const activeGat =
+    field?.gat_no ||
+    (typeof window !== "undefined" ? localStorage.getItem("soilpilot_selected_gat") : null) ||
+    "22";
   const activeFieldId =
     field?.id ||
-    (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-104");
+    `demo-field-gat-${activeGat}`;
 
   const loadReport = async () => {
     try {
@@ -102,7 +106,7 @@ export default function ReportsPage() {
   // Farmer & Field context from actual session / backend report
   const farmerName =
     report?.farmer?.name || farmer?.name || t("reports.farmerName") || "Farmer";
-  const gatNo = report?.field?.gat_no || field?.gat_no || "104";
+  const gatNo = report?.field?.gat_no || field?.gat_no || activeGat;
   const villageName =
     report?.field?.village || location?.village || "Malegaon Bk";
   const talukaName = report?.field?.taluka || location?.taluka || "Baramati";

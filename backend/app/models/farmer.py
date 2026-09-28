@@ -14,6 +14,8 @@ class Farmer(Base):
     full_name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
     mobile_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
     preferred_language: Mapped[str] = mapped_column(String(10), default="mr", nullable=False)
+    role: Mapped[str] = mapped_column(String(20), default="farmer", nullable=False)
+    gat_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

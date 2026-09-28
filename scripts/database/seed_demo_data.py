@@ -274,16 +274,16 @@ def seed_demo_data():
                 shapely_obj = shape(geom_dict)
                 geom_wkt = shapely_obj.wkt
 
-                # Seed for both Malegaon Bk and Malegaon Kh (and any Malegaon village match)
+                # Seed exclusively for Malegaon Kh (cadastral survey belongs to Malegaon Khurd)
                 target_villages = [
                     v for (t, v_name), v in village_map.items()
-                    if t == "Baramati" and "malegaon" in v_name.lower()
+                    if t == "Baramati" and "malegaon kh" in v_name.lower()
                 ]
 
                 # Also check direct db villages
                 extra_malegaon = db.query(Village).filter(
                     Village.taluka_id == taluka_map["Baramati"].id,
-                    Village.name.ilike("%malegaon%")
+                    Village.name.ilike("%malegaon kh%")
                 ).all()
                 for em in extra_malegaon:
                     if em not in target_villages:

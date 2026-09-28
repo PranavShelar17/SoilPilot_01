@@ -33,7 +33,7 @@ export const FarmMapPreview: React.FC<FarmMapPreviewProps> = ({ gatNo }) => {
 
       {/* Embedded Compact Field Map Preview */}
       <div className="w-full">
-        <FarmMap previewMode={true} className="h-44 sm:h-48" />
+        <FarmMap previewMode={true} selectedGat={gatNo} className="h-44 sm:h-48" />
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">

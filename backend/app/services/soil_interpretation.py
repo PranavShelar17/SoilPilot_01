@@ -1,4 +1,4 @@
-﻿"""Centralized Soil Nutrient Interpretation Rules & Thresholds.
+"""Centralized Soil Nutrient Interpretation Rules & Thresholds.
 SoilPilot Phase 7 - Based on ICAR and Maharashtra Agricultural University standards.
 """
 from typing import Dict, Any, Tuple
@@ -161,6 +161,17 @@ SOIL_THRESHOLDS: Dict[str, Dict[str, Any]] = {
             ("Sufficient", "पुरेसे")
         ),
         "reference_range": "Deficient < 0.5 | Sufficient >= 0.5",
+    },
+    "bd": {
+        "unit": "g/cm³",
+        "name": "Bulk Density",
+        "name_mr": "मातीची घनता (BD)",
+        "interpret": lambda v: (
+            ("Optimal Porosity", "उत्तम सच्छिद्रता") if v < 1.40 else
+            ("Moderate Density", "मध्यम घनता") if v <= 1.60 else
+            ("High Density / Compacted", "जास्त घनता / कठीण जमीन")
+        ),
+        "reference_range": "Optimal < 1.40 | Moderate 1.40 - 1.60 | High > 1.60",
     },
 }
 

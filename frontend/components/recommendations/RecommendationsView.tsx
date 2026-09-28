@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { recommendationService } from "@/services/recommendationService";
 import { RecommendationsResponse, RecommendationItem } from "@/types/recommendation";
+import { KML_AVAILABLE_GATS } from "@/types/gat";
 import { RecommendationsHeader } from "./RecommendationsHeader";
 import { SoilStatusOverview } from "./SoilStatusOverview";
 import { RecommendationsSummaryCards } from "./RecommendationsSummaryCards";
@@ -24,8 +26,36 @@ interface RecommendationsViewProps {
 }
 
 export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldIdOverride }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { field, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const urlGat = searchParams?.get("gat");
+
+  const [selectedGat, setSelectedGat] = useState<string>(() => {
+    const validGats: string[] = [...KML_AVAILABLE_GATS];
+    if (urlGat && validGats.includes(urlGat.replace(/[^\d]/g, ""))) return urlGat.replace(/[^\d]/g, "");
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("soilpilot_selected_gat");
+      if (stored && validGats.includes(stored.replace(/[^\d]/g, ""))) return stored.replace(/[^\d]/g, "");
+    }
+    const fieldGat = field?.gat_no?.replace(/[^\d]/g, "");
+    if (fieldGat && validGats.includes(fieldGat)) return fieldGat;
+    return "15";
+  });
+
+  useEffect(() => {
+    if (urlGat) {
+      setSelectedGat(urlGat);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("soilpilot_selected_gat", urlGat);
+      }
+    } else if (field?.gat_no) {
+      setSelectedGat(field.gat_no);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("soilpilot_selected_gat", field.gat_no);
+      }
+    }
+  }, [urlGat, field?.gat_no]);
 
   const [data, setData] = useState<RecommendationsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -34,8 +64,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
 
   const activeFieldId =
     fieldIdOverride ||
-    field?.id ||
-    (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-104");
+    (selectedGat ? `demo-field-gat-${selectedGat}` : field?.id || (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-12"));
 
   const fetchRecommendations = async () => {
     try {
@@ -150,6 +179,40 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 py-4 sm:py-6">
+
+      {/* Clean Navigation & Parcel Identity Header */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-stone-200 shadow-xs flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded-lg text-xs font-bold shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>
+              {data?.field?.village || "Malegaon Kh"} &bull; {t("geo.gatNo") || "Gat No."} {selectedGat}
+              {data?.field?.area ? ` (${data.field.area} Ha)` : ""}
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-xs font-semibold">
+            🌱 {locale === "mr" ? "माती नकाशानुसार खत शिफारसी" : "Nutrient Plan Tailored to Soil Map"}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/soil-map?gat=${selectedGat}`}
+            className="text-xs font-bold text-soil-primary hover:text-soil-primaryHover flex items-center gap-1.5 transition-colors bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-lg border border-stone-200"
+          >
+            <MapIcon className="w-3.5 h-3.5 text-soil-primary" />
+            <span>{locale === "mr" ? `माती नकाशा पहा` : `View Soil Map`}</span>
+          </Link>
+          <Link
+            href={`/soil-health-card?gat=${selectedGat}`}
+            className="text-xs font-bold text-white bg-soil-primary hover:bg-soil-primaryHover px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>{locale === "mr" ? `सॉईल हेल्थ कार्ड` : `Soil Health Card`}</span>
+          </Link>
+        </div>
+      </div>
+
       {/* 1. Header with Field Meta and Link to Soil Health Card */}
       <RecommendationsHeader
         village={data.field.village}

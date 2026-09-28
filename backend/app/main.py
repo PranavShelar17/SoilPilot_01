@@ -24,6 +24,29 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def auto_seed_if_empty():
+    """Ensure database has official Pune geographic hierarchy seeded on startup."""
+    from app.db.session import SessionLocal
+    from app.models.geography import State
+    db = SessionLocal()
+    try:
+        if db.query(State).count() == 0:
+            logger.info("Database is empty. Automatically seeding official Pune hierarchy...")
+            import sys
+            from pathlib import Path
+            root_dir = Path(__file__).resolve().parent.parent.parent
+            scripts_dir = root_dir / "scripts" / "database"
+            if str(scripts_dir) not in sys.path:
+                sys.path.insert(0, str(scripts_dir))
+            from seed_demo_data import seed_demo_data
+            seed_demo_data()
+    except Exception as e:
+        logger.warning(f"Auto-seed check: {e}")
+    finally:
+        db.close()
+
+
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Log incoming requests and responses for observability."""

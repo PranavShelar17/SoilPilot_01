@@ -15,7 +15,9 @@ export const SoilOverview: React.FC = () => {
   const [summary, setSummary] = useState<SoilHealthSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const fieldId = field?.id || (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-104");
+  const storedGat = typeof window !== "undefined" ? localStorage.getItem("soilpilot_selected_gat") : null;
+  const activeGat = field?.gat_no || storedGat || "15";
+  const fieldId = field?.id ? String(field.id) : `demo-field-gat-${activeGat}`;
 
   useEffect(() => {
     let isMounted = true;

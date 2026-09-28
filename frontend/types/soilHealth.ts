@@ -41,6 +41,7 @@ export interface SoilReportMetadata {
   laboratory_name: string;
   is_demo: boolean;
   status: string;
+  observations?: string[];
 }
 
 export interface SoilHealthReport {
@@ -50,6 +51,8 @@ export interface SoilHealthReport {
   is_demo: boolean;
   report: SoilReportMetadata | null;
   parameters: SoilParameter[];
+  dsm_stats?: any;
+  observations?: string[];
 }
 
 export interface SoilPrimarySummaryParam {

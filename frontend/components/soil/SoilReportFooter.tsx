@@ -8,12 +8,14 @@ interface SoilReportFooterProps {
   isDemo?: boolean;
   reportDate?: string;
   reportNo?: string;
+  observations?: string[];
 }
 
 export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
   isDemo = false,
   reportDate,
   reportNo,
+  observations,
 }) => {
   const { t } = useI18n();
 
@@ -26,12 +28,20 @@ export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
           <span>{t("soilHealthCard.observations")}</span>
         </h4>
         <ul className="space-y-1.5 text-stone-800 list-disc list-inside leading-relaxed">
-          <li>{t("soilHealthCard.obs1")}</li>
-          <li>{t("soilHealthCard.obs2")}</li>
-          <li>{t("soilHealthCard.obs3")}</li>
-          <li>{t("soilHealthCard.obs4")}</li>
-          <li>{t("soilHealthCard.obs5")}</li>
-          <li>{t("soilHealthCard.obs6")}</li>
+          {observations && observations.length > 0 ? (
+            observations.map((obs, idx) => (
+              <li key={idx}>{obs}</li>
+            ))
+          ) : (
+            <>
+              <li>{t("soilHealthCard.obs1")}</li>
+              <li>{t("soilHealthCard.obs2")}</li>
+              <li>{t("soilHealthCard.obs3")}</li>
+              <li>{t("soilHealthCard.obs4")}</li>
+              <li>{t("soilHealthCard.obs5")}</li>
+              <li>{t("soilHealthCard.obs6")}</li>
+            </>
+          )}
         </ul>
       </div>
 

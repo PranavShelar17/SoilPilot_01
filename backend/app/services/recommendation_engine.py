@@ -392,4 +392,29 @@ def evaluate_parameter_recommendation(
                 rec["action_guidance"] = "Maintain good drainage to avoid sodium accumulation from irrigation water."
                 rec["action_guidance_mr"] = "पाण्याचा निचरा चांगला ठेवा जेणेकरून भविष्यात सोडियम साचणार नाही."
 
+    # 9. Bulk Density (BD)
+    elif key in ["bd", "bulk_density"]:
+        rec["why_it_matters"] = "Bulk density indicates soil compaction, root aeration, and water infiltration resistance in Vertisols."
+        rec["why_it_matters_mr"] = "मातीची घनता मुळांची वाढ, हवा खेळती राहणे आणि पाणी मुरण्याची क्षमता दर्शवते."
+        if value > 1.60:
+            rec["priority"] = "HIGH PRIORITY"
+            rec["priority_key"] = "high"
+            rec["needs_attention"] = True
+            rec["what_observed"] = f"Bulk density is {value:.3f} g/cm³, indicating compacted soil layers."
+            rec["what_observed_mr"] = f"मातीची घनता {value:.3f} g/cm³ आहे, जी जमीन घट्ट (कॉम्पॅक्ट) झाल्याचे दर्शवते."
+            rec["what_it_means"] = "High compaction limits crop root growth, restricts aeration, and elevates waterlogging risks."
+            rec["what_it_means_mr"] = "मुळांच्या वाढीस अडथळा येतो आणि पावसाळ्यात पाणी साचून राहण्याचा धोका वाढतो."
+            rec["action_guidance"] = "Perform deep summer subsoiling or ripping. Incorporate green manure (Sunnhemp) or compost to reduce compaction."
+            rec["action_guidance_mr"] = "उन्हाळ्यात खोल नांगरट किंवा सबसॉयलरचा वापर करा. ताग किंवा धैंचाचे हिरवळीचे खत जमिनीत गाडून सेंद्रिय कर्ब वाढवा."
+        else:
+            rec["priority"] = "INFORMATION"
+            rec["priority_key"] = "info"
+            rec["needs_attention"] = False
+            rec["what_observed"] = f"Bulk density is {value:.3f} g/cm³, representing moderate, healthy density for Deccan Vertisols."
+            rec["what_observed_mr"] = f"मातीची घनता {value:.3f} g/cm³ आहे, जी काळ्या जमिनीसाठी योग्य व मध्यम मर्यादेत आहे."
+            rec["what_it_means"] = "Good balance of soil particle packing for moisture conservation and root stability."
+            rec["what_it_means_mr"] = "मातीची रचना पिकांच्या मुळांसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे."
+            rec["action_guidance"] = "Maintain minimum tillage and retain crop residues on surface to preserve soil structure."
+            rec["action_guidance_mr"] = "कमीतकमी मशागत पद्धत अवलंबा आणि शेतात पाचट किंवा सेंद्रिय आच्छादन ठेवा."
+
     return rec

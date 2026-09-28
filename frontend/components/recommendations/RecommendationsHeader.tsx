@@ -57,7 +57,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
           <span>{village || "Malegaon"}</span>
           <span className="text-surface-borderStrong">•</span>
           <span className="text-soil-primary font-bold">
-            {t("recommendations.gat")} {gatNo || "104"}
+            {t("recommendations.gat")} {gatNo || "13"}
           </span>
           {area && (
             <>
@@ -71,7 +71,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
 
         {/* View Soil Health Card Action */}
         <Link
-          href="/soil-health-card"
+          href={`/soil-health-card?gat=${gatNo}`}
           className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-soil-cream text-soil-primary border border-soil-secondary/40 hover:bg-soil-creamMuted text-xs font-bold transition-all shadow-xs"
         >
           <FileText className="w-3.5 h-3.5 text-soil-primary" />

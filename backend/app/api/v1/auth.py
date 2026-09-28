@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Header, Cookie, Response, status, HTTPEx
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.auth import GatLoginRequest, AuthResponse, SessionUserResponse
+from app.schemas.auth import GatLoginRequest, RegisterRequest, AuthResponse, SessionUserResponse
 from app.services.auth_service import auth_service, AuthService
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -24,11 +24,51 @@ def extract_token(
 
 
 @router.post(
+    "/register",
+    response_model=AuthResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Farmer Registration with Gat Number",
+    description="Registers a new farmer, associates their cadastral Gat Number permanently in profile and database, and returns session token.",
+)
+def register(
+    payload: RegisterRequest,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> AuthResponse:
+    auth_result = auth_service.register(db, payload)
+
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=auth_result.token,
+        max_age=AuthService.TOKEN_EXPIRY_SECONDS,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/",
+    )
+    return auth_result
+
+
+@router.post(
     "/gat-login",
     response_model=AuthResponse,
     status_code=status.HTTP_200_OK,
     summary="Farmer Gat-Based Access / Login",
     description="Identifies and grants access to a farmer using administrative hierarchy (State -> District -> Taluka -> Village) and cadastral Gat Number.",
+)
+@router.post(
+    "/gat-access",
+    response_model=AuthResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Farmer Gat-Based Access alias",
+    include_in_schema=False,
+)
+@router.post(
+    "/login",
+    response_model=AuthResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Farmer Access / Login",
+    include_in_schema=False,
 )
 def gat_login(
     payload: GatLoginRequest,
