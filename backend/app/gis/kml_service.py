@@ -284,7 +284,7 @@ class KMLService:
         return None
 
     def get_gat_geometry(self, gat_no: str):
-        g = self.get_gat_by_no(gat_no)
+        g = self.get_gat_by_no(gat_no, generate_fallback=True)
         if not g:
             return None
         try:

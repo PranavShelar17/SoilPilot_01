@@ -175,16 +175,7 @@ export function getOrCreateGatEntry(data: Record<string, GatDataFull>, gatId: st
     centroid: [cLon, cLat],
     bounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]],
     stats: defaultStats as any,
-    overlays: {
-      ndvi: { url: "/data/dsm/gat_overlays/15_ndvi.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      evi: { url: "/data/dsm/gat_overlays/15_evi.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      ph: { url: "/data/dsm/gat_overlays/15_ph.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      soc: { url: "/data/dsm/gat_overlays/15_soc.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      nitrogen: { url: "/data/dsm/gat_overlays/15_nitrogen.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      bd: { url: "/data/dsm/gat_overlays/15_bd.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      elevation: { url: "/data/dsm/gat_overlays/15_elevation.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-      uncertainty: { url: "/data/dsm/gat_overlays/15_uncertainty.png", bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05], latLngBounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]] },
-    }
+    overlays: {},
   };
   data[clean] = syntheticEntry;
   return syntheticEntry;

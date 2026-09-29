@@ -260,7 +260,7 @@ class DSMService:
     @staticmethod
     def get_kml_gat_detail(gat_no: str) -> Optional[Dict[str, Any]]:
         """Returns specific Gat details from KML."""
-        return kml_service.get_gat_by_no(gat_no)
+        return kml_service.get_gat_by_no(gat_no, generate_fallback=True)
 
     @staticmethod
     def render_heatmap(
