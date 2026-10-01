@@ -24,7 +24,6 @@ import {
   AlertCircle,
   RefreshCw,
   FlaskConical,
-  Lightbulb,
   ArrowLeft,
 } from "lucide-react";
 
@@ -171,13 +170,6 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
               {report?.field?.area ? ` (${report.field.area} Ha)` : ""}
             </span>
           </span>
-          <Link
-            href={`/recommendations?gat=${selectedGat}`}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-soil-cream text-soil-primary border border-soil-secondary/30 rounded-lg text-xs font-bold hover:bg-soil-primaryLight transition-colors"
-          >
-            <Lightbulb className="w-3.5 h-3.5 text-soil-primary" />
-            <span>{locale === "mr" ? `खत शिफारसी पहा →` : `View Recommendations →`}</span>
-          </Link>
         </div>
       </div>
 
@@ -226,15 +218,8 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           </button>
         </div>
 
-        {/* Action Buttons: PDF Downloads, Recommendations & Print */}
+        {/* Action Buttons: PDF Downloads & Print */}
         <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/recommendations?gat=${selectedGat}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-soil-cream text-soil-primary border border-soil-secondary/40 rounded-lg hover:bg-soil-creamMuted transition-all shadow-xs"
-          >
-            <Lightbulb className="w-3.5 h-3.5 text-soil-primary" />
-            <span>{t("nav.recommendations")}</span>
-          </Link>
 
           <button
             type="button"
@@ -338,10 +323,10 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 font-sans">
-                Laboratory Soil Chemical & Nutrient Analysis
+                Laboratory Soil Chemical &amp; Nutrient Analysis
               </h3>
               <span className="text-[11px] text-stone-500 font-medium">
-                Standard: ICAR / MPKV Rahuri Vertisol Diagnostic Matrix
+                ADT AI Training Foundation &bull; Diagnostic Matrix
               </span>
             </div>
 

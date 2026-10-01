@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
-import { CheckCircle2, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 
 interface SoilReportFooterProps {
   isDemo?: boolean;
@@ -15,36 +15,11 @@ export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
   isDemo = false,
   reportDate,
   reportNo,
-  observations,
 }) => {
   const { t } = useI18n();
 
   return (
     <div className="space-y-6 pt-2">
-      {/* Soil Health Observations & Agronomic Advice Box */}
-      <div className="rounded-md border border-stone-800 p-4 bg-stone-50/70 text-xs">
-        <h4 className="font-bold text-stone-900 uppercase tracking-wide text-[11px] mb-2.5 pb-1 border-b border-stone-300 flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4 text-soil-primary" />
-          <span>{t("soilHealthCard.observations")}</span>
-        </h4>
-        <ul className="space-y-1.5 text-stone-800 list-disc list-inside leading-relaxed">
-          {observations && observations.length > 0 ? (
-            observations.map((obs, idx) => (
-              <li key={idx}>{obs}</li>
-            ))
-          ) : (
-            <>
-              <li>{t("soilHealthCard.obs1")}</li>
-              <li>{t("soilHealthCard.obs2")}</li>
-              <li>{t("soilHealthCard.obs3")}</li>
-              <li>{t("soilHealthCard.obs4")}</li>
-              <li>{t("soilHealthCard.obs5")}</li>
-              <li>{t("soilHealthCard.obs6")}</li>
-            </>
-          )}
-        </ul>
-      </div>
-
       {/* Laboratory Signatures & Certification Block (Matches standard laboratory dossier) */}
       <div className="border border-stone-800 rounded-md p-4 bg-white grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
         <div>

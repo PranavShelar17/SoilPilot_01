@@ -364,13 +364,6 @@ function SoilMapContent() {
               <FileBadge className="w-3.5 h-3.5" />
               <span>{locale === "mr" ? `सॉईल हेल्थ कार्ड (गट ${gatDisplay})` : `Soil Health Card (Gat ${gatDisplay})`}</span>
             </Link>
-            <Link
-              href={`/recommendations?gat=${gatDisplay}`}
-              className="px-3.5 py-1.5 rounded-xl bg-soil-cream border border-soil-secondary/30 hover:bg-soil-primaryLight text-soil-primary text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors"
-            >
-              <Lightbulb className="w-3.5 h-3.5 text-soil-primary" />
-              <span>{locale === "mr" ? `खत शिफारसी (गट ${gatDisplay})` : `Recommendations (Gat ${gatDisplay})`}</span>
-            </Link>
             <div className="px-3.5 py-1.5 rounded-xl bg-surface-subtle border border-surface-border flex items-center gap-2 text-xs font-semibold text-text-main shadow-xs">
               <MapPin className="w-3.5 h-3.5 text-soil-primary" />
               <span>

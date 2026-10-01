@@ -17,7 +17,6 @@ export const Header: React.FC = () => {
     { key: "myFarm", labelKey: "nav.myFarm", href: "/my-farm" },
     { key: "soilMap", labelKey: "nav.soilMap", href: "/soil-map" },
     { key: "soilHealthCard", labelKey: "nav.soilHealthCard", href: "/soil-health-card" },
-    { key: "recommendations", labelKey: "nav.recommendations", href: "/recommendations" },
     { key: "reports", labelKey: "nav.reports", href: "/reports" },
   ];
 

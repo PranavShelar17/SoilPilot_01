@@ -138,7 +138,7 @@ export const FarmerSampleInfoTable: React.FC<FarmerSampleInfoTableProps> = ({
                 <td className="px-3 py-1.5 font-bold">
                   {report?.status === "Available" ? (
                     <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-bold">
-                      Verified & Certified
+                      Soil Data Available
                     </span>
                   ) : (
                     <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[11px] font-bold">

@@ -289,11 +289,11 @@ class PDFService:
         # --------------------------------------------------------------
         title_text = "मृद आरोग्य पत्रिका (SOIL HEALTH CARD)" if is_mr else "SOIL HEALTH CARD"
         sub_text = (
-            "डिजिटल सॉईल मॅपिंग आणि मृद आरोग्य पोर्टल • महाराष्ट्र कृषी"
+            "ADT AI Training Foundation • कृषी व डिजिटल माती परीक्षण केंद्र"
             if is_mr
-            else "Digital Soil Mapping & Soil Health Portal • Maharashtra Agricultural Cadastre"
+            else "ADT AI Training Foundation • Agricultural Diagnostic & Digital Soil Testing Center"
         )
-        tag_text = "प्रात्यक्षिक नमुना (DEMO)" if is_mr else "DEMO RECORD"
+        tag_text = "प्रात्यक्षिक नमुना (DEMO DATA)" if is_mr else "DEMO DATA"
 
         header_data = [
             [
@@ -306,12 +306,12 @@ class PDFService:
             [
                 Paragraph(sub_text, styles["subtitle"]),
                 Paragraph(
-                    f"<font color='white'>ICAR/MPKV Rahuri Standard Matrix</font>",
+                    f"<font color='white'>Baramati, Pune, Maharashtra</font>",
                     ParagraphStyle("Std", parent=styles["subtitle"], alignment=2),
                 ),
             ],
         ]
-        header_table = Table(header_data, colWidths=[140 * mm, 46 * mm])
+        header_table = Table(header_data, colWidths=[130 * mm, 56 * mm])
         header_table.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, -1), COLOR_PRIMARY),
@@ -388,9 +388,9 @@ class PDFService:
         story.append(Spacer(1, 4 * mm))
 
         # --------------------------------------------------------------
-        # 3. Primary Nutrient & Chemical Diagnostics Table
+        # 3. Primary Nutrient & Chemical Diagnostics Table (NO SOURCE, HAS RECOMMENDATION)
         # --------------------------------------------------------------
-        param_sec_title = "माती चाचणी निकाल आणि विश्लेषण (Nutrient Health Diagnostics)" if is_mr else "SOIL HEALTH DIAGNOSTICS & NUTRIENT STATUS"
+        param_sec_title = "माती चाचणी निकाल आणि शिफारसी (Soil Health Diagnostics & Recommendations)" if is_mr else "SOIL HEALTH DIAGNOSTICS & RECOMMENDATIONS"
         story.append(Paragraph(param_sec_title, styles["section"]))
         story.append(Spacer(1, 1.5 * mm))
 
@@ -407,9 +407,9 @@ class PDFService:
         th_param = "माती घटक (Soil Parameter)" if is_mr else "Soil Parameter"
         th_val = "मूल्य (Value)" if is_mr else "Value"
         th_unit = "एकक (Unit)" if is_mr else "Unit"
-        th_status = "स्थिती / विश्लेषण (Status)" if is_mr else "Interpretation"
-        th_range = "संदर्भ श्रेणी (Reference Range)" if is_mr else "Reference Range"
-        th_source = "माहिती स्रोत (Source)" if is_mr else "Data Source"
+        th_status = "विश्लेषण (Interpretation)" if is_mr else "Interpretation"
+        th_range = "संदर्भ श्रेणी (Range)" if is_mr else "Reference Range"
+        th_rec = "शिफारस (Recommendation)" if is_mr else "Recommendation"
 
         param_rows = [[
             Paragraph(th_sr, styles["th"]),
@@ -418,7 +418,7 @@ class PDFService:
             Paragraph(th_unit, styles["th"]),
             Paragraph(th_status, styles["th"]),
             Paragraph(th_range, styles["th"]),
-            Paragraph(th_source, styles["th"]),
+            Paragraph(th_rec, styles["th"]),
         ]]
 
         if chosen_params:
@@ -429,14 +429,7 @@ class PDFService:
                 unit_str = p.get("unit") or "-"
                 interp = p.get("interpretation_mr" if is_mr else "interpretation", p.get("interpretation", "N/A"))
                 ref_range = p.get("reference_range", "-")
-                source = p.get("source_type") or p.get("source") or "LAB OBSERVATION"
-                if is_mr:
-                    if source == "LAB OBSERVATION":
-                        source = "प्रयोगशाळा निरीक्षण"
-                    elif source == "DSM PREDICTION":
-                        source = "डिजिटल सॉईल मॅपिंग अंदाज"
-                    elif source == "IMPORTED DATA":
-                        source = "आयात केलेला डेटा"
+                rec_text = p.get("recommendation_mr" if is_mr else "recommendation") or p.get("recommendation", "Maintain balanced nutrient management.")
 
                 param_rows.append([
                     Paragraph(str(idx), styles["td_center"]),
@@ -445,7 +438,7 @@ class PDFService:
                     Paragraph(unit_str, styles["td_center"]),
                     Paragraph(interp, styles["td"]),
                     Paragraph(ref_range, styles["td"]),
-                    Paragraph(source, styles["td_center"]),
+                    Paragraph(rec_text, styles["td"]),
                 ])
         else:
             param_rows.append([
@@ -455,12 +448,12 @@ class PDFService:
                 Paragraph("-", styles["td_center"]),
                 Paragraph("प्रलंबित" if is_mr else "Pending", styles["td"]),
                 Paragraph("-", styles["td"]),
-                Paragraph("PENDING", styles["td_center"]),
+                Paragraph("Recommendation pending soil test data.", styles["td"]),
             ])
 
         param_table = Table(
             param_rows,
-            colWidths=[10 * mm, 46 * mm, 20 * mm, 16 * mm, 34 * mm, 36 * mm, 24 * mm],
+            colWidths=[8 * mm, 38 * mm, 18 * mm, 14 * mm, 26 * mm, 26 * mm, 56 * mm],
         )
 
         table_style_commands = [
@@ -571,11 +564,11 @@ class PDFService:
             else "DETAILED SOIL TEST & DIAGNOSTIC REPORT"
         )
         sub_title = (
-            "SoilPilot डिजिटल सॉईल मॅपिंग व मृद आरोग्य पोर्टल • भारतीय कृषी संशोधन परिषद (ICAR) निकष"
+            "ADT AI Training Foundation • कृषी व डिजिटल माती परीक्षण केंद्र, बारामती"
             if is_mr
-            else "SoilPilot Digital Soil Mapping & Soil Health Portal • ICAR & MPKV Rahuri Vertisol Standards"
+            else "ADT AI Training Foundation • Agricultural Diagnostic & Digital Soil Testing Center, Baramati"
         )
-        demo_str = "प्रात्यक्षिक नमुना (DEMO)" if is_mr else "DEMO DATASET"
+        demo_str = "प्रात्यक्षिक नमुना (DEMO DATA)" if is_mr else "DEMO DATA"
 
         header_data = [
             [
@@ -588,12 +581,12 @@ class PDFService:
             [
                 Paragraph(sub_title, styles["subtitle"]),
                 Paragraph(
-                    f"<font color='white'>Official Laboratory Dossier</font>",
+                    f"<font color='white'>Baramati, Pune, Maharashtra</font>",
                     ParagraphStyle("Dossier", parent=styles["subtitle"], alignment=2),
                 ),
             ],
         ]
-        header_table = Table(header_data, colWidths=[140 * mm, 46 * mm])
+        header_table = Table(header_data, colWidths=[130 * mm, 56 * mm])
         header_table.setStyle(
             TableStyle([
                 ("BACKGROUND", (0, 0), (-1, -1), COLOR_PRIMARY),
@@ -625,7 +618,7 @@ class PDFService:
         receipt_no = report_meta.get("receipt_no", "REC-7842/26")
         sample_name = report_meta.get("sample_name", "Surface Soil Composite (0-15 cm)")
         crop_name = report_meta.get("crop_name", "Sugarcane (ऊस)")
-        lab_name = report_meta.get("laboratory_name", "SoilPilot Soil Testing & Diagnostic Laboratory")
+        lab_name = report_meta.get("laboratory_name") or "ADT AI Training Foundation — Agricultural Diagnostic & Digital Soil Testing Center, Baramati"
 
         meta_rows = [
             [
@@ -676,12 +669,12 @@ class PDFService:
         story.append(Spacer(1, 4 * mm))
 
         # --------------------------------------------------------------
-        # 3. Complete Soil Parameter Laboratory Table (All Parameters)
+        # 3. Complete Soil Parameter Laboratory Table (All Parameters, NO SOURCE, HAS RECOMMENDATION)
         # --------------------------------------------------------------
         param_heading = (
-            "२. माती रासायनिक आणि पोषणद्रव्य विश्लेषण (Soil Chemical & Nutrient Diagnostics)"
+            "२. माती रासायनिक आणि पोषणद्रव्य विश्लेषण व शिफारसी (Soil Chemical Diagnostics & Recommendations)"
             if is_mr
-            else "2. COMPLETE SOIL CHEMICAL & NUTRIENT LABORATORY DIAGNOSTICS"
+            else "2. COMPLETE SOIL CHEMICAL & NUTRIENT DIAGNOSTICS & RECOMMENDATIONS"
         )
         story.append(Paragraph(param_heading, styles["section"]))
         story.append(Spacer(1, 1.5 * mm))
@@ -691,8 +684,8 @@ class PDFService:
         th_val = "मूल्य (Value)" if is_mr else "Observed Value"
         th_unit = "एकक (Unit)" if is_mr else "Unit"
         th_status = "विश्लेषण (Interpretation)" if is_mr else "Status / Interpretation"
-        th_range = "संदर्भ श्रेणी (Reference Range)" if is_mr else "Standard Reference Range"
-        th_source = "स्रोत (Source)" if is_mr else "Source"
+        th_range = "संदर्भ श्रेणी (Range)" if is_mr else "Reference Range"
+        th_rec = "शिफारस (Recommendation)" if is_mr else "Recommendation"
 
         full_table_rows = [[
             Paragraph(th_sr, styles["th"]),
@@ -701,7 +694,7 @@ class PDFService:
             Paragraph(th_unit, styles["th"]),
             Paragraph(th_status, styles["th"]),
             Paragraph(th_range, styles["th"]),
-            Paragraph(th_source, styles["th"]),
+            Paragraph(th_rec, styles["th"]),
         ]]
 
         if parameters:
@@ -712,14 +705,7 @@ class PDFService:
                 unit_str = p.get("unit") or "-"
                 interp = p.get("interpretation_mr" if is_mr else "interpretation", p.get("interpretation", "N/A"))
                 ref_range = p.get("reference_range", "-")
-                source = p.get("source_type") or p.get("source") or "LAB OBSERVATION"
-                if is_mr:
-                    if source == "LAB OBSERVATION":
-                        source = "प्रयोगशाळा निरीक्षण"
-                    elif source == "DSM PREDICTION":
-                        source = "डिजिटल सॉईल मॅपिंग अंदाज"
-                    elif source == "IMPORTED DATA":
-                        source = "आयात केलेला डेटा"
+                rec_text = p.get("recommendation_mr" if is_mr else "recommendation") or p.get("recommendation", "Maintain balanced nutrient management.")
 
                 full_table_rows.append([
                     Paragraph(str(idx), styles["td_center"]),
@@ -728,7 +714,7 @@ class PDFService:
                     Paragraph(unit_str, styles["td_center"]),
                     Paragraph(interp, styles["td"]),
                     Paragraph(ref_range, styles["td"]),
-                    Paragraph(source, styles["td_center"]),
+                    Paragraph(rec_text, styles["td"]),
                 ])
         else:
             full_table_rows.append([
@@ -738,12 +724,12 @@ class PDFService:
                 Paragraph("-", styles["td_center"]),
                 Paragraph("प्रलंबित" if is_mr else "Pending", styles["td"]),
                 Paragraph("-", styles["td"]),
-                Paragraph("PENDING", styles["td_center"]),
+                Paragraph("Recommendation pending soil test data.", styles["td"]),
             ])
 
         full_table = Table(
             full_table_rows,
-            colWidths=[8 * mm, 46 * mm, 22 * mm, 16 * mm, 34 * mm, 36 * mm, 24 * mm],
+            colWidths=[8 * mm, 38 * mm, 18 * mm, 14 * mm, 26 * mm, 26 * mm, 56 * mm],
         )
 
         full_table_style = [
@@ -766,34 +752,32 @@ class PDFService:
         story.append(Spacer(1, 4 * mm))
 
         # --------------------------------------------------------------
-        # 4. Soil-Based Recommendations Summary Section
+        # 4. Soil-Based Recommendations Summary Section (Dynamically Ranked)
         # --------------------------------------------------------------
         rec_title = (
-            "३. मातीवर आधारित खत व पीक मार्गदर्शन सारांश (Soil-Based Recommendations Summary)"
+            "३. महत्त्वाच्या माती व्यवस्थापन शिफारसी (Key Soil Management Recommendations)"
             if is_mr
-            else "3. SOIL-BASED AGRONOMIC RECOMMENDATION SUMMARY"
+            else "3. KEY SOIL MANAGEMENT RECOMMENDATIONS"
         )
         story.append(Paragraph(rec_title, styles["section"]))
         story.append(Spacer(1, 1.5 * mm))
 
-        n_param = next((p for p in parameters if p.get("key") in ("available_nitrogen", "nitrogen")), None)
-        n_val_disp = f"{n_param['value']} kg/ha" if n_param and n_param.get("value") is not None else "176.5 kg/ha"
-        ph_param = next((p for p in parameters if p.get("key") in ("ph", "soil_reaction")), None)
-        ph_val_disp = f"{ph_param['value']:.2f}" if ph_param and isinstance(ph_param.get("value"), (int, float)) else "7.20"
+        key_recs = report_data.get("key_recommendations", [])
+        if not key_recs:
+            from app.services.recommendation_engine import get_ranked_key_recommendations
+            key_recs = get_ranked_key_recommendations(parameters, max_items=5)
 
-        rec_text = (
-            f"<b>नत्र व्यवस्थापन (Nitrogen Split):</b> उपलब्ध नत्र प्रमाण कमी ({n_val_disp}) असल्याने शिफारशीत युरिया तीन ते चार हप्त्यांमध्ये विभागून द्यावा.<br/>"
-            f"<b>सामू स्थिती (Soil pH):</b> मातीचा सामू {ph_val_disp} (तटस्थ ते विम्लधर्मी) असल्याने सेंद्रिय खते (शेणखत/कंपोस्ट) प्रति एकरी ३-५ टन वापरावी.<br/>"
-            "<b>सूक्ष्मअन्नद्रव्ये (Micronutrients):</b> जस्त (Zinc) आणि बोरॉन (Boron) कमतरतेवर मात करण्यासाठी माती परीक्षणानुसार फेरस/झिंक सल्फेटचा वापर करावा.<br/>"
-            "<i>टीप: सविस्तर शेत-विशिष्ट खत शिफारशींसाठी SoilPilot वरील 'शिफारशी' (Recommendations) विभागाला भेट द्या.</i>"
-            if is_mr
-            else
-            f"<b>Nitrogen Management:</b> Available Nitrogen is low ({n_val_disp}). Apply nitrogenous fertilizers in 3-4 split applications to optimize uptake.<br/>"
-            f"<b>Soil Reaction (pH):</b> Soil reaction is optimal at pH {ph_val_disp}. Incorporate 3-5 tonnes/acre well-rotted FYM/compost and green manuring to sustain biology.<br/>"
-            "<b>Micronutrient Enrichment:</b> Zinc (0.42 ppm) and Boron require basal supplementation with chelated fertilizers.<br/>"
-            "<i>Note: For comprehensive crop-specific fertilizer schedules, consult the SoilPilot Recommendations module (/recommendations).</i>"
-        )
+        rec_lines = []
+        for kr in key_recs:
+            kr_name = kr.get("name_mr" if is_mr else "name", kr.get("name", ""))
+            kr_rec = kr.get("recommendation_mr" if is_mr else "recommendation", kr.get("recommendation", ""))
+            kr_status = kr.get("status_category", "")
+            rec_lines.append(f"• <b>{kr_name} ({kr_status}):</b> {kr_rec}")
 
+        if not rec_lines:
+            rec_lines.append("• Maintain balanced nutrient management and continue periodic soil testing.")
+
+        rec_text = "<br/>".join(rec_lines)
         rec_box = Table([[Paragraph(rec_text, styles["val"])]], colWidths=[186 * mm])
         rec_box.setStyle(
             TableStyle([
@@ -806,6 +790,7 @@ class PDFService:
             ])
         )
         story.append(rec_box)
+        story.append(Spacer(1, 4 * mm))
         story.append(Spacer(1, 4 * mm))
 
         # --------------------------------------------------------------

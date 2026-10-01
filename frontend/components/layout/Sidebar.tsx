@@ -28,7 +28,6 @@ const navItems: NavItem[] = [
   { key: "myFarm", labelKey: "nav.myFarm", href: "/my-farm", icon: Tractor },
   { key: "soilHealthCard", labelKey: "nav.soilHealthCard", href: "/soil-health-card", icon: FileBadge },
   { key: "soilMap", labelKey: "nav.soilMap", href: "/soil-map", icon: Map },
-  { key: "recommendations", labelKey: "nav.recommendations", href: "/recommendations", icon: Lightbulb },
   { key: "reports", labelKey: "nav.reports", href: "/reports", icon: FileText },
 ];
 

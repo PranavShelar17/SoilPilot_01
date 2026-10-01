@@ -418,3 +418,360 @@ def evaluate_parameter_recommendation(
             rec["action_guidance_mr"] = "कमीतकमी मशागत पद्धत अवलंबा आणि शेतात पाचट किंवा सेंद्रिय आच्छादन ठेवा."
 
     return rec
+
+
+def get_concise_parameter_recommendation(
+    key: str,
+    value: Optional[float],
+    interpretation_en: str = "",
+    interpretation_mr: str = ""
+) -> Dict[str, Any]:
+    """Returns a short, farmer-friendly recommendation, status category, and priority ranking
+    for tabular display in the Soil Health Card, Soil Sample Test Report, and PDF.
+    
+    Status Categories: OPTIMAL, GOOD, LOW, MEDIUM, HIGH, VERY HIGH, CRITICAL, NOT AVAILABLE
+    Priority Rank: 1 (Critical), 2 (Low), 3 (High), 4 (Medium), 5 (Optimal), 6 (Not Available)
+    """
+    if value is None:
+        return {
+            "status_category": "NOT AVAILABLE",
+            "priority_rank": 6,
+            "priority_key": "info",
+            "recommendation": "Recommendation unavailable because this parameter has no valid test value.",
+            "recommendation_mr": "या घटकाची वैध चाचणी नोंद उपलब्ध नसल्याने शिफारस उपलब्ध नाही.",
+        }
+
+    k = key.lower()
+    interp_en = (interpretation_en or "").lower()
+
+    # 1. Soil pH
+    if k in ["ph", "soil_reaction"]:
+        if value < 6.5:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high" if value < 5.5 else "moderate",
+                "recommendation": "Consider soil-specific amelioration practices only according to the configured soil test recommendation. Avoid applying amendments without a validated requirement.",
+                "recommendation_mr": "माती चाचणीच्या शिफारशीनुसारच आवश्यकतेनुसार जमीन सुधारक वापरा. प्रमाणीकरणाशिवाय अतिरिक्त भूसुधारके वापरणे टाळा.",
+            }
+        elif value <= 7.8:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "No major pH correction indicated from this result. Maintain balanced nutrient management and continue periodic soil testing.",
+                "recommendation_mr": "सामू संतुलित असल्याने कोणत्याही मोठ्या दुरुस्तीची गरज नाही. संतुलित खत व्यवस्थापन आणि नियमित माती परीक्षण सुरू ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "HIGH" if value > 8.5 else "MEDIUM",
+                "priority_rank": 3 if value > 8.5 else 4,
+                "priority_key": "high" if value > 8.5 else "moderate",
+                "recommendation": "Consider soil-specific nutrient and soil management practices based on the soil test and crop requirement. Do not apply amendments without a validated recommendation.",
+                "recommendation_mr": "माती परीक्षण आणि पिकाच्या गरजेनुसार खत व जमीन व्यवस्थापन ठेवा. शिफारशीशिवाय अतिरिक्त घटक टाळणे योग्य.",
+            }
+
+    # 2. Electrical Conductivity (EC)
+    elif k in ["ec", "electrical_conductivity"]:
+        if value < 1.0:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Electrical conductivity is within the configured safe range. Maintain appropriate irrigation and nutrient management.",
+                "recommendation_mr": "विद्युत वाहकता सुरक्षित मर्यादेत आहे. योग्य सिंचन आणि संतुलित खत व्यवस्थापन सुरू ठेवा.",
+            }
+        elif value <= 2.0:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "moderate",
+                "recommendation": "Monitor salinity risk and maintain appropriate irrigation and drainage practices.",
+                "recommendation_mr": "क्षारतेच्या जोखमीवर लक्ष ठेवा आणि शेतातून पाण्याचा योग्य निचरा ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "CRITICAL",
+                "priority_rank": 1,
+                "priority_key": "high",
+                "recommendation": "Further assessment of soil and irrigation-water salinity is recommended before selecting corrective practices.",
+                "recommendation_mr": "कोणतीही सुधारणा पद्धत निवडण्यापूर्वी माती आणि सिंचन पाण्याच्या क्षारतेची पुढील तपासणी करावी.",
+            }
+
+    # 3. Organic Carbon
+    elif k in ["organic_carbon", "soc"]:
+        if value <= 0.50:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high",
+                "recommendation": "Improve soil organic matter through appropriate residue management, compost/FYM or other locally suitable organic inputs according to the farm plan.",
+                "recommendation_mr": "पिकांचे अवशेष, शेणखत किंवा कंपोस्टच्या योग्य वापराद्वारे सेंद्रिय कर्ब वाढवण्यावर भर द्या.",
+            }
+        elif value <= 0.75:
+            return {
+                "status_category": "MEDIUM",
+                "priority_rank": 4,
+                "priority_key": "moderate",
+                "recommendation": "Maintain organic matter through residue retention, appropriate organic inputs and balanced nutrient management.",
+                "recommendation_mr": "पिकांचे अवशेष जमिनीत गाडून आणि संतुलित सेंद्रिय खतांचा वापर करून सेंद्रिय कर्ब टिकवून ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "VERY HIGH" if value > 1.20 else "HIGH",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Maintain organic matter and avoid unnecessary additional amendments solely to increase SOC.",
+                "recommendation_mr": "सेंद्रिय कर्बाचा सध्याचा चांगला साठा टिकवून ठेवा; केवळ कर्ब वाढवण्यासाठी अनावश्यक खते टाळा.",
+            }
+
+    # 4. Available Nitrogen (N)
+    elif k in ["available_nitrogen", "nitrogen"]:
+        if value < 280:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high",
+                "recommendation": "Nitrogen status is low. Follow the field-specific soil-test-based nutrient recommendation and consider integrated nutrient management.",
+                "recommendation_mr": "नत्राचे प्रमाण कमी आहे. शेताच्या माती चाचणीनुसार शिफारशीत खत मात्रा विभागून द्या व एकात्मिक पोषण व्यवस्थापन ठेवा.",
+            }
+        elif value <= 420:
+            return {
+                "status_category": "MEDIUM",
+                "priority_rank": 4,
+                "priority_key": "info",
+                "recommendation": "Maintain balanced nitrogen management based on crop requirement and soil testing.",
+                "recommendation_mr": "पिकाच्या गरजेनुसार व माती चाचणीनुसार संतुलित नत्र व्यवस्थापन ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "moderate",
+                "recommendation": "Avoid unnecessary additional nitrogen application and follow the crop-specific soil-test-based recommendation.",
+                "recommendation_mr": "अनावश्यक अतिरिक्त नत्र खत देणे टाळा आणि पीक गरजेनुसारच खतांचा वापर करा.",
+            }
+
+    # 5. Available Phosphorus (P)
+    elif k in ["available_phosphorus", "phosphorus"]:
+        if value < 14.0:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high",
+                "recommendation": "Phosphorus status is low. Follow the field-specific soil-test-based phosphorus recommendation.",
+                "recommendation_mr": "स्फुरदाचे प्रमाण कमी आहे. शेताच्या माती चाचणीनुसार शिफारशीत स्फुरद खत मुळांच्या सानिध्यात द्या.",
+            }
+        elif value <= 28.0:
+            return {
+                "status_category": "MEDIUM",
+                "priority_rank": 4,
+                "priority_key": "info",
+                "recommendation": "Maintain balanced phosphorus application based on crop requirement and soil testing.",
+                "recommendation_mr": "पिकाच्या गरजेनुसार संतुलित स्फुरद खत व्यवस्थापन ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "info",
+                "recommendation": "Avoid unnecessary phosphorus application until further soil testing indicates a requirement.",
+                "recommendation_mr": "जमिनीत स्फुरद पुरेसे असल्याने पुढील माती चाचणी होईपर्यंत अनावश्यक स्फुरद खतांचा वापर टाळा.",
+            }
+
+    # 6. Available Potassium (K)
+    elif k in ["available_potassium", "potassium"]:
+        if value < 150.0:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high",
+                "recommendation": "Potassium status is low. Follow the field-specific soil-test-based potassium recommendation.",
+                "recommendation_mr": "पालाशचे प्रमाण कमी आहे. शेताच्या माती चाचणीनुसार शिफारशीत पालाश खताचा वापर करा.",
+            }
+        elif value <= 250.0:
+            return {
+                "status_category": "MEDIUM",
+                "priority_rank": 4,
+                "priority_key": "info",
+                "recommendation": "Maintain balanced potassium management according to crop requirement.",
+                "recommendation_mr": "पिकाच्या गरजेनुसार संतुलित पालाश व्यवस्थापन ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "VERY HIGH" if value > 300 else "HIGH",
+                "priority_rank": 3,
+                "priority_key": "moderate",
+                "recommendation": "Avoid unnecessary potassium application and continue monitoring through soil testing.",
+                "recommendation_mr": "पालाशचा मुबलक साठा असल्याने अनावश्यक पालाश खतांचा खर्च टाळा आणि माती चाचणीद्वारे लक्ष ठेवा.",
+            }
+
+    # 7. Micronutrients: Iron, Zinc, Manganese, Copper, Boron
+    elif k in ["zinc", "iron", "manganese", "copper", "boron"]:
+        is_deficient = "deficient" in interp_en or "low" in interp_en or "कमतरता" in interpretation_mr
+        is_high = "high" in interp_en or "जास्त" in interpretation_mr
+        if is_deficient:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "high" if k in ["zinc", "iron"] else "moderate",
+                "recommendation": "The nutrient level is below the configured reference range. Follow the soil-test-based micronutrient recommendation.",
+                "recommendation_mr": "या सूक्ष्मअन्नद्रव्याचे प्रमाण आवश्यकतेपेक्षा कमी आहे. माती चाचणीनुसार शिफारशीत सूक्ष्मअन्नद्रव्य मात्रा द्या.",
+            }
+        elif is_high:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "info",
+                "recommendation": "Avoid unnecessary additional application of this micronutrient and monitor future soil tests.",
+                "recommendation_mr": "या सूक्ष्मअन्नद्रव्याचा अतिरिक्त वापर टाळा आणि पुढील चाचणीपर्यंत निरीक्षण ठेवा.",
+            }
+        else:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "The nutrient level is within the configured range. Maintain balanced nutrient management.",
+                "recommendation_mr": "हे सूक्ष्मअन्नद्रव्य योग्य पातळीत आहे. संतुलित पोषण व्यवस्थापन सुरू ठेवा.",
+            }
+
+    # 8. Sulphur
+    elif k in ["sulphur", "sulfur"]:
+        if value < 10.0 or "deficient" in interp_en or "low" in interp_en:
+            return {
+                "status_category": "LOW",
+                "priority_rank": 2,
+                "priority_key": "moderate",
+                "recommendation": "Sulphur status is low. Follow the field-specific soil-test-based sulphur recommendation.",
+                "recommendation_mr": "गंधकाचे प्रमाण कमी आहे. शेताच्या माती चाचणीनुसार शिफारशीत गंधक खताचा वापर करा.",
+            }
+        elif value > 25.0:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "info",
+                "recommendation": "Avoid unnecessary additional sulphur application until further soil testing indicates a requirement.",
+                "recommendation_mr": "अतिरिक्त गंधक देणे टाळा आणि पुढील माती चाचणीनुसार नियोजन करा.",
+            }
+        else:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Maintain balanced nutrient management.",
+                "recommendation_mr": "गंधक पुरेसे आहे. संतुलित पोषण व्यवस्थापन कायम ठेवा.",
+            }
+
+    # 9. Exchangeable Sodium Percentage (ESP)
+    elif k in ["exchangeable_sodium", "esp"]:
+        if value > 15.0:
+            return {
+                "status_category": "CRITICAL",
+                "priority_rank": 1,
+                "priority_key": "high",
+                "recommendation": "Monitor sodicity risk and follow a soil- and water-test-based reclamation recommendation where required.",
+                "recommendation_mr": "चोपण जमिनीचा धोका टाळण्यासाठी माती व पाणी चाचणीनुसार शिफारशीत सुधारणा पद्धतींचा वापर करा.",
+            }
+        else:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Exchangeable sodium is within the safe range. Maintain appropriate drainage.",
+                "recommendation_mr": "सोडियमचे प्रमाण सुरक्षित मर्यादेत आहे. शेतातील पाण्याचा निचरा योग्य ठेवा.",
+            }
+
+    # 10. Free Lime (CaCO3)
+    elif k in ["free_lime", "caco3"]:
+        if value > 10.0:
+            return {
+                "status_category": "MEDIUM",
+                "priority_rank": 4,
+                "priority_key": "moderate",
+                "recommendation": "Interpretation should be considered together with soil reaction and crop requirements; consider organic inputs and foliar nutrition.",
+                "recommendation_mr": "चुनखडीचे प्रमाण जास्त असल्याने सेंद्रिय खतांचा वापर वाढवा व अन्नद्रव्यांसाठी फवारणीचा मार्ग विचारात घ्या.",
+            }
+        else:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Interpretation should be considered together with soil reaction and crop requirements.",
+                "recommendation_mr": "मुक्त चुनखडी योग्य मर्यादेत आहे. नियमित संतुलित शेती पद्धती सुरू ठेवा.",
+            }
+
+    # 11. Bulk Density
+    elif k in ["bd", "bulk_density"]:
+        if value > 1.60:
+            return {
+                "status_category": "HIGH",
+                "priority_rank": 3,
+                "priority_key": "high",
+                "recommendation": "Soil density is elevated; consider deep subsoiling and organic residue incorporation to relieve compaction.",
+                "recommendation_mr": "माती घट्ट झाल्याचे दिसते; खोल नांगरट व सेंद्रिय घटकांचा वापर करून मातीची रचना सुधारा.",
+            }
+        else:
+            return {
+                "status_category": "OPTIMAL",
+                "priority_rank": 5,
+                "priority_key": "info",
+                "recommendation": "Soil physical condition and density are favorable for root penetration and moisture retention.",
+                "recommendation_mr": "मातीची भौतिक घनता योग्य असून मुळांची वाढ व ओलावा टिकवण्यासाठी अनुकूल आहे.",
+            }
+
+    # Fallback
+    return {
+        "status_category": "GOOD",
+        "priority_rank": 5,
+        "priority_key": "info",
+        "recommendation": "Maintain balanced nutrient management and continue periodic soil testing.",
+        "recommendation_mr": "संतुलित खत व्यवस्थापन आणि नियमित माती चाचणी सुरू ठेवा.",
+    }
+
+
+def get_ranked_key_recommendations(parameters: List[Dict[str, Any]], max_items: int = 5) -> List[Dict[str, Any]]:
+    """Rank recommendations internally by priority:
+    1. Critical
+    2. Low
+    3. High
+    4. Medium
+    5. Optimal
+    
+    Returns the top most relevant recommendations dynamically generated from actual soil data.
+    """
+    ranked_list = []
+    seen_keys = set()
+
+    for p in parameters:
+        key = p.get("key") or p.get("parameter_key") or ""
+        if key in seen_keys:
+            continue
+        val = p.get("value")
+        interp_en = p.get("interpretation") or p.get("interpretation_en") or ""
+        interp_mr = p.get("interpretation_mr") or interp_en
+        name = p.get("name") or p.get("parameter_name") or key
+        name_mr = p.get("name_mr") or p.get("parameter_name_mr") or name
+
+        rec_meta = get_concise_parameter_recommendation(key, val, interp_en, interp_mr)
+        seen_keys.add(key)
+
+        ranked_list.append({
+            "key": key,
+            "name": name,
+            "parameter": name,
+            "name_mr": name_mr,
+            "value": val,
+            "unit": p.get("unit", ""),
+            "status": rec_meta["status_category"],
+            "status_category": rec_meta["status_category"],
+            "priority_rank": rec_meta["priority_rank"],
+            "priority_key": rec_meta["priority_key"],
+            "recommendation": rec_meta["recommendation"],
+            "recommendation_mr": rec_meta["recommendation_mr"],
+        })
+
+    # Sort strictly by priority_rank (1=Critical, 2=Low, 3=High, 4=Medium, 5=Optimal)
+    ranked_list.sort(key=lambda x: (x["priority_rank"], x["key"]))
+
+    return ranked_list[:max_items]
+

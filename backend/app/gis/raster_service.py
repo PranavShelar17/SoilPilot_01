@@ -405,8 +405,8 @@ class RasterService:
             return geom_input
         return None
 
-    def get_gat_raster_stats(self, geom_input: Any) -> Dict[str, Dict[str, Any]]:
-        """Calculates zonal statistics (mean, min, max, std, count, classification)
+    def get_gat_raster_stats(self, geom_input: Any, area_ha: Optional[float] = None) -> Dict[str, Dict[str, Any]]:
+        """Calculates zonal statistics (mean, min, max, std, count, classification, canopy_statistics)
         across all GeoTIFF layers for the given Gat geometry.
         Accepts GeoJSON dict or Shapely geometry or WKT string.
         """
@@ -462,6 +462,38 @@ class RasterService:
                     "pixel_count": len(vals),
                     "classification": self.classify_value(key, mean_v),
                 }
+
+                if key == "ndvi":
+                    sparse_cnt = sum(1 for v in vals if v < 0.2)
+                    mod_cnt = sum(1 for v in vals if 0.2 <= v < 0.5)
+                    dense_cnt = sum(1 for v in vals if v >= 0.5)
+                    tot_cnt = len(vals)
+                    tot_ha = float(area_ha) if area_ha is not None else None
+                    tot_acres = round(tot_ha * 2.47105, 2) if tot_ha is not None else None
+
+                    stats_by_layer[key]["canopy_statistics"] = {
+                        "low": {
+                            "name": "Sparse / Fallow",
+                            "pixel_count": sparse_cnt,
+                            "percentage": round((sparse_cnt / tot_cnt) * 100, 2) if tot_cnt > 0 else 0.0,
+                            "area_acres": round((sparse_cnt / tot_cnt) * tot_acres, 2) if tot_acres is not None else None,
+                            "area_hectares": round((sparse_cnt / tot_cnt) * tot_ha, 2) if tot_ha is not None else None,
+                        },
+                        "moderate": {
+                            "name": "Moderate Canopy",
+                            "pixel_count": mod_cnt,
+                            "percentage": round((mod_cnt / tot_cnt) * 100, 2) if tot_cnt > 0 else 0.0,
+                            "area_acres": round((mod_cnt / tot_cnt) * tot_acres, 2) if tot_acres is not None else None,
+                            "area_hectares": round((mod_cnt / tot_cnt) * tot_ha, 2) if tot_ha is not None else None,
+                        },
+                        "healthy_dense": {
+                            "name": "Healthy / Dense Canopy",
+                            "pixel_count": dense_cnt,
+                            "percentage": round((dense_cnt / tot_cnt) * 100, 2) if tot_cnt > 0 else 0.0,
+                            "area_acres": round((dense_cnt / tot_cnt) * tot_acres, 2) if tot_acres is not None else None,
+                            "area_hectares": round((dense_cnt / tot_cnt) * tot_ha, 2) if tot_ha is not None else None,
+                        },
+                    }
 
         return stats_by_layer
 

@@ -195,12 +195,12 @@ class DSMService:
                 if village_name:
                     v = db.query(Village).filter(Village.id == f.village_id).first()
                     if v and village_name.lower() in v.name.lower():
-                        s = raster_service.get_gat_raster_stats(f.geometry)
+                        s = raster_service.get_gat_raster_stats(f.geometry, area_ha=f.area)
                         if s:
                             target_field = f
                             stats = s
                             break
-                s = raster_service.get_gat_raster_stats(f.geometry)
+                s = raster_service.get_gat_raster_stats(f.geometry, area_ha=f.area)
                 if s:
                     target_field = f
                     stats = s
@@ -209,13 +209,19 @@ class DSMService:
         if target_field and stats:
             unc = stats.get("uncertainty", {}).get("mean")
             confidence = round(max(85.0, 100.0 - unc), 1) if unc is not None else 92.0
+            tot_ha = target_field.area
+            tot_ac = round(tot_ha * 2.47105, 2) if tot_ha is not None else None
+            canopy_stats = stats.get("ndvi", {}).get("canopy_statistics")
             return {
                 "gat_no": clean_gat,
                 "field_id": target_field.id,
                 "area_ha": target_field.area,
+                "total_area_hectares": tot_ha,
+                "total_area_acres": tot_ac,
                 "village_id": target_field.village_id,
                 "source": "Database Cadastre",
                 "confidence": confidence,
+                "canopy_statistics": canopy_stats,
                 "layers": stats,
                 **stats
             }
@@ -223,15 +229,20 @@ class DSMService:
         # 2. Fallback to KML files (trial.kml or malegaonkh_final1.kml)
         kml_gat = kml_service.get_gat_by_no(clean_gat)
         if kml_gat:
-            kml_stats = raster_service.get_gat_raster_stats(kml_gat["geometry_wkt"])
+            tot_ha = kml_gat.get("area_ha")
+            tot_ac = round(tot_ha * 2.47105, 2) if tot_ha is not None else None
+            kml_stats = raster_service.get_gat_raster_stats(kml_gat["geometry_wkt"], area_ha=tot_ha)
             if kml_stats:
                 unc = kml_stats.get("uncertainty", {}).get("mean")
                 confidence = round(max(85.0, 100.0 - unc), 1) if unc is not None else 92.0
+                canopy_stats = kml_stats.get("ndvi", {}).get("canopy_statistics")
                 return {
                     "gat_no": kml_gat["gat_no"],
                     "name": kml_gat["name"],
                     "field_id": None,
                     "area_ha": kml_gat["area_ha"],
+                    "total_area_hectares": tot_ha,
+                    "total_area_acres": tot_ac,
                     "village": kml_gat.get("village", "Malegaon"),
                     "taluka": kml_gat.get("taluka", "Baramati"),
                     "district": kml_gat.get("district", "Pune"),
@@ -241,6 +252,7 @@ class DSMService:
                     "geometry": kml_gat["geometry"],
                     "source": f"KML ({kml_gat['source_file']})",
                     "confidence": confidence,
+                    "canopy_statistics": canopy_stats,
                     "layers": kml_stats,
                     **kml_stats
                 }

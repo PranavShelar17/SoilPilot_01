@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { recommendationService } from "@/services/recommendationService";
+import { soilHealthService } from "@/services/soilHealthService";
 import { RecommendationsResponse, RecommendationItem } from "@/types/recommendation";
 import { KML_AVAILABLE_GATS } from "@/types/gat";
 import { RecommendationsHeader } from "./RecommendationsHeader";
@@ -20,9 +21,125 @@ import {
   ShieldCheck,
   Filter,
 } from "lucide-react";
+import { getConciseParameterRecommendation, getRankedKeyRecommendations } from "@/lib/soilRecommendations";
 
 interface RecommendationsViewProps {
   fieldIdOverride?: string | number;
+}
+
+/** Build a RecommendationsResponse-shaped object from a SoilHealthReport
+ *  when the dedicated /recommendations endpoint is unavailable. */
+function buildRecommendationsFromSoilReport(report: any): RecommendationsResponse {
+  const parameters: any[] = report.parameters || [];
+  const field = report.field || {};
+  const farmer = report.farmer || {};
+
+  // Build soil_overview for key nutrients
+  const keyKeys = ["ph", "organic_carbon", "available_nitrogen", "available_phosphorus", "available_potassium"];
+  const keyNames: Record<string, { name: string; name_mr: string; unit: string }> = {
+    ph: { name: "Soil pH", name_mr: "मातीचा सामू (pH)", unit: "" },
+    organic_carbon: { name: "Organic Carbon", name_mr: "सेंद्रिय कर्ब", unit: "%" },
+    available_nitrogen: { name: "Nitrogen", name_mr: "उपलब्ध नत्र (N)", unit: "kg/ha" },
+    available_phosphorus: { name: "Phosphorus", name_mr: "उपलब्ध स्फुरद (P)", unit: "kg/ha" },
+    available_potassium: { name: "Potassium", name_mr: "उपलब्ध पालाश (K)", unit: "kg/ha" },
+  };
+  const paramDict: Record<string, any> = {};
+  for (const p of parameters) {
+    paramDict[p.key || p.parameter_key] = p;
+  }
+  const soil_overview = keyKeys.map((k) => {
+    const p = paramDict[k];
+    const meta = keyNames[k];
+    return p
+      ? {
+          key: k,
+          name: meta.name,
+          name_mr: meta.name_mr,
+          value: p.value,
+          unit: p.unit || meta.unit,
+          status: p.interpretation || "Recorded",
+          status_mr: p.interpretation_mr || "नोंदणीकृत",
+          is_available: true,
+        }
+      : {
+          key: k,
+          name: meta.name,
+          name_mr: meta.name_mr,
+          value: null,
+          unit: meta.unit,
+          status: "Not Available",
+          status_mr: "उपलब्ध नाही",
+          is_available: false,
+        };
+  });
+
+  // Build RecommendationItem list from parameters
+  const recommendations: RecommendationItem[] = parameters.map((p) => {
+    const key = p.key || p.parameter_key || "";
+    const rec = getConciseParameterRecommendation(
+      key,
+      p.value,
+      p.interpretation || p.interpretation_en || "",
+      p.interpretation_mr || "",
+    );
+    const backendRec = p.recommendation || "";
+    const backendRecMr = p.recommendation_mr || "";
+    return {
+      parameter_key: key,
+      parameter_name: p.name || p.parameter_name || key,
+      parameter_name_mr: p.name_mr || p.parameter_name_mr || key,
+      category: p.category || "General",
+      value: p.value ?? 0,
+      unit: p.unit || "",
+      status: p.interpretation || p.status_category || rec.status_category,
+      status_mr: p.interpretation_mr || rec.status_category,
+      source: p.source || "DSM PREDICTION",
+      priority: rec.priority_key === "high" ? "HIGH PRIORITY" : rec.priority_key === "moderate" ? "MODERATE" : "INFORMATION",
+      priority_key: rec.priority_key,
+      needs_attention: rec.priority_key === "high" || rec.priority_key === "moderate",
+      what_observed:
+        `${p.name || key}: ${p.value !== null && p.value !== undefined ? p.value : "N/A"} ${p.unit || ""}`.trim(),
+      what_observed_mr:
+        `${p.name_mr || key}: ${p.value !== null && p.value !== undefined ? p.value : "N/A"} ${p.unit || ""}`.trim(),
+      what_it_means: p.interpretation || rec.status_category,
+      what_it_means_mr: p.interpretation_mr || rec.status_category,
+      action_guidance: backendRec || rec.recommendation,
+      action_guidance_mr: backendRecMr || rec.recommendation_mr,
+      why_it_matters: `${p.name || key} is a key soil health indicator that affects crop productivity and soil fertility.`,
+      why_it_matters_mr: `${p.name_mr || key} हा माती आरोग्याचा महत्त्वाचा निर्देशक आहे.`,
+    };
+  });
+
+  // Sort by priority
+  recommendations.sort((a, b) => {
+    const rank = { "HIGH PRIORITY": 1, MODERATE: 2, INFORMATION: 3 };
+    return (rank[a.priority] || 3) - (rank[b.priority] || 3);
+  });
+
+  const highCount = recommendations.filter((r) => r.priority_key === "high").length;
+  const modCount = recommendations.filter((r) => r.priority_key === "moderate").length;
+  const infoCount = recommendations.filter((r) => r.priority_key === "info").length;
+  const attentionCount = recommendations.filter((r) => r.needs_attention).length;
+
+  return {
+    field,
+    farmer,
+    has_data: parameters.length > 0,
+    is_demo: report.is_demo ?? true,
+    summary: {
+      parameters_reviewed: recommendations.length,
+      parameters_needing_attention: attentionCount,
+      high_priority_count: highCount,
+      moderate_count: modCount,
+      info_count: infoCount,
+    },
+    soil_overview,
+    recommendations,
+    message_en:
+      "Soil-test-based recommendations generated from field soil observations.",
+    message_mr:
+      "माती परीक्षण निरीक्षणांवर आधारित शेत-विशिष्ट शिफारसी तयार केल्या आहेत.",
+  };
 }
 
 export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldIdOverride }) => {
@@ -64,7 +181,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
 
   const activeFieldId =
     fieldIdOverride ||
-    (selectedGat ? `demo-field-gat-${selectedGat}` : field?.id || (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-12"));
+    (selectedGat ? `demo-field-gat-${selectedGat}` : field?.id || (field?.gat_no ? `demo-field-gat-${field.gat_no}` : "demo-field-gat-15"));
 
   const fetchRecommendations = async () => {
     try {
@@ -72,9 +189,21 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
       setError(null);
       const res = await recommendationService.getFieldRecommendations(activeFieldId);
       setData(res);
-    } catch (err: any) {
-      console.error("Error loading recommendations:", err);
-      setError(err?.message || "Failed to load recommendations");
+    } catch (primaryErr: any) {
+      // Primary recommendations endpoint failed — fall back to soil health report
+      // and compute recommendations client-side using the shared engine.
+      console.warn("Recommendations API unavailable; falling back to soil health report:", primaryErr?.message);
+      try {
+        const soilReport = await soilHealthService.getFieldReport(activeFieldId);
+        const fallbackData = buildRecommendationsFromSoilReport(soilReport);
+        setData(fallbackData);
+        setError(null);
+      } catch (fallbackErr: any) {
+        console.error("Soil health report fallback also failed:", fallbackErr?.message);
+        setError(
+          "Unable to load recommendations. Please check your connection and try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -98,7 +227,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
     );
   }
 
-  // Error State
+  // Error State — friendly, never shows raw API errors
   if (error || !data) {
     return (
       <div className="max-w-xl mx-auto my-12 p-8 bg-white rounded-2xl border border-surface-border shadow-sm text-center space-y-4">
@@ -191,7 +320,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
             </span>
           </span>
           <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-stone-100 text-stone-700 border border-stone-200 rounded-lg text-xs font-semibold">
-            🌱 {locale === "mr" ? "माती नकाशानुसार खत शिफारसी" : "Nutrient Plan Tailored to Soil Map"}
+            🌱 {locale === "mr" ? "माती नकाशानुसार खत शिफारसी" : "Soil Test-Based Recommendations"}
           </span>
         </div>
 

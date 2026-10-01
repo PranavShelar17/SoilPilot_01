@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Map as LeafletMap, LayerGroup, ImageOverlay, GeoJSON, Marker } from "leaflet";
 import { useI18n } from "@/i18n/useI18n";
 import {
@@ -800,6 +800,120 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     });
   }, [selectedGatId, myGatId, ready, layer, gats, gatDataFull, grid]);
 
+  // Precompute / memoize parcel raster class area distribution (Acres & Hectares)
+  // based on the selected Gat polygon and actual classified raster pixels.
+  // Cached per Gat and layer; does NOT re-run on mouse movements.
+  const parcelClassAreas = useMemo<Record<string, { acres: number; ha: number }> | null>(() => {
+    if (!layer || layer.id === "farm_boundary") return null;
+    const cleanNum = selectedGatId?.replace(/[^\d]/g, "") || myGatId?.replace(/[^\d]/g, "") || selectedGatId;
+    if (!cleanNum) return null;
+
+    const gatInfo = gatDataFull ? (gatDataFull[cleanNum] || getOrCreateGatEntry(gatDataFull, cleanNum)) : null;
+    const one = gats?.features?.find((f) => f.id === selectedGatId) || gats?.features?.[0];
+
+    const totalAcres = gatInfo?.area_acres
+      ?? one?.properties?.area_acres
+      ?? (one?.properties?.area_ha ? one.properties.area_ha * 2.47105 : 3.68);
+    const totalHa = gatInfo?.area_ha
+      ?? one?.properties?.area_ha
+      ?? (totalAcres * 0.404686);
+
+    const layerId = layer.id;
+
+    // 1. Primary Source: Exact clipped parcel overlay raster grid in gatDataFull
+    const overlayGrid = gatInfo?.overlays?.[layerId]?.grid;
+    if (overlayGrid && overlayGrid.values && overlayGrid.rows > 0) {
+      let validPixels = 0;
+      const classPixelCounts: Record<string, number> = {};
+
+      for (let r = 0; r < overlayGrid.rows; r++) {
+        const rowVals = overlayGrid.values[r];
+        if (!rowVals) continue;
+        for (let c = 0; c < overlayGrid.cols; c++) {
+          let v = rowVals[c];
+          if (v !== null && v !== undefined && !isNaN(v)) {
+            if ((layerId === "ndvi" || layerId === "evi") && v > 1.0) {
+              v = v / 100;
+            }
+            validPixels++;
+            const cls = getClassification(layerId, v);
+            classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
+          }
+        }
+      }
+
+      if (validPixels > 0) {
+        const result: Record<string, { acres: number; ha: number }> = {};
+        for (const [status, count] of Object.entries(classPixelCounts)) {
+          const ratio = count / validPixels;
+          result[status] = {
+            acres: Number((ratio * totalAcres).toFixed(2)),
+            ha: Number((ratio * totalHa).toFixed(2)),
+          };
+        }
+        return result;
+      }
+    }
+
+    // 2. Secondary Source: Sample raster grid across the Gat polygon geometry
+    if (grid && one && one.geometry) {
+      const coords = (one.geometry as any).coordinates;
+      const ring: [number, number][] =
+        one.geometry.type === "Polygon"
+          ? coords[0]
+          : one.geometry.type === "MultiPolygon"
+          ? coords[0]?.[0]
+          : [];
+
+      if (ring && ring.length >= 3) {
+        const [w, s, e, n] = one.properties?.bounds || [grid.west, grid.south, grid.east, grid.north];
+        const stepX = Math.max(grid.pxW, (e - w) / 25);
+        const stepY = Math.max(grid.pxH, (n - s) / 25);
+
+        let validCount = 0;
+        const classPixelCounts: Record<string, number> = {};
+
+        for (let x = w; x <= e; x += stepX) {
+          for (let y = s; y <= n; y += stepY) {
+            let inside = false;
+            for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+              const [xi, yi] = ring[i];
+              const [xj, yj] = ring[j];
+              const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+              if (intersect) inside = !inside;
+            }
+
+            if (inside) {
+              let v = sampleGrid(grid, x, y);
+              if (v !== null && !isNaN(v)) {
+                if ((layerId === "ndvi" || layerId === "evi") && v > 1.0) {
+                  v = v / 100;
+                }
+                validCount++;
+                const cls = getClassification(layerId, v);
+                classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
+              }
+            }
+          }
+        }
+
+        if (validCount > 0) {
+          const result: Record<string, { acres: number; ha: number }> = {};
+          for (const [status, count] of Object.entries(classPixelCounts)) {
+            const ratio = count / validCount;
+            result[status] = {
+              acres: Number((ratio * totalAcres).toFixed(2)),
+              ha: Number((ratio * totalHa).toFixed(2)),
+            };
+          }
+          return result;
+        }
+      }
+    }
+
+    return null;
+  }, [layer?.id, selectedGatId, myGatId, gatDataFull, gats, grid]);
+
   // 8. Combined Gat Badge & Neon Cursor HUD Marker on Parcel (matching user reference screenshot)
   useEffect(() => {
     const map = mapRef.current;
@@ -860,6 +974,30 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       return layer?.mean !== undefined ? layer.mean.toFixed(2) : "0.39";
     })();
 
+    const currentClassArea = (() => {
+      if (!parcelClassAreas) return null;
+      if (parcelClassAreas[classInfo.status]) {
+        return parcelClassAreas[classInfo.status];
+      }
+      const normKey = classInfo.status.toLowerCase().replace(/[^a-z0-9]/g, "");
+      for (const [k, v] of Object.entries(parcelClassAreas)) {
+        if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === normKey) {
+          return v;
+        }
+      }
+      return null;
+    })();
+
+    const areaTagText = (() => {
+      if (currentClassArea) {
+        return `${currentClassArea.acres.toFixed(2)} Acres (${currentClassArea.ha.toFixed(2)} Ha)`;
+      }
+      if (!gatDataFull && !grid) {
+        return "Calculating area…";
+      }
+      return "Area unavailable";
+    })();
+
     const hudHtml = `
       <div style="display: flex; align-items: center; gap: 0; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45)); font-family: system-ui, -apple-system, sans-serif; pointer-events: none; user-select: none;">
         <!-- 1. White Gat Badge (Left side) -->
@@ -876,7 +1014,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
         <div style="width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 8px solid #ffffff; margin-left: -1px; margin-right: 6px; filter: drop-shadow(2px 0 1px rgba(0,0,0,0.08));"></div>
 
         <!-- 3. Dark HUD Card with Vibrant Neon Green Border (Right side - exactly matching reference screenshot) -->
-        <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7); padding: 11px 16px; min-width: 290px; color: #ffffff;">
+        <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7); padding: 11px 16px; min-width: 320px; max-width: 440px; color: #ffffff;">
           <!-- Top Row: Location Icon + Gat Number + Lat/Lng Coordinates -->
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12px; font-weight: 700;">
             <div style="display: flex; align-items: center; gap: 6px; color: #ffffff;">
@@ -904,12 +1042,17 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
             </span>
           </div>
 
-          <!-- Bottom Row: Status Pill Badge + Plot Average -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px;">
-            <span style="display: inline-flex; align-items: center; padding: 2.5px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
-              ${classInfo.status}
-            </span>
-            <span style="font-size: 11.5px; color: #cbd5e1; font-weight: 600;">
+          <!-- Bottom Row: Status Pill Badge + Canopy Class Area Tag + Plot Average -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+              <span style="display: inline-flex; align-items: center; padding: 2.5px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
+                ${classInfo.status}
+              </span>
+              <span style="display: inline-flex; align-items: center; padding: 2.5px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; background: rgba(30, 41, 59, 0.9); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.3); white-space: nowrap; letter-spacing: -0.01em;" title="Class area inside Gat ${cleanNum}">
+                ${areaTagText}
+              </span>
+            </div>
+            <span style="font-size: 11.5px; color: #cbd5e1; font-weight: 600; white-space: nowrap;">
               Plot Avg: ${avgDisplay} ${layerUnit}
             </span>
           </div>
@@ -920,13 +1063,13 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     const customIcon = L.divIcon({
       className: "soilpilot-hud-marker",
       html: hudHtml,
-      iconSize: [460, 100],
-      iconAnchor: [80, 50],
+      iconSize: [520, 110],
+      iconAnchor: [80, 55],
     });
 
     const marker = L.marker([probeLat, probeLng], { icon: customIcon, interactive: false }).addTo(map);
     hudMarkerRef.current = marker;
-  }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull]);
+  }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull, parcelClassAreas]);
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-card border border-surface-border bg-slate-900 ${className}`}>

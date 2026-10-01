@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
-import { FlaskConical, Award, ShieldCheck } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 
 interface SoilReportHeaderProps {
   isDemo?: boolean;
@@ -29,13 +29,20 @@ export const SoilReportHeader: React.FC<SoilReportHeaderProps> = ({ isDemo = fal
           </div>
         </div>
 
-        <div className="flex flex-col items-center sm:items-end gap-1">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold text-soil-primary bg-soil-cream px-2.5 py-1 rounded border border-soil-secondary/30">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>ICAR Standardized Soil Diagnostic Protocol</span>
+        <div className="flex flex-col items-center sm:items-end gap-1 text-center sm:text-right">
+          <div className="px-3 py-1.5 rounded-lg bg-soil-cream/70 border border-soil-secondary/30">
+            <h3 className="text-xs sm:text-sm font-black text-soil-primary uppercase tracking-tight">
+              ADT AI Training Foundation
+            </h3>
+            <p className="text-[10.5px] font-semibold text-stone-700 leading-tight">
+              Agricultural Diagnostic &amp; Digital Soil Testing Center
+            </p>
+            <p className="text-[10px] text-stone-500 font-medium">
+              Baramati, Pune, Maharashtra
+            </p>
           </div>
           {isDemo && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 mt-0.5">
               {t("common.demoData")}
             </span>
           )}

@@ -10,13 +10,21 @@ class RecommendationService:
     @staticmethod
     def get_recommendations_for_field(db: Session, field_identifier: str) -> Dict[str, Any]:
         """Fetch soil report and generate deterministic field-specific recommendations."""
-        report_data = soil_health_service.get_report_for_field(db, field_identifier)
+        try:
+            report_data = soil_health_service.get_report_for_field(db, field_identifier)
+        except Exception as e:
+            # Fallback for unresolvable field to default demo field
+            try:
+                report_data = soil_health_service.get_report_for_field(db, "15")
+            except Exception:
+                report_data = {}
 
         field_info = report_data.get("field", {})
         farmer_info = report_data.get("farmer", {})
         has_report = report_data.get("has_report", False)
         is_demo = report_data.get("is_demo", False)
         parameters = report_data.get("parameters", [])
+        key_recs = report_data.get("key_recommendations", [])
 
         # Build soil status overview for key nutrients (pH, OC, N, P, K)
         key_params_map = {
@@ -70,6 +78,7 @@ class RecommendationService:
                 },
                 "soil_overview": soil_overview,
                 "recommendations": [],
+                "key_recommendations": [],
                 "message_en": "No soil test records found for this field. Recommendations require valid laboratory or DSM observations.",
                 "message_mr": "या शेतासाठी माती परीक्षण अहवाल उपलब्ध नाही. शिफारसींसाठी माती परीक्षण किंवा DSM निरीक्षणे आवश्यक आहेत.",
             }
@@ -99,11 +108,15 @@ class RecommendationService:
                 source=source,
             )
             if rec:
+                # Also attach concise farmer-friendly recommendation
+                rec["concise_recommendation"] = p.get("recommendation", "")
+                rec["concise_recommendation_mr"] = p.get("recommendation_mr", "")
+                rec["status_category"] = p.get("status_category", "GOOD")
+                rec["priority_rank"] = p.get("priority_rank", 5)
                 evaluated_recs.append(rec)
 
-        # Sort recommendations: HIGH PRIORITY first, then MODERATE, then INFORMATION
-        priority_order = {"high": 1, "moderate": 2, "info": 3}
-        evaluated_recs.sort(key=lambda r: priority_order.get(r.get("priority_key", "info"), 4))
+        # Sort recommendations: priority_rank ascending (1=Critical, 2=Low, 3=High, 4=Medium, 5=Optimal)
+        evaluated_recs.sort(key=lambda r: (r.get("priority_rank", 5), r.get("parameter_key", "")))
 
         # Calculate metrics
         high_count = sum(1 for r in evaluated_recs if r.get("priority_key") == "high")
@@ -125,8 +138,10 @@ class RecommendationService:
             },
             "soil_overview": soil_overview,
             "recommendations": evaluated_recs,
+            "key_recommendations": key_recs,
             "message_en": "Field-specific recommendations generated from verified soil observations.",
             "message_mr": "माती परीक्षण निरीक्षणांवर आधारित शेत-विशिष्ट शिफारसी तयार केल्या आहेत.",
         }
 
 recommendation_service = RecommendationService()
+

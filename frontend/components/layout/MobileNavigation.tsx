@@ -22,13 +22,12 @@ export const MobileNavigation: React.FC = () => {
     { key: "myFarm", labelKey: "nav.myFarm", href: "/my-farm", icon: Tractor },
     { key: "soilHealthCard", labelKey: "nav.soilHealthCard", href: "/soil-health-card", icon: FileBadge },
     { key: "soilMap", labelKey: "nav.soilMap", href: "/soil-map", icon: Map },
-    { key: "recommendations", labelKey: "nav.recommendations", href: "/recommendations", icon: Lightbulb },
     { key: "reports", labelKey: "nav.reports", href: "/reports", icon: FileText },
   ];
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-surface-border shadow-lg">
-      <div className="grid grid-cols-6 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

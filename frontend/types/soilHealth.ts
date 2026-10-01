@@ -9,8 +9,28 @@ export interface SoilParameter {
   interpretation: string;
   interpretation_mr?: string;
   reference_range: string;
-  source: 'LAB OBSERVATION' | 'DSM PREDICTION' | 'IMPORTED DATA' | 'NOT AVAILABLE' | string;
+  recommendation?: string;
+  recommendation_mr?: string;
+  recommendation_detail?: string;
+  recommendation_detail_mr?: string;
+  status_category?: 'OPTIMAL' | 'GOOD' | 'LOW' | 'MEDIUM' | 'HIGH' | 'VERY HIGH' | 'CRITICAL' | 'NOT AVAILABLE' | string;
+  priority_rank?: number;
+  priority_key?: 'high' | 'moderate' | 'info';
+  source?: 'LAB OBSERVATION' | 'DSM PREDICTION' | 'IMPORTED DATA' | 'NOT AVAILABLE' | string;
   source_type?: string;
+}
+
+export interface KeyRecommendation {
+  key: string;
+  name: string;
+  name_mr?: string;
+  value: number | null;
+  unit?: string;
+  status_category: string;
+  priority_rank: number;
+  priority_key: string;
+  recommendation: string;
+  recommendation_mr?: string;
 }
 
 export interface SoilReportFieldInfo {
@@ -39,6 +59,9 @@ export interface SoilReportMetadata {
   report_date: string;
   crop_name?: string | null;
   laboratory_name: string;
+  organization_name?: string;
+  center_name?: string;
+  center_location?: string;
   is_demo: boolean;
   status: string;
   observations?: string[];
@@ -51,6 +74,7 @@ export interface SoilHealthReport {
   is_demo: boolean;
   report: SoilReportMetadata | null;
   parameters: SoilParameter[];
+  key_recommendations?: KeyRecommendation[];
   dsm_stats?: any;
   observations?: string[];
 }

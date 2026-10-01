@@ -8,6 +8,11 @@ from app.models.farmer import Farmer
 from app.models.geography import Village, Taluka, District
 from app.models.soil_health import SoilReport, SoilParameterValue
 from app.services.soil_interpretation import SOIL_THRESHOLDS, interpret_parameter
+from app.services.recommendation_engine import (
+    get_concise_parameter_recommendation,
+    evaluate_parameter_recommendation,
+    get_ranked_key_recommendations,
+)
 
 # Authoritative Demo Sample Dataset (matching the reference laboratory report & DSM predictions for Baramati Vertisols)
 DEMO_LAB_PARAMETERS = [
@@ -152,6 +157,21 @@ class SoilHealthService:
                 src = "DSM PREDICTION" if n_raw is not None else p["source"]
 
             interp_en, interp_mr, ref_range = interpret_parameter(p["key"], val)
+            rec_info = get_concise_parameter_recommendation(p["key"], val, interp_en, interp_mr)
+            detailed_rec = evaluate_parameter_recommendation(
+                key=p["key"],
+                name=p["name"],
+                name_mr=p["name_mr"],
+                category=p["category"],
+                value=val,
+                unit=p["unit"],
+                interpretation_en=interp_en,
+                interpretation_mr=interp_mr,
+                source=src,
+            )
+            detail_guidance = detailed_rec.get("action_guidance", "") if detailed_rec else ""
+            detail_guidance_mr = detailed_rec.get("action_guidance_mr", "") if detailed_rec else ""
+
             params.append({
                 "sr_no": p["sr_no"],
                 "key": p["key"],
@@ -167,12 +187,31 @@ class SoilHealthService:
                 "interpretation_en": interp_en,
                 "interpretation_mr": interp_mr,
                 "reference_range": ref_range,
+                "recommendation": rec_info["recommendation"],
+                "recommendation_mr": rec_info["recommendation_mr"],
+                "status_category": rec_info["status_category"],
+                "priority_rank": rec_info["priority_rank"],
+                "priority_key": rec_info["priority_key"],
+                "recommendation_detail": detail_guidance,
+                "recommendation_detail_mr": detail_guidance_mr,
                 "source": src,
                 "source_type": src,
             })
 
         # Add Bulk Density (BD) from DSM raster
         bd_interp_en, bd_interp_mr, bd_ref = interpret_parameter("bd", bd_val)
+        bd_rec_info = get_concise_parameter_recommendation("bd", bd_val, bd_interp_en, bd_interp_mr)
+        bd_detailed = evaluate_parameter_recommendation(
+            key="bd",
+            name="Bulk Density",
+            name_mr="मातीची घनता (BD)",
+            category="Physical",
+            value=bd_val,
+            unit="g/cm³",
+            interpretation_en=bd_interp_en,
+            interpretation_mr=bd_interp_mr,
+            source="DSM PREDICTION",
+        )
         params.append({
             "sr_no": 15,
             "key": "bd",
@@ -188,9 +227,19 @@ class SoilHealthService:
             "interpretation_en": bd_interp_en,
             "interpretation_mr": bd_interp_mr,
             "reference_range": bd_ref,
+            "recommendation": bd_rec_info["recommendation"],
+            "recommendation_mr": bd_rec_info["recommendation_mr"],
+            "status_category": bd_rec_info["status_category"],
+            "priority_rank": bd_rec_info["priority_rank"],
+            "priority_key": bd_rec_info["priority_key"],
+            "recommendation_detail": bd_detailed.get("action_guidance", "") if bd_detailed else "",
+            "recommendation_detail_mr": bd_detailed.get("action_guidance_mr", "") if bd_detailed else "",
             "source": "DSM PREDICTION",
             "source_type": "DSM PREDICTION",
         })
+
+        # Dynamic Key Recommendations Summary (ranked internally: Critical > Low > High > Medium > Optimal)
+        key_recs = get_ranked_key_recommendations(params, max_items=5)
 
         dynamic_observations = [
             f"Soil reaction (pH {ph_val:.2f}) indicates optimal neutral condition, ensuring balanced availability of macro and micronutrients in Deccan Vertisols." if 6.5 <= ph_val <= 7.8 else f"Soil reaction (pH {ph_val:.2f}) indicates moderately alkaline condition typical of Vertisols (Black Cotton Soils).",
@@ -228,12 +277,16 @@ class SoilHealthService:
                 "sample_date": "15-09-2026",
                 "report_date": "20-09-2026",
                 "crop_name": "Sugarcane (ऊस)",
-                "laboratory_name": "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra",
+                "organization_name": "ADT AI Training Foundation",
+                "laboratory_name": "ADT AI Training Foundation — Agricultural Diagnostic & Digital Soil Testing Center, Baramati, Pune, Maharashtra",
+                "center_name": "Agricultural Diagnostic & Digital Soil Testing Center",
+                "center_location": "Baramati, Pune, Maharashtra",
                 "is_demo": True,
-                "status": "Verified & Certified",
+                "status": "Demonstration Diagnostic Record",
                 "observations": dynamic_observations,
             },
             "parameters": params,
+            "key_recommendations": key_recs,
             "dsm_stats": {
                 "gat_no": display_gat,
                 "name": display_gat,
