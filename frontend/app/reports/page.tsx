@@ -27,6 +27,11 @@ import {
   Sparkles,
   Info,
 } from "lucide-react";
+import {
+  getCleanReferenceRange,
+  getCleanReferenceRangeMr,
+} from "@/lib/soilRecommendations";
+import { translateGeoName, translateFarmerName, translateStatus } from "@/i18n/marathiHelper";
 
 type ButtonState = "idle" | "loading" | "success" | "error";
 
@@ -104,24 +109,24 @@ export default function ReportsPage() {
   };
 
   // Farmer & Field context from actual session / backend report
-  const farmerName =
+  const isMr = locale === "mr";
+  const rawFarmerName =
     report?.farmer?.name || farmer?.name || t("reports.farmerName") || "Farmer";
+  const farmerName = isMr ? translateFarmerName(rawFarmerName) : rawFarmerName;
   const gatNo = report?.field?.gat_no || field?.gat_no || activeGat;
-  const villageName =
+  const rawVillageName =
     report?.field?.village || location?.village || "Malegaon Bk";
-  const talukaName = report?.field?.taluka || location?.taluka || "Baramati";
-  const districtName = report?.field?.district || location?.district || "Pune";
-  const fieldArea =
-    report?.field?.area != null
-      ? `${report.field.area} ${report.field.area_unit || "Ha"}`
-      : field?.area != null
-      ? `${field.area} ${field.area_unit || "Ha"}`
-      : "1.96 Ha";
+  const villageName = isMr ? translateGeoName(rawVillageName) : rawVillageName;
+  const rawTalukaName = report?.field?.taluka || location?.taluka || "Baramati";
+  const talukaName = isMr ? translateGeoName(rawTalukaName) : rawTalukaName;
+  const rawDistrictName = report?.field?.district || location?.district || "Pune";
+  const districtName = isMr ? translateGeoName(rawDistrictName) : rawDistrictName;
+  const rawAreaNum = report?.field?.area != null ? report.field.area : (field?.area != null ? field.area : 1.96);
+  const fieldArea = `${rawAreaNum} ${isMr ? "हेक्टर" : "Ha"}`;
   const reportDate = report?.report?.report_date || "20-09-2026";
   const sampleDate = report?.report?.sample_date || "15-09-2026";
   const reportNo = report?.report?.report_no || "SPL/2026/SL-0104";
   const isDemo = report?.is_demo ?? true;
-  const isMr = locale === "mr";
 
   return (
     <ProtectedRoute>
@@ -228,7 +233,7 @@ export default function ReportsPage() {
                     {t("reports.gatNo") || "Gat Number"}
                   </span>
                   <span className="text-sm font-bold text-soil-primary font-mono block">
-                    Gat No. {gatNo}
+                    {isMr ? `गट क्र. ${gatNo}` : `Gat No. ${gatNo}`}
                   </span>
                 </div>
 
@@ -242,7 +247,7 @@ export default function ReportsPage() {
                     {villageName}, {talukaName}
                   </span>
                   <span className="text-[10px] text-text-muted block">
-                    {districtName}, Maharashtra
+                    {districtName}, {isMr ? "महाराष्ट्र" : "Maharashtra"}
                   </span>
                 </div>
 
@@ -330,15 +335,15 @@ export default function ReportsPage() {
 
                   <div className="pt-2 border-t border-surface-border text-[11px] text-text-muted space-y-1">
                     <div className="flex items-center justify-between">
-                      <span>Primary Metrics:</span>
+                      <span>{t("reports.primaryMetrics") || (isMr ? "मुख्य घटक:" : "Primary Metrics:")}</span>
                       <span className="font-semibold text-text-main">
-                        pH, EC, SOC, N, P, K + Micronutrients
+                        {isMr ? "सामू (pH), क्षारता (EC), सेंद्रिय कर्ब (SOC), नत्र (N), स्फुरद (P), पालाश (K) + सूक्ष्मअन्नद्रव्ये" : "pH, EC, SOC, N, P, K + Micronutrients"}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Format:</span>
+                      <span>{t("reports.format") || (isMr ? "स्वरूप:" : "Format:")}</span>
                       <span className="font-semibold text-text-main">
-                        A4 Single-Page Health Card
+                        {t("reports.card1Format") || (isMr ? "A4 एक-पानी आरोग्य पत्रिका" : "A4 Single-Page Health Card")}
                       </span>
                     </div>
                   </div>
@@ -427,15 +432,15 @@ export default function ReportsPage() {
 
                   <div className="pt-2 border-t border-surface-border text-[11px] text-text-muted space-y-1">
                     <div className="flex items-center justify-between">
-                      <span>Parameters:</span>
+                      <span>{t("reports.parameters") || (isMr ? "घटक:" : "Parameters:")}</span>
                       <span className="font-semibold text-text-main">
-                        Complete 14+ Laboratory Panel
+                        {t("reports.card2Params") || (isMr ? "संपूर्ण १४+ प्रयोगशाळा चाचण्या" : "Complete 14+ Laboratory Panel")}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span>Features:</span>
+                      <span>{t("reports.features") || (isMr ? "वैशिष्ट्ये:" : "Features:")}</span>
                       <span className="font-semibold text-text-main">
-                        Ranges, Status, Sources &amp; Notes
+                        {t("reports.card2Features") || (isMr ? "श्रेणी, स्थिती, निकष व टिपा" : "Ranges, Status, Sources & Notes")}
                       </span>
                     </div>
                   </div>
@@ -544,21 +549,21 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-surface-subtle rounded-xl border border-surface-border text-xs">
                   <div>
                     <span className="text-text-muted block text-[11px]">
-                      Farmer Name:
+                      {isMr ? "शेतकऱ्याचे नाव:" : "Farmer Name:"}
                     </span>
                     <span className="font-bold text-text-main">{farmerName}</span>
                   </div>
                   <div>
                     <span className="text-text-muted block text-[11px]">
-                      Gat Number:
+                      {isMr ? "गट क्रमांक:" : "Gat Number:"}
                     </span>
                     <span className="font-bold font-mono text-soil-primary">
-                      Gat No. {gatNo}
+                      {isMr ? `गट क्र. ${gatNo}` : `Gat No. ${gatNo}`}
                     </span>
                   </div>
                   <div>
                     <span className="text-text-muted block text-[11px]">
-                      Village &amp; Taluka:
+                      {isMr ? "गाव व तालुका:" : "Village & Taluka:"}
                     </span>
                     <span className="font-semibold text-text-main">
                       {villageName}, {talukaName}
@@ -566,7 +571,7 @@ export default function ReportsPage() {
                   </div>
                   <div>
                     <span className="text-text-muted block text-[11px]">
-                      Report Number:
+                      {isMr ? "अहवाल क्रमांक:" : "Report Number:"}
                     </span>
                     <span className="font-bold font-mono text-text-main">
                       {reportNo}
@@ -579,7 +584,7 @@ export default function ReportsPage() {
                   <table className="w-full text-left text-xs">
                     <thead className="bg-soil-primary text-white font-bold">
                       <tr>
-                        <th className="p-3 w-10 text-center">Sr.</th>
+                        <th className="p-3 w-10 text-center">{isMr ? "अ.क्र." : "Sr."}</th>
                         <th className="p-3">
                           {isMr ? "माती घटक" : "Soil Parameter"}
                         </th>
@@ -642,11 +647,13 @@ export default function ReportsPage() {
                               </td>
                               <td className="p-3">
                                 <span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-soil-primaryLight text-soil-primary border border-soil-primary/20">
-                                  {interp}
+                                  {isMr ? translateStatus(interp, true) : interp}
                                 </span>
                               </td>
-                              <td className="p-3 text-text-muted text-[11px]">
-                                {p.reference_range || "-"}
+                              <td className="p-3 text-text-muted text-[11px] whitespace-nowrap">
+                                {isMr
+                                  ? getCleanReferenceRangeMr(p.key, p.reference_range)
+                                  : getCleanReferenceRange(p.key, p.reference_range)}
                               </td>
                               <td className="p-3 text-text-main text-[11px] font-medium leading-relaxed max-w-[260px]">
                                 {rec}
@@ -690,7 +697,7 @@ export default function ReportsPage() {
                 {/* Data Source & Disclaimer (Section 13) */}
                 <div className="p-4 rounded-xl bg-surface-subtle border border-surface-border text-[11px] text-text-muted space-y-1.5">
                   <span className="font-bold text-text-main block">
-                    DATA SOURCE &amp; PLATFORM DISCLAIMER
+                    {t("reports.disclaimerTitle") || (isMr ? "माहिती स्रोत व प्रणाली अस्वीकरण" : "DATA SOURCE & PLATFORM DISCLAIMER")}
                   </span>
                   <p className="leading-relaxed">
                     {t("reports.disclaimer") ||
@@ -726,7 +733,7 @@ export default function ReportsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-xs">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Digital Verification Record</span>
+                  <span>{t("reports.digitalVerification") || (isMr ? "डिजिटल पडताळणी नोंद" : "Digital Verification Record")}</span>
                 </span>
               </div>
             </div>
@@ -747,18 +754,18 @@ export default function ReportsPage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-surface-subtle border-b border-surface-border text-text-muted font-bold">
                     <tr>
-                      <th className="p-3">Season / Year</th>
-                      <th className="p-3">Report Number</th>
-                      <th className="p-3">Sample Date</th>
-                      <th className="p-3">Report Date</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Actions</th>
+                      <th className="p-3">{t("reports.seasonYear") || (isMr ? "हंगाम / वर्ष" : "Season / Year")}</th>
+                      <th className="p-3">{t("reports.reportNumber") || (isMr ? "अहवाल क्रमांक" : "Report Number")}</th>
+                      <th className="p-3">{t("reports.sampleDateLabel") || (isMr ? "नमुना तारीख" : "Sample Date")}</th>
+                      <th className="p-3">{t("reports.reportDate") || (isMr ? "अहवाल तारीख" : "Report Date")}</th>
+                      <th className="p-3">{isMr ? "स्थिती" : "Status"}</th>
+                      <th className="p-3 text-right">{t("reports.actions") || (isMr ? "कृती" : "Actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-surface-border text-text-main">
                     <tr className="hover:bg-surface-subtle/50">
                       <td className="p-3 font-bold">
-                        Kharif / Post-Monsoon 2026
+                        {t("reports.kharifPostMonsoon") || (isMr ? "खरीप / मान्सूनोत्तर २०२६" : "Kharif / Post-Monsoon 2026")}
                       </td>
                       <td className="p-3 font-mono font-semibold text-soil-primary">
                         {reportNo}
@@ -767,7 +774,7 @@ export default function ReportsPage() {
                       <td className="p-3 text-text-muted">{reportDate}</td>
                       <td className="p-3">
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Certified
+                          {t("reports.certified") || (isMr ? "प्रमाणित" : "Certified")}
                         </span>
                       </td>
                       <td className="p-3 text-right">
@@ -781,20 +788,20 @@ export default function ReportsPage() {
                           <button
                             type="button"
                             onClick={handleDownloadCard}
-                            className="text-stone-700 hover:text-stone-900 inline-flex items-center gap-1 text-xs font-semibold"
+                            className="text-stone-700 hover:text-stone-900 inline-flex items-center gap-1 text-xs font-semibold cursor-pointer"
                             title="Download Soil Health Card PDF"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>Card</span>
+                            <span>{t("reports.cardDownload") || (isMr ? "पत्रिका" : "Card")}</span>
                           </button>
                           <button
                             type="button"
                             onClick={handleDownloadDetailed}
-                            className="text-stone-700 hover:text-stone-900 inline-flex items-center gap-1 text-xs font-semibold"
+                            className="text-stone-700 hover:text-stone-900 inline-flex items-center gap-1 text-xs font-semibold cursor-pointer"
                             title="Download Detailed Report PDF"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>Dossier</span>
+                            <span>{t("reports.dossierDownload") || (isMr ? "सविस्तर" : "Dossier")}</span>
                           </button>
                         </div>
                       </td>

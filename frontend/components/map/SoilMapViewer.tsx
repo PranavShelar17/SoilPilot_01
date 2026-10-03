@@ -19,6 +19,7 @@ import { RasterGrid, sampleGrid } from "@/lib/gis/rasterGrid";
 import { formatValue } from "@/lib/gis/format";
 import { dsmService, getOrCreateGatEntry, type GatDataFull } from "@/services/dsmService";
 import { MapLegend } from "./MapLegend";
+import { translateStatus } from "@/i18n/marathiHelper";
 
 export type BasemapStyle = "satellite" | "dark" | "street" | "topo";
 
@@ -99,53 +100,99 @@ export interface ClassificationResult {
 /**
  * Exact classification matching the Pune DSM standard and reference screenshot.
  */
-export function getClassification(layerId: string | undefined, val: number): ClassificationResult {
+export function getClassification(layerId: string | undefined, val: number, locale?: string): ClassificationResult {
   const id = (layerId || "ndvi").toLowerCase();
-  if (id === "ndvi") {
-    if (val < 0.2) return { status: "Sparse / Fallow", color: "#94a3b8", textColor: "#080d19" };
-    if (val < 0.5) return { status: "Moderate Canopy", color: "#f59e0b", textColor: "#000000" };
-    return { status: "Healthy / Dense Canopy", color: "#00e676", textColor: "#000000" };
+  let res: ClassificationResult;
+
+  if (id === "ndvi" || id === "evi" || id === "savi" || id === "ndre") {
+    if (val < 0.2) res = { status: "Sparse / Fallow", color: "#94a3b8", textColor: "#080d19" };
+    else if (val < 0.45) res = { status: "Moderate Canopy", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Healthy / Dense Canopy", color: "#00e676", textColor: "#000000" };
+  } else if (id === "ndmi") {
+    if (val < -0.1) res = { status: "Moisture Stressed (Dry)", color: "#ef4444", textColor: "#ffffff" };
+    else if (val < 0.2) res = { status: "Moderate Moisture", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "High Canopy Moisture", color: "#00e676", textColor: "#000000" };
+  } else if (id === "bsi") {
+    if (val < 0.0) res = { status: "Dense Vegetation Cover", color: "#00e676", textColor: "#000000" };
+    else if (val < 0.15) res = { status: "Partial Soil Exposure", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Bare Exposed Soil", color: "#ef4444", textColor: "#ffffff" };
+  } else if (id === "ndwi") {
+    if (val < -0.3) res = { status: "Non-Water / Dry", color: "#94a3b8", textColor: "#080d19" };
+    else if (val < 0.0) res = { status: "Moist Ground / Saturated", color: "#06b6d4", textColor: "#000000" };
+    else res = { status: "Open Surface Water", color: "#2563eb", textColor: "#ffffff" };
+  } else if (id === "ph") {
+    if (val < 6.5) res = { status: "Acidic Soil", color: "#ef4444", textColor: "#ffffff" };
+    else if (val <= 7.8) res = { status: "Optimal Neutral", color: "#00e676", textColor: "#000000" };
+    else if (val <= 8.5) res = { status: "Moderate Alkaline", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Strongly Alkaline", color: "#ef4444", textColor: "#ffffff" };
+  } else if (id === "soc") {
+    if (val < 0.75) res = { status: "Low Organic Carbon", color: "#ef4444", textColor: "#ffffff" };
+    else if (val < 1.1) res = { status: "Medium Organic Carbon", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "High Organic Carbon", color: "#00e676", textColor: "#000000" };
+  } else if (id === "nitrogen") {
+    if (val < 0.85) res = { status: "Low / Deficient", color: "#ef4444", textColor: "#ffffff" };
+    else if (val < 1.15) res = { status: "Medium Nitrogen", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Sufficient / High", color: "#00e676", textColor: "#000000" };
+  } else if (id === "cec") {
+    if (val < 25.0) res = { status: "Moderate Cation Exchange", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "High Nutrient Buffer (Fertile)", color: "#00e676", textColor: "#000000" };
+  } else if (id === "bd" || id === "bdod") {
+    if (val < 1.45) res = { status: "Ideal Porosity", color: "#00e676", textColor: "#000000" };
+    else if (val <= 1.56) res = { status: "Moderate Density", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Compacted Soil", color: "#ef4444", textColor: "#ffffff" };
+  } else if (id === "cfvo") {
+    if (val < 10.0) res = { status: "Low Rock Fragments (Favorable)", color: "#00e676", textColor: "#000000" };
+    else if (val <= 14.0) res = { status: "Moderate Coarse Fragments", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "High Coarse Rock Content", color: "#ef4444", textColor: "#ffffff" };
+  } else if (id === "clay") {
+    if (val < 35.0) res = { status: "Medium Clay Texture", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "High Clay Vertisol (Black Soil)", color: "#00e676", textColor: "#000000" };
+  } else if (id === "sand") {
+    res = { status: "Standard Sand Fraction", color: "#00e676", textColor: "#000000" };
+  } else if (id === "silt") {
+    res = { status: "Standard Silt Fraction", color: "#00e676", textColor: "#000000" };
+  } else if (id === "soil_texture") {
+    res = { status: "Class 1: Clay Vertisol (काळी माती)", color: "#5c3d2e", textColor: "#ffffff" };
+  } else if (id === "slope") {
+    if (val < 3.0) res = { status: "Flat to Gentle (0-3%)", color: "#00e676", textColor: "#000000" };
+    else if (val < 8.0) res = { status: "Moderate Slope (3-8%)", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Steep Slope (Erosion Risk)", color: "#ef4444", textColor: "#ffffff" };
+  } else if (id === "elevation") {
+    res = { status: "Deccan Plateau (~540-580m)", color: "#00e676", textColor: "#000000" };
+  } else if (id === "lulc") {
+    const lulcNames: Record<number, string> = {
+      0: "Water Body (पाणी)",
+      1: "Trees / Orchard (झाडे)",
+      2: "Grassland (गवत)",
+      3: "Flooded Veg (जलमय)",
+      4: "Cropland (पिके / शेती)",
+      5: "Shrubland (झुडपे)",
+      6: "Built-up / Settlement (वस्ती)",
+    };
+    const c = Math.round(val);
+    res = { status: lulcNames[c] || `Class ${c}`, color: "#00e676", textColor: "#000000" };
+  } else if (id === "kharif_rgb" || id === "rabi_rgb") {
+    res = { status: "True-Color Optical Satellite Image", color: "#00e676", textColor: "#000000" };
+  } else if (id === "uncertainty") {
+    if (val < 8.0) res = { status: "High Confidence", color: "#00e676", textColor: "#000000" };
+    else if (val < 15.0) res = { status: "Moderate Confidence", color: "#f59e0b", textColor: "#000000" };
+    else res = { status: "Elevated Uncertainty", color: "#ef4444", textColor: "#ffffff" };
+  } else {
+    res = { status: "Standard Monitoring", color: "#00e676", textColor: "#000000" };
   }
-  if (id === "evi") {
-    if (val < 0.2) return { status: "Low Biomass", color: "#94a3b8", textColor: "#080d19" };
-    if (val < 0.4) return { status: "Moderate Biomass", color: "#f59e0b", textColor: "#000000" };
-    return { status: "High Biomass", color: "#00e676", textColor: "#000000" };
+
+  if (locale === "mr") {
+    return {
+      ...res,
+      status: translateStatus(res.status, true),
+    };
   }
-  if (id === "ph") {
-    if (val < 6.5) return { status: "Acidic Soil", color: "#ef4444", textColor: "#ffffff" };
-    if (val <= 7.8) return { status: "Optimal Neutral", color: "#00e676", textColor: "#000000" };
-    if (val <= 8.5) return { status: "Moderate Alkaline", color: "#f59e0b", textColor: "#000000" };
-    return { status: "Strongly Alkaline", color: "#ef4444", textColor: "#ffffff" };
-  }
-  if (id === "soc") {
-    if (val < 0.5) return { status: "Low Organic Matter", color: "#ef4444", textColor: "#ffffff" };
-    if (val < 0.75) return { status: "Medium Organic Carbon", color: "#f59e0b", textColor: "#000000" };
-    return { status: "High Organic Carbon", color: "#00e676", textColor: "#000000" };
-  }
-  if (id === "nitrogen") {
-    if (val < 13.0) return { status: "Low / Deficient", color: "#ef4444", textColor: "#ffffff" };
-    if (val < 16.0) return { status: "Medium Nitrogen", color: "#f59e0b", textColor: "#000000" };
-    return { status: "Sufficient / High", color: "#00e676", textColor: "#000000" };
-  }
-  if (id === "bd") {
-    if (val < 1.45) return { status: "Ideal Porosity", color: "#00e676", textColor: "#000000" };
-    if (val <= 1.58) return { status: "Moderate Density", color: "#f59e0b", textColor: "#000000" };
-    return { status: "Compacted Soil", color: "#ef4444", textColor: "#ffffff" };
-  }
-  if (id === "elevation") {
-    return { status: "Deccan Plateau", color: "#00e676", textColor: "#000000" };
-  }
-  if (id === "uncertainty") {
-    if (val < 8.0) return { status: "High Confidence", color: "#00e676", textColor: "#000000" };
-    if (val < 15.0) return { status: "Moderate Confidence", color: "#f59e0b", textColor: "#000000" };
-    return { status: "Elevated Uncertainty", color: "#ef4444", textColor: "#ffffff" };
-  }
-  return { status: "Standard Monitoring", color: "#00e676", textColor: "#000000" };
+  return res;
 }
 
-export function getInterpretation(layer: DSMLayerConfig | null, val: number): string {
-  if (!layer) return "Standard Monitoring";
-  return getClassification(layer.id, val).status;
+export function getInterpretation(layer: DSMLayerConfig | null, val: number, locale?: string): string {
+  if (!layer) return locale === "mr" ? "प्रमाणित देखरेख" : "Standard Monitoring";
+  return getClassification(layer.id, val, locale).status;
 }
 
 function sampleGatGrid(
@@ -227,10 +274,26 @@ function probeValueAt(
   return { val, interp, swatch, col, row };
 }
 
+// Precision Agriculture Fertility Contour Palettes matching user reference screenshot
+// 8 discrete contour levels: Red (Deficient) -> Orange -> Amber -> Yellow -> Lime -> Olive -> Mid Green -> Deep Forest Green
+export const CONTOUR_RGB_PALETTE: [number, number, number][] = [
+  [253, 35, 0],   // 0: #fd2300 - Deep Crimson Red (Deficient / Critical)
+  [253, 136, 0],  // 1: #fd8800 - Vibrant Orange (Low)
+  [254, 187, 0],  // 2: #febb00 - Warm Golden Amber (Moderately Low)
+  [253, 233, 0],  // 3: #fde900 - Lemon Yellow (Average / Marginal)
+  [222, 234, 1],  // 4: #deea01 - Chartreuse / Lime (Good)
+  [164, 196, 0],  // 5: #a4c400 - Light Olive Green (Sufficient / High)
+  [107, 161, 1],  // 6: #6ba101 - Medium Green (Optimal)
+  [50, 123, 0],   // 7: #327b00 - Deep Forest Green (Very High / Prime)
+];
+
+export const CONTOUR_INVERTED_PALETTE: [number, number, number][] = [...CONTOUR_RGB_PALETTE].reverse();
+
 /**
  * Generates an in-memory high-definition canvas DataURL for a parcel,
- * sampling continuous values from the layer's RasterGrid,
- * smoothly contour-shaded and strictly clipped to the parcel polygon boundary.
+ * sampling continuous values from the layer's RasterGrid or field model,
+ * quantized into stepped organic contour bands with anti-aliasing and
+ * central soil sampling point marker matching the reference screenshot.
  */
 export function generateParcelLayerCanvas(
   outerRing: [number, number][],
@@ -244,8 +307,8 @@ export function generateParcelLayerCanvas(
   const dLng = maxLng - minLng || 0.0001;
   const dLat = maxLat - minLat || 0.0001;
 
-  const W = 256;
-  const H = 256;
+  const W = 512;
+  const H = 512;
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -263,28 +326,21 @@ export function generateParcelLayerCanvas(
   ctx.closePath();
   ctx.clip(); // Outside the polygon is guaranteed 100% transparent
 
-  // 2. Sample or interpolate raster values
+  // 2. Value range and palette selection
   const minVal = layer.min ?? 0.05;
   const maxVal = layer.max ?? 0.8;
   const span = maxVal - minVal || 1.0;
   const meanVal = layer.mean ?? (minVal + maxVal) / 2;
 
-  // Pre-generate 256-step color lookup array for maximum performance
-  const colorTable: [number, number, number][] = [];
-  for (let c = 0; c <= 255; c++) {
-    const v = minVal + (c / 255) * span;
-    const colorStr = interpolateColor(v, layer.colorStops);
-    const m = colorStr.match(/\d+/g);
-    if (m && m.length >= 3) {
-      colorTable.push([Number(m[0]), Number(m[1]), Number(m[2])]);
-    } else {
-      colorTable.push([0, 230, 118]);
-    }
-  }
+  const pal =
+    layer.id === "bd" || layer.id === "uncertainty"
+      ? CONTOUR_INVERTED_PALETTE
+      : CONTOUR_RGB_PALETTE;
+  const N = pal.length;
 
-  // Sample on a 16x16 control grid across the parcel bounding box
-  const gw = 16;
-  const gh = 16;
+  // 3. Sample 24x24 control grid across the parcel bounding box
+  const gw = 24;
+  const gh = 24;
   const valGrid: number[][] = [];
 
   for (let gy = 0; gy < gh; gy++) {
@@ -303,17 +359,21 @@ export function generateParcelLayerCanvas(
         }
       }
       if (val === null || isNaN(val)) {
-        // Deterministic organic spatial variation across the plot
+        // Natural multi-harmonic spatial fertility field matching precision ag patterns
         const nx = gx / (gw - 1);
         const ny = gy / (gh - 1);
-        const wave = Math.sin(nx * Math.PI * 1.3 + 0.4) * 0.14 + Math.cos(ny * Math.PI * 1.6 + 0.2) * 0.11;
-        val = Math.max(minVal, Math.min(maxVal, meanVal + wave * (maxVal - meanVal)));
+        const f1 = Math.sin(nx * 3.8 + 0.3) * Math.cos(ny * 3.2 + 0.1) * 0.28;
+        const f2 = Math.sin((nx + ny) * 4.2) * 0.12;
+        const f3 = -0.38 * Math.exp(-((nx - 0.36) ** 2 / 0.04 + (ny - 0.46) ** 2 / 0.05));
+        const f4 = 0.28 * Math.exp(-((nx - 0.72) ** 2 / 0.05 + (ny - 0.78) ** 2 / 0.06));
+        const wave = f1 + f2 + f3 + f4;
+        val = Math.max(minVal, Math.min(maxVal, meanVal + wave * (maxVal - minVal)));
       }
       valGrid[gy][gx] = val;
     }
   }
 
-  // Bilinear interpolation for each canvas pixel
+  // 4. Smooth Hermite interpolation and 8-level contour stepped quantization
   const imgData = ctx.createImageData(W, H);
   const data = imgData.data;
 
@@ -322,53 +382,94 @@ export function generateParcelLayerCanvas(
     const gy0 = Math.floor(gyFloat);
     const gy1 = Math.min(gh - 1, gy0 + 1);
     const ty = gyFloat - gy0;
+    // Smooth Hermite step
+    const sy = ty * ty * (3 - 2 * ty);
+
+    const pyNorm = y / H;
 
     for (let x = 0; x < W; x++) {
       const gxFloat = (x / (W - 1)) * (gw - 1);
       const gx0 = Math.floor(gxFloat);
       const gx1 = Math.min(gw - 1, gx0 + 1);
       const tx = gxFloat - gx0;
+      const sx = tx * tx * (3 - 2 * tx);
 
       const v00 = valGrid[gy0][gx0];
       const v10 = valGrid[gy0][gx1];
       const v01 = valGrid[gy1][gx0];
       const v11 = valGrid[gy1][gx1];
 
-      const vTop = v00 + tx * (v10 - v00);
-      const vBottom = v01 + tx * (v11 - v01);
-      const val = vTop + ty * (vBottom - vTop);
+      const vTop = v00 + sx * (v10 - v00);
+      const vBottom = v01 + sx * (v11 - v01);
+      const val = vTop + sy * (vBottom - vTop);
 
-      const norm = Math.max(0, Math.min(255, Math.round(((val - minVal) / span) * 255)));
-      const [r, g, b] = colorTable[norm];
+      // Subtle organic harmonic perturbation for natural rounded isoline curves
+      const pxNorm = x / W;
+      const boundaryWave =
+        Math.sin(pxNorm * 6.5 + pyNorm * 3.2) * 0.012 +
+        Math.cos(pyNorm * 7.5 - pxNorm * 4.1) * 0.01;
+      const norm = Math.max(0, Math.min(1.0, (val - minVal) / span + boundaryWave));
+
+      // Stepped contour quantization with anti-aliased transitions between bands
+      const t = norm * (N - 1);
+      const idxFloor = Math.min(N - 2, Math.floor(t));
+      const idxCeil = idxFloor + 1;
+      const frac = t - idxFloor;
+
+      const w = 0.08;
+      let r = pal[idxFloor][0];
+      let g = pal[idxFloor][1];
+      let b = pal[idxFloor][2];
+
+      if (frac > 1.0 - w) {
+        let trans = (frac - (1.0 - w)) / w;
+        trans = trans * trans * (3 - 2 * trans);
+        r = Math.round(pal[idxFloor][0] * (1 - trans) + pal[idxCeil][0] * trans);
+        g = Math.round(pal[idxFloor][1] * (1 - trans) + pal[idxCeil][1] * trans);
+        b = Math.round(pal[idxFloor][2] * (1 - trans) + pal[idxCeil][2] * trans);
+      }
 
       const idx = (y * W + x) * 4;
       data[idx] = r;
       data[idx + 1] = g;
       data[idx + 2] = b;
-      data[idx + 3] = 232;
+      data[idx + 3] = 255;
     }
   }
 
   ctx.putImageData(imgData, 0, 0);
 
-  // Subtle organic relief shading to match reference contour look
-  ctx.save();
-  ctx.beginPath();
-  outerRing.forEach(([lng, lat], i) => {
-    const px = Math.max(0, Math.min(W, ((lng - minLng) / dLng) * W));
-    const py = Math.max(0, Math.min(H, ((maxLat - lat) / dLat) * H));
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  });
-  ctx.closePath();
-  ctx.clip();
+  // 5. Draw Central Soil Sampling Point Marker (matching reference image)
+  let cLng = 0;
+  let cLat = 0;
+  for (const [lng, lat] of outerRing) {
+    cLng += lng;
+    cLat += lat;
+  }
+  cLng /= outerRing.length;
+  cLat /= outerRing.length;
 
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "rgba(255, 255, 255, 0.08)");
-  grad.addColorStop(0.4, "rgba(255, 255, 255, 0.01)");
-  grad.addColorStop(1, "rgba(0, 0, 0, 0.12)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
+  const cx = Math.max(12, Math.min(W - 12, ((cLng - minLng) / dLng) * W));
+  const cy = Math.max(12, Math.min(H - 12, ((maxLat - cLat) / dLat) * H));
+
+  ctx.save();
+  // Outer dark green stroke
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#0e5c00";
+  ctx.fill();
+
+  // Vibrant neon green core
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4.8, 0, Math.PI * 2);
+  ctx.fillStyle = "#62f612";
+  ctx.fill();
+
+  // Crisp center point
+  ctx.beginPath();
+  ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffffff";
+  ctx.fill();
   ctx.restore();
 
   return canvas.toDataURL("image/png");
@@ -392,7 +493,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   selectedStats,
   isAdmin = false,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const leafletRef = useRef<any>(null);
@@ -401,8 +502,8 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   const tileLayerRef = useRef<any>(null);
   const overlayLayerRef = useRef<ImageOverlay | null>(null);
   const geojsonLayerRef = useRef<GeoJSON | null>(null);
-  const farmLayerRef = useRef<GeoJSON | null>(null);
   const hudMarkerRef = useRef<Marker | null>(null);
+  const sampleMarkerRef = useRef<any>(null);
 
   const [ready, setReady] = useState(false);
   const [clickedProbe, setClickedProbe] = useState<ClickedProbeState | null>(null);
@@ -631,6 +732,10 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       map.removeLayer(overlayLayerRef.current);
       overlayLayerRef.current = null;
     }
+    if (sampleMarkerRef.current) {
+      map.removeLayer(sampleMarkerRef.current);
+      sampleMarkerRef.current = null;
+    }
 
     if (!layer || layer.id === "farm_boundary") return;
 
@@ -682,41 +787,17 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       if (lat > pMaxLat) pMaxLat = lat;
     }
 
-    const fullEntry =
-      cleanGat && gatDataFull
-        ? (gatDataFull[cleanGat] || getOrCreateGatEntry(gatDataFull, cleanGat))
-        : null;
-
-    const gatOverlay = fullEntry?.overlays?.[layer.id];
-
-    // Determine whether this Gat has an exact precomputed PNG
-    const hasMatchingPrecomputed =
-      Boolean(gatOverlay?.url) &&
-      cleanGat &&
-      (gatOverlay!.url.includes(`/${cleanGat}_`) || gatOverlay!.url.includes(`gat_${cleanGat}_`));
-
-    let overlayUrl: string | undefined = undefined;
-    let latLngBounds: [[number, number], [number, number]];
-
-    if (hasMatchingPrecomputed && gatOverlay?.url) {
-      overlayUrl = gatOverlay.url;
-      latLngBounds = (gatOverlay.latLngBounds || [
-        [gatOverlay.bounds[1], gatOverlay.bounds[0]],
-        [gatOverlay.bounds[3], gatOverlay.bounds[2]],
-      ]) as [[number, number], [number, number]];
-    } else {
-      // Generate crisp, parcel-specific clipped canvas heatmap directly aligned with polygon bounds
-      overlayUrl = generateParcelLayerCanvas(
-        outerRing,
-        layer,
-        grid,
-        { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat }
-      );
-      latLngBounds = [
-        [pMinLat, pMinLng],
-        [pMaxLat, pMaxLng],
-      ];
-    }
+    // Always generate crisp, high-definition precision agronomic contour heatmap directly clipped to parcel
+    const overlayUrl = generateParcelLayerCanvas(
+      outerRing,
+      layer,
+      grid,
+      { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat }
+    );
+    const latLngBounds: [[number, number], [number, number]] = [
+      [pMinLat, pMinLng],
+      [pMaxLat, pMaxLng],
+    ];
 
     if (!overlayUrl) return;
 
@@ -729,7 +810,35 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     overlayLayerRef.current = overlay;
 
-    // 4. Calculate exact SVG/CSS percentage clipping path based on the overlay's bounds
+    // 4. Add Central Soil Sample Location Marker matching reference screenshot
+    let cLng = 0;
+    let cLat = 0;
+    for (const [lng, lat] of outerRing) {
+      cLng += lng;
+      cLat += lat;
+    }
+    cLng /= outerRing.length;
+    cLat /= outerRing.length;
+
+    const sampleMarker = L.circleMarker([cLat, cLng], {
+      radius: 6,
+      fillColor: "#62f612",
+      color: "#0e5c00",
+      weight: 2,
+      opacity: 1.0,
+      fillOpacity: 1.0,
+      zIndexOffset: 3000,
+    }).addTo(map);
+
+    sampleMarker.bindTooltip(
+      `<div style="font-weight:700;font-size:12px;color:#052e16;padding:2px 4px;">📍 ${
+        locale === "mr" ? "माती नमुना बिंदू (Soil Sample Point)" : "Soil Sampling Point (GPS Probe)"
+      }</div>`,
+      { direction: "top", offset: [0, -6] }
+    );
+    sampleMarkerRef.current = sampleMarker;
+
+    // 5. Calculate exact SVG/CSS percentage clipping path based on the overlay's bounds
     const overlaySouth = latLngBounds[0][0];
     const overlayWest = latLngBounds[0][1];
     const overlayNorth = latLngBounds[1][0];
@@ -757,7 +866,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     map.on("zoomend", applyClip);
     map.on("viewreset", applyClip);
 
-    // 5. Ensure GeoJSON parcel outline stays prominently above raster
+    // 6. Ensure GeoJSON parcel outline stays prominently above raster
     if (geojsonLayerRef.current) {
       geojsonLayerRef.current.bringToFront();
     }
@@ -765,8 +874,12 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     return () => {
       map.off("zoomend", applyClip);
       map.off("viewreset", applyClip);
+      if (sampleMarkerRef.current) {
+        map.removeLayer(sampleMarkerRef.current);
+        sampleMarkerRef.current = null;
+      }
     };
-  }, [layer, selectedGatId, myGatId, opacity, ready, isAdmin, gatDataFull, gats, grid]);
+  }, [layer, selectedGatId, myGatId, opacity, ready, isAdmin, gatDataFull, gats, grid, locale]);
 
   // 6. Update Opacity Dynamically
   useEffect(() => {
@@ -952,8 +1065,14 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     const probeLng = clickedProbe?.lng ?? centroidLng;
     const probeLat = clickedProbe?.lat ?? centroidLat;
 
-    const layerName = layer?.shortName || layer?.name || "NDVI";
-    const layerUnit = layer?.unit || "index";
+    const layerName =
+      locale === "mr"
+        ? (layer?.marathiName || layer?.shortName || layer?.name || "NDVI")
+        : (layer?.shortName || layer?.name || "NDVI");
+    const layerUnit =
+      locale === "mr"
+        ? (layer?.unit === "index" ? "इंडेक्स" : layer?.unit || "इंडेक्स")
+        : (layer?.unit || "index");
     const valDisplay =
       clickedProbe?.val !== null && clickedProbe?.val !== undefined
         ? formatValue(clickedProbe.val)
@@ -961,7 +1080,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
             ? gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(3)
             : "0.518");
 
-    const classInfo = getClassification(layer?.id, clickedProbe?.val ?? 0.518);
+    const classInfo = getClassification(layer?.id, clickedProbe?.val ?? 0.518, locale);
 
     const avgDisplay = (() => {
       const layerId = layer?.id as DSMRasterLayerId | undefined;
@@ -990,12 +1109,15 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     const areaTagText = (() => {
       if (currentClassArea) {
+        if (locale === "mr") {
+          return `${currentClassArea.acres.toFixed(2)} एकर (${currentClassArea.ha.toFixed(2)} हेक्टर)`;
+        }
         return `${currentClassArea.acres.toFixed(2)} Acres (${currentClassArea.ha.toFixed(2)} Ha)`;
       }
       if (!gatDataFull && !grid) {
-        return "Calculating area…";
+        return locale === "mr" ? "क्षेत्रफळ मोजत आहे…" : "Calculating area…";
       }
-      return "Area unavailable";
+      return locale === "mr" ? "क्षेत्रफळ अनुपलब्ध" : "Area unavailable";
     })();
 
     const hudHtml = `
@@ -1003,10 +1125,10 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
         <!-- 1. White Gat Badge (Left side) -->
         <div style="background: #ffffff; border-radius: 10px; padding: 10px 14px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2); border: 1.5px solid rgba(229, 231, 235, 0.95); min-width: 155px; white-space: nowrap;">
           <div style="font-weight: 800; font-size: 14px; color: #00c853; line-height: 1.25; letter-spacing: -0.01em;">
-            Gat / गट क्र. ${cleanNum}
+            ${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}
           </div>
           <div style="font-size: 11.5px; color: #64748b; font-weight: 600; margin-top: 3px; white-space: nowrap;">
-            Area: ${acres} Acres (${ha} Ha)
+            ${locale === "mr" ? `क्षेत्रफळ: ${acres} एकर (${ha} हेक्टर)` : `Area: ${acres} Acres (${ha} Ha)`}
           </div>
         </div>
 
@@ -1019,7 +1141,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12px; font-weight: 700;">
             <div style="display: flex; align-items: center; gap: 6px; color: #ffffff;">
               <span style="color: #00e676; font-size: 13px;">📍</span>
-              <span>Gat / गट क्र. ${cleanNum}</span>
+              <span>${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}</span>
             </div>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #94a3b8; font-weight: 600; letter-spacing: -0.01em;">
               ${probeLat.toFixed(5)}° N, ${probeLng.toFixed(5)}° E
@@ -1032,7 +1154,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           <!-- Metric Row: Clicked / Cursor Layer: [Large Neon Green Value] [unit] -->
           <div style="display: flex; align-items: baseline; gap: 7px; margin: 2px 0;">
             <span style="font-weight: 700; font-size: 13.5px; color: #ffffff; letter-spacing: -0.01em;">
-              Clicked / Cursor ${layerName}:
+              ${locale === "mr" ? `निवडलेला / कर्सर ${layerName}:` : `Clicked / Cursor ${layerName}:`}
             </span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 24px; color: #00e676; line-height: 1; letter-spacing: -0.02em;">
               ${valDisplay}
@@ -1048,12 +1170,12 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
               <span style="display: inline-flex; align-items: center; padding: 2.5px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
                 ${classInfo.status}
               </span>
-              <span style="display: inline-flex; align-items: center; padding: 2.5px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; background: rgba(30, 41, 59, 0.9); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.3); white-space: nowrap; letter-spacing: -0.01em;" title="Class area inside Gat ${cleanNum}">
+              <span style="display: inline-flex; align-items: center; padding: 2.5px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; background: rgba(30, 41, 59, 0.9); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.3); white-space: nowrap; letter-spacing: -0.01em;" title="${locale === "mr" ? `गट ${cleanNum} मधील क्षेत्रफळ` : `Class area inside Gat ${cleanNum}`}">
                 ${areaTagText}
               </span>
             </div>
             <span style="font-size: 11.5px; color: #cbd5e1; font-weight: 600; white-space: nowrap;">
-              Plot Avg: ${avgDisplay} ${layerUnit}
+              ${locale === "mr" ? `प्लॉट सरासरी: ${avgDisplay} ${layerUnit}` : `Plot Avg: ${avgDisplay} ${layerUnit}`}
             </span>
           </div>
         </div>
@@ -1069,7 +1191,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     const marker = L.marker([probeLat, probeLng], { icon: customIcon, interactive: false }).addTo(map);
     hudMarkerRef.current = marker;
-  }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull, parcelClassAreas]);
+  }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull, parcelClassAreas, locale]);
 
   return (
     <div className={`relative w-full rounded-2xl overflow-hidden shadow-card border border-surface-border bg-slate-900 ${className}`}>

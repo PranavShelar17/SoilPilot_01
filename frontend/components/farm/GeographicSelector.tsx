@@ -18,6 +18,7 @@ import {
   Sparkles,
   Layers,
 } from "lucide-react";
+import { translateGeoName, translateFarmerName } from "@/i18n/marathiHelper";
 
 interface GeographicSelectorProps {
   onFieldSelected?: (field: FieldResult) => void;
@@ -28,7 +29,7 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
   onFieldSelected,
   className = "",
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   // Permanently fixed administrative levels (Maharashtra -> Pune)
   const fixedState = t("geo.fixedState");
@@ -224,7 +225,7 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
               <option value="">{t("geo.selectTaluka")}</option>
               {talukas.map((tName) => (
                 <option key={tName} value={tName}>
-                  {tName}
+                  {locale === "mr" ? translateGeoName(tName) : tName}
                 </option>
               ))}
             </select>
@@ -254,7 +255,7 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
               </option>
               {filteredVillages.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.name}
+                  {locale === "mr" ? translateGeoName(v.name) : v.name}
                 </option>
               ))}
             </select>
@@ -277,7 +278,7 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
                 onClick={() => setVillageSearch("")}
                 className="text-[11px] text-text-muted hover:text-text-main underline px-1"
               >
-                Clear
+                {locale === "mr" ? "साफ करा" : "Clear"}
               </button>
             )}
           </div>
@@ -369,21 +370,21 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
             <div className="p-3 bg-white rounded-lg border border-surface-border">
               <span className="text-text-muted block">{t("geo.fieldArea")}</span>
               <span className="font-bold text-sm text-text-main mt-0.5 block">
-                {fieldResult.area ? `${fieldResult.area} ${fieldResult.area_unit}` : "N/A"}
+                {fieldResult.area ? `${fieldResult.area} ${locale === "mr" ? (fieldResult.area_unit === "Ha" || fieldResult.area_unit === "ha" ? "हेक्टर" : "एकर") : fieldResult.area_unit}` : "N/A"}
               </span>
             </div>
 
             <div className="p-3 bg-white rounded-lg border border-surface-border">
               <span className="text-text-muted block">{t("geo.farmerName")}</span>
               <span className="font-bold text-sm text-text-main mt-0.5 block truncate">
-                {fieldResult.farmer?.full_name || t("geo.unassigned")}
+                {fieldResult.farmer?.full_name ? (locale === "mr" ? translateFarmerName(fieldResult.farmer.full_name) : fieldResult.farmer.full_name) : t("geo.unassigned")}
               </span>
             </div>
 
             <div className="p-3 bg-white rounded-lg border border-surface-border">
-              <span className="text-text-muted block">Location Hierarchy</span>
+              <span className="text-text-muted block">{t("geo.locationHierarchy") || (locale === "mr" ? "स्थान रचना" : "Location Hierarchy")}</span>
               <span className="font-semibold text-xs text-text-main mt-0.5 block truncate">
-                {fieldResult.village?.taluka_name || selectedTaluka} • {fieldResult.village?.name}
+                {(locale === "mr" ? translateGeoName(fieldResult.village?.taluka_name || selectedTaluka) : (fieldResult.village?.taluka_name || selectedTaluka))} • {(locale === "mr" ? translateGeoName(fieldResult.village?.name || "") : fieldResult.village?.name)}
               </span>
             </div>
           </div>

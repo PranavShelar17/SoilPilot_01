@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { Sprout, Globe, LogOut, User } from "lucide-react";
+import { translateFarmerName, formatGatLabel } from "@/i18n/marathiHelper";
 
 export const Header: React.FC = () => {
   const { language, setLanguage, t } = useI18n();
@@ -82,10 +83,10 @@ export const Header: React.FC = () => {
           {isAuthenticated && (farmer || field) && (
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-subtle border border-surface-border text-xs font-semibold text-text-main shadow-xs">
               <User className="w-3.5 h-3.5 text-soil-primary" />
-              <span className="max-w-[130px] truncate">{farmer?.name || "Farmer"}</span>
+              <span className="max-w-[130px] truncate">{translateFarmerName(farmer?.name, language === "mr")}</span>
               {field?.gat_no && (
                 <span className="px-2 py-0.5 rounded-md bg-soil-primaryLight text-soil-primary text-[11px] font-bold border border-soil-primary/20">
-                  Gat {field.gat_no}
+                  {formatGatLabel(field.gat_no, language === "mr")}
                 </span>
               )}
             </div>

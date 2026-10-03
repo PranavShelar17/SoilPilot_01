@@ -9,12 +9,12 @@ def test_soil_interpretation_rules():
     # Test pH
     en, mr, ref = interpret_parameter("ph", 8.38)
     assert "Alkaline" in en
-    assert "Alkaline" in ref
+    assert "6.0 - 7.5" in ref
 
     # Test Organic Carbon
     en, mr, ref = interpret_parameter("organic_carbon", 1.02)
     assert "High" in en
-    assert "High" in ref
+    assert "0.50 - 0.75%" in ref
 
     # Test Nitrogen
     en, mr, ref = interpret_parameter("available_nitrogen", 163.0)
@@ -48,7 +48,7 @@ def test_get_soil_health_demo_field():
     ec_param = next(p for p in params if p["key"] == "ec")
     assert ec_param["value"] == 0.10
     assert ec_param["unit"] == "dS/m"
-    assert "Normal" in ec_param["interpretation"]
+    assert "Normal" in ec_param["interpretation"] or "Non-saline" in ec_param["interpretation"]
 
 def test_get_soil_health_summary_demo_field():
     response = client.get("/api/v1/soil-health/field/demo-field-gat-104/summary")

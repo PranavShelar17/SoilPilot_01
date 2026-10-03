@@ -275,6 +275,65 @@ This launches:
 
 ---
 
+## 15. Soil Health Parameter Interpretation Standards
+
+SoilPilot applies deterministic agronomic classification rules derived from the **Government Soil Health Card (SHC) scheme**, large-scale **Indian Micronutrient Research (242,827 soil samples across 615 districts)**, and **MPKV Rahuri STCR-IPNS equations** for Maharashtra Vertisols:
+
+| Parameter | Range | Classification | Short recommendation | Ref. |
+| --------- | ----- | -------------- | -------------------- | ---- |
+| **pH** | <5.0 | Strongly acidic | Apply lime as per soil test | R1 |
+| | 5.0–6.0 | Acidic | Monitor; lime if needed | R1 |
+| | 6.0–7.5 | Suitable | Maintain current pH | R1 |
+| | 7.5–8.5 | Alkaline | Monitor Fe/Zn | R1, R2 |
+| | >8.5 | Strongly alkaline | Test soil; manage alkalinity | R1 |
+| **EC** | <0.4 dS/m | Non-saline | No salinity action | R1 |
+| | 0.4–0.8 | Slightly saline | Improve drainage; monitor | R1 |
+| | 0.8–1.6 | Moderately saline | Manage salts and irrigation | R1 |
+| | >1.6 | Highly saline | Soil/water testing needed | R1 |
+| **OC** | <0.5% | Low | Add FYM/compost/residues | R1 |
+| | 0.5–0.75% | Medium | Maintain organic matter | R1 |
+| | >0.75% | High | Maintain; no extra OC needed | R1 |
+| **N** | <280 kg/ha | Low | Increase N; ~125% RDF* | R1, R3 |
+| | 280–560 | Medium | Normal RDF* | R1, R3 |
+| | >560 | High | Reduce N; ~75% RDF* | R1, R3 |
+| **P** | <10 kg/ha | Low | Increase P; ~125% RDF* | R1, R3 |
+| | 10–25 | Medium | Normal RDF* | R1, R3 |
+| | 25–50 | High | Reduce P; ~75% RDF* | R1, R3 |
+| | >50 | Very high | Avoid P fertilizer | R1 |
+| **K** | <120 kg/ha | Low | Increase K; ~125% RDF* | R1, R3 |
+| | 120–280 | Medium | Normal RDF* | R1, R3 |
+| | 280–600 | High | Reduce K; ~75% RDF* | R1, R3 |
+| | >600 | Very high | Avoid K fertilizer | R1 |
+| **Fe** | <2.5 mg/kg | Very deficient | Correct Fe deficiency | R2 |
+| | 2.5–4.5 | Deficient | Apply Fe if needed | R1, R2 |
+| | 4.5–6.5 | Marginal | Monitor Fe | R2 |
+| | >6.5 | Sufficient | No Fe correction | R2 |
+| **Zn** | <0.3 mg/kg | Very deficient | Correct Zn deficiency | R2 |
+| | 0.3–0.6 | Deficient | Apply Zn if needed | R1, R2 |
+| | 0.6–0.9 | Marginal | Monitor Zn | R2 |
+| | >0.9 | Sufficient | No Zn correction | R2 |
+| **S** | <15 mg/kg | Deficient | Apply S as needed | R2 |
+| | 15–22.5 | Marginal | Monitor S | R2 |
+| | >22.5 | Sufficient | Maintain S | R2 |
+| **B** | <0.5 mg/kg | Deficient | Apply B carefully | R2 |
+| | 0.5–0.7 | Marginal | Monitor B | R2 |
+| | >0.7 | Sufficient | No B correction | R2 |
+| **Cu** | <0.4 mg/kg | Deficient | Apply Cu if needed | R2 |
+| | 0.4–0.6 | Marginal | Monitor Cu | R2 |
+| | >0.6 | Sufficient | No Cu correction | R2 |
+| **Mn** | <3 mg/kg | Deficient | Apply Mn if needed | R2 |
+| | 3–5 | Marginal | Monitor Mn | R2 |
+| | >5 | Sufficient | No Mn correction | R2 |
+
+> **References & Notes:**
+> - **R1**: Soil Health Card (SHC) Scheme, Ministry of Agriculture & Farmers Welfare, Govt of India.
+> - **R2**: Indian Micronutrient Research (242,827 soil samples across 615 districts), Shukla et al., ICAR-IISS.
+> - **R3**: Soil Test Crop Response (STCR) & MPKV Rahuri STCR-IPNS Framework for Maharashtra Vertisols.
+> - **\*RDF**: Recommended Dose of Fertilizers (शिफारशीत खत मात्रा).
+> - See full documentation in [`docs/soil-health-standards.md`](docs/soil-health-standards.md).
+
+---
+
 ## 15. Phase 2 Database & Migration Commands
 
 ### Running Alembic Migrations

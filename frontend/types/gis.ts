@@ -3,15 +3,37 @@
  * SoilPilot Phase 6 (+ raster / Gat visualisation)
  */
 
+export type DSMLayerCategoryId = "soil_properties" | "topography" | "land_use";
+
 export type DSMLayerId =
   | "farm_boundary"
-  | "ndvi"
-  | "evi"
-  | "ph"
+  // 1. Soil Properties (0–30 cm Root-Zone Standardized)
+  | "bdod"
+  | "cec"
+  | "cfvo"
+  | "clay"
+  | "sand"
+  | "silt"
   | "soc"
   | "nitrogen"
-  | "bd"
+  | "ph"
+  | "soil_texture"
+  // 2. Topography & Elevation
   | "elevation"
+  | "slope"
+  // 3. Land Use & Multi-Spectral Indices
+  | "lulc"
+  | "kharif_rgb"
+  | "rabi_rgb"
+  | "ndvi"
+  | "evi"
+  | "savi"
+  | "ndmi"
+  | "ndre"
+  | "bsi"
+  | "ndwi"
+  // Legacy compatibility
+  | "bd"
   | "uncertainty";
 
 /** Layers that are backed by a raster (everything except the boundary layer). */
@@ -73,13 +95,22 @@ export interface DSMLayerConfig {
   rasterGridUrl?: string;
   gridMeta?: RasterGridMeta;
   category?: string;
+  categoryLabel?: string;
+  categoryLabelMr?: string;
   marathiName?: string;
   description?: string;
   mean?: number;
   std?: number;
 }
 
-/** Shape of `public/data/dsm/manifest.json` (produced by scripts/gis/export_dsm_web.py). */
+export interface DSMManifestCategory {
+  id: DSMLayerCategoryId;
+  name: string;
+  marathiName: string;
+  icon?: string;
+}
+
+/** Shape of `public/data/dsm/manifest.json`. */
 export interface DSMManifestLayer {
   id: DSMRasterLayerId;
   key: string;
@@ -87,6 +118,8 @@ export interface DSMManifestLayer {
   marathiName: string;
   unit: string;
   category: string;
+  categoryLabel?: string;
+  categoryLabelMr?: string;
   description: string;
   cmap: string;
   min: number;
@@ -96,7 +129,7 @@ export interface DSMManifestLayer {
   validPixels: number;
   image: string;
   grid: RasterGridMeta;
-  legendStops: { pct: number; color: string; value: number }[];
+  legendStops: { pct: number; color: string; value: number; label?: string }[];
 }
 
 export interface DSMManifest {
@@ -113,6 +146,7 @@ export interface DSMManifest {
     district: string;
     state: string;
   };
+  categories?: DSMManifestCategory[];
   layers: DSMManifestLayer[];
 }
 

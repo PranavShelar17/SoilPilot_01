@@ -228,49 +228,55 @@ class AuthService:
                     field = new_field
 
             if not field:
-                # Automatically provision Gat parcel (supports Gats 1-221)
-                farmer = db.query(Farmer).filter(
-                    Farmer.farmer_code == f"FARMER-{clean_gat}"
-                ).first()
-                if not farmer:
-                    farmer = Farmer(
-                        farmer_code=f"FARMER-{clean_gat}",
-                        full_name=f"Farmer (Gat {clean_gat})",
-                        preferred_language="mr",
-                        role="farmer",
-                        gat_number=clean_gat,
+                # Automatically provision Gat parcel for valid survey range (Gats 1-221)
+                if clean_gat.isdigit() and 1 <= int(clean_gat) <= 221:
+                    farmer = db.query(Farmer).filter(
+                        Farmer.farmer_code == f"FARMER-{clean_gat}"
+                    ).first()
+                    if not farmer:
+                        farmer = Farmer(
+                            farmer_code=f"FARMER-{clean_gat}",
+                            full_name=f"Farmer (Gat {clean_gat})",
+                            preferred_language="mr",
+                            role="farmer",
+                            gat_number=clean_gat,
+                            is_active=True,
+                        )
+                        db.add(farmer)
+                        db.flush()
+                    else:
+                        farmer.gat_number = clean_gat
+                        db.flush()
+
+                    num = int(clean_gat)
+                    offsetX = (((num * 37) % 21) - 10) * 0.00065
+                    offsetY = (((num * 53) % 19) - 9) * 0.00055
+                    cLon = 74.5065 + offsetX
+                    cLat = 18.1655 + offsetY
+                    dx = 0.00075
+                    dy = 0.00065
+                    wkt = f"POLYGON(({cLon - dx} {cLat - dy}, {cLon + dx} {cLat - dy}, {cLon + dx} {cLat + dy}, {cLon - dx} {cLat + dy}, {cLon - dx} {cLat - dy}))"
+                    area_ha = round(1.25 + (num % 7) * 0.52, 2)
+
+                    new_field = Field(
+                        farmer_id=farmer.id,
+                        village_id=village.id,
+                        gat_no=clean_gat,
+                        area=area_ha,
+                        area_unit="hectare",
+                        geometry=wkt,
+                        is_demo=False,
                         is_active=True,
                     )
-                    db.add(farmer)
-                    db.flush()
+                    db.add(new_field)
+                    db.commit()
+                    db.refresh(new_field)
+                    field = new_field
                 else:
-                    farmer.gat_number = clean_gat
-                    db.flush()
-
-                num = int(clean_gat) if clean_gat.isdigit() else 123
-                offsetX = (((num * 37) % 21) - 10) * 0.00065
-                offsetY = (((num * 53) % 19) - 9) * 0.00055
-                cLon = 74.5065 + offsetX
-                cLat = 18.1655 + offsetY
-                dx = 0.00075
-                dy = 0.00065
-                wkt = f"POLYGON(({cLon - dx} {cLat - dy}, {cLon + dx} {cLat - dy}, {cLon + dx} {cLat + dy}, {cLon - dx} {cLat + dy}, {cLon - dx} {cLat - dy}))"
-                area_ha = round(1.25 + (num % 7) * 0.52, 2)
-
-                new_field = Field(
-                    farmer_id=farmer.id,
-                    village_id=village.id,
-                    gat_no=clean_gat,
-                    area=area_ha,
-                    area_unit="hectare",
-                    geometry=wkt,
-                    is_demo=False,
-                    is_active=True,
-                )
-                db.add(new_field)
-                db.commit()
-                db.refresh(new_field)
-                field = new_field
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="We couldn't find a farm with these details. Please check the Gat number or select a different village.",
+                    )
 
             farmer = field.farmer
             if not farmer:

@@ -73,6 +73,7 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
   const farmLayerRef = useRef<GeoJSON | null>(null);
   const allPlotsLayerRef = useRef<GeoJSON | null>(null);
   const centerMarkerRef = useRef<LeafletMarker | null>(null);
+  const sampleDotMarkerRef = useRef<any>(null);
   const dsmLayerRef = useRef<ImageOverlay | TileLayer | null>(null);
 
   const [activeBasemap, setActiveBasemap] = useState<"satellite" | "street">("satellite");
@@ -277,6 +278,10 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
       map.removeLayer(centerMarkerRef.current);
       centerMarkerRef.current = null;
     }
+    if (sampleDotMarkerRef.current) {
+      map.removeLayer(sampleDotMarkerRef.current);
+      sampleDotMarkerRef.current = null;
+    }
 
     // A. Background Neighbor Plots (if provided for Admin)
     if (allPlotsGeoJSON && allPlotsGeoJSON.features && allPlotsGeoJSON.features.length > 0) {
@@ -354,6 +359,24 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
         }).addTo(map);
         centerMarkerRef.current = marker;
 
+        // Soil Sample GPS Location Marker (matching reference image)
+        const sampleDotMarker = L.circleMarker(center, {
+          radius: 6,
+          fillColor: "#62f612",
+          color: "#0e5c00",
+          weight: 2,
+          opacity: 1.0,
+          fillOpacity: 1.0,
+          zIndexOffset: 1500,
+        }).addTo(map);
+        sampleDotMarker.bindTooltip(
+          `<div style="font-weight:700;font-size:12px;color:#052e16;">📍 ${
+            language === "mr" ? "माती नमुना ठिकाण" : "Soil Sample Point"
+          }</div>`,
+          { direction: "top", offset: [0, -6] }
+        );
+        sampleDotMarkerRef.current = sampleDotMarker;
+
         // Auto-fit bounds to the selected Gat
         map.fitBounds(bounds, {
           padding: [60, 60],
@@ -420,14 +443,25 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
         maxZoom: 21,
       }).addTo(map);
       dsmLayerRef.current = dsmLayerObj;
+    } else if (dsmLayer.rasterImageUrl && dsmLayer.rasterBounds) {
+      const [w, s, e, n] = dsmLayer.rasterBounds;
+      const overlay = L.imageOverlay(dsmLayer.rasterImageUrl, [[s, w], [n, e]], {
+        opacity: dsmOpacity,
+        interactive: false,
+        zIndex: 5,
+      }).addTo(map);
+      dsmLayerRef.current = overlay;
+    }
 
-      // Keep raster under the boundary layer
-      if (farmLayerRef.current) {
-        farmLayerRef.current.bringToFront();
-      }
-      if (centerMarkerRef.current) {
-        centerMarkerRef.current.setZIndexOffset(1000);
-      }
+    // Keep raster under the boundary layer
+    if (farmLayerRef.current) {
+      farmLayerRef.current.bringToFront();
+    }
+    if (centerMarkerRef.current) {
+      centerMarkerRef.current.setZIndexOffset(1000);
+    }
+    if (sampleDotMarkerRef.current) {
+      sampleDotMarkerRef.current.setZIndexOffset(1500);
     }
   }, [dsmLayer, dsmOpacity, mapLoaded]);
 

@@ -52,7 +52,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
   onExport,
   className = "",
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [query, setQuery] = useState("");
@@ -79,10 +79,10 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between">
             <h3 className="text-xs sm:text-sm font-bold text-text-main">
-              {t("gat.panel.title") || "Gat Parcels & KML"}
+              {t("gat.panel.title") || (locale === "mr" ? "गट भूखंड व KML" : "Gat Parcels & KML")}
             </h3>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-subtle border border-surface-border text-text-muted">
-              {features.length} {features.length === 1 ? "parcel" : "parcels"}
+              {features.length} {locale === "mr" ? "भूखंड" : (features.length === 1 ? "parcel" : "parcels")}
             </span>
           </div>
           <p className="text-[11px] text-text-muted truncate">
@@ -94,7 +94,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
       {/* KML Source Switcher Tabs */}
       <div className="mb-3">
         <label className="text-[10px] font-bold text-text-light uppercase tracking-wider block mb-1.5">
-          Select KML Layer File
+          {locale === "mr" ? "KML स्तर फाइल निवडा" : "Select KML Layer File"}
         </label>
         <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-surface-subtle border border-surface-border/80">
           <button
@@ -107,7 +107,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span className="truncate">Gats (trial.kml)</span>
+            <span className="truncate">{locale === "mr" ? "गट (trial.kml)" : "Gats (trial.kml)"}</span>
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             }`}
           >
             <Building2 className="w-3.5 h-3.5" />
-            <span className="truncate">Village (malegaon)</span>
+            <span className="truncate">{locale === "mr" ? "गाव सीमा (माळेगाव)" : "Village (malegaon)"}</span>
           </button>
         </div>
       </div>
@@ -158,13 +158,13 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-soil-primary hover:bg-soil-primaryHover text-white text-xs font-bold shadow-xs transition-colors disabled:opacity-60"
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            <span>Upload KML</span>
+            <span>{locale === "mr" ? "KML अपलोड करा" : "Upload KML"}</span>
           </button>
           <button
             type="button"
             onClick={onExport}
             disabled={features.length === 0}
-            title="Export KML"
+            title={locale === "mr" ? "KML निर्यात करा" : "Export KML"}
             className="p-1.5 rounded-lg border border-surface-border bg-white hover:bg-surface-subtle text-text-muted hover:text-text-main transition-colors disabled:opacity-50"
           >
             <FileDown className="w-4 h-4" />
@@ -194,7 +194,9 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
       <div className="mt-3">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[11px] font-bold text-text-main uppercase tracking-wide">
-            {activeSource === "village" ? "Boundary" : "Available Gats"} ({features.length})
+            {activeSource === "village"
+              ? (locale === "mr" ? "गाव सीमा" : "Boundary")
+              : (locale === "mr" ? "उपलब्ध गट" : "Available Gats")} ({features.length})
           </span>
           {selectedGatId && (
             <button
@@ -202,7 +204,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
               onClick={() => onSelectGat(null)}
               className="text-[11px] font-semibold text-soil-primary hover:underline"
             >
-              Show Full Heatmap
+              {locale === "mr" ? "संपूर्ण हीटमॅप दाखवा" : "Show Full Heatmap"}
             </button>
           )}
         </div>
@@ -214,7 +216,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search Gat No. (e.g. 12, 14)..."
+              placeholder={locale === "mr" ? "गट क्र. शोधा (उदा. १२, १४)..." : "Search Gat No. (e.g. 12, 14)..."}
               className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-surface-border bg-surface-subtle focus:bg-white"
             />
           </div>
@@ -245,13 +247,13 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
               >
                 <span className="flex items-center gap-1.5 min-w-0">
                   <span className={`text-xs font-bold truncate ${isSel ? "text-soil-primary" : "text-text-main"}`}>
-                    {f.properties.is_village_boundary ? "" : "Gat No. "} {f.properties.name}
+                    {f.properties.is_village_boundary ? "" : (locale === "mr" ? "गट क्र. " : "Gat No. ")} {f.properties.name}
                   </span>
                   {f.id === myGatId && <Star className="w-3 h-3 text-amber-500 fill-amber-400 shrink-0" />}
                 </span>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-[11px] font-mono text-text-muted">
-                    {f.properties.area_ha} Ha
+                    {f.properties.area_ha} {locale === "mr" ? "हेक्टर" : "Ha"}
                   </span>
                   {isSel && <CheckCircle2 className="w-3.5 h-3.5 text-soil-primary" />}
                 </div>
@@ -259,7 +261,9 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             );
           })}
           {!loading && visible.length === 0 && (
-            <p className="text-[11px] text-text-muted py-2 text-center">No matching Gats found.</p>
+            <p className="text-[11px] text-text-muted py-2 text-center">
+              {locale === "mr" ? "कोणतेही जुळणारे गट आढळले नाहीत." : "No matching Gats found."}
+            </p>
           )}
         </div>
       </div>

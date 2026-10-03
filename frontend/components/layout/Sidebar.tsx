@@ -15,6 +15,7 @@ import {
   LogOut,
   MapPin,
 } from "lucide-react";
+import { translateGeoName, formatGatLabel } from "@/i18n/marathiHelper";
 
 interface NavItem {
   key: string;
@@ -28,12 +29,13 @@ const navItems: NavItem[] = [
   { key: "myFarm", labelKey: "nav.myFarm", href: "/my-farm", icon: Tractor },
   { key: "soilHealthCard", labelKey: "nav.soilHealthCard", href: "/soil-health-card", icon: FileBadge },
   { key: "soilMap", labelKey: "nav.soilMap", href: "/soil-map", icon: Map },
+  { key: "recommendations", labelKey: "nav.recommendations", href: "/recommendations", icon: Lightbulb },
   { key: "reports", labelKey: "nav.reports", href: "/reports", icon: FileText },
 ];
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const { isAuthenticated, field, location, logout } = useAuth();
 
   return (
@@ -66,10 +68,10 @@ export const Sidebar: React.FC = () => {
           <div className="p-3 bg-soil-primaryLight/40 rounded-xl border border-soil-secondary/30 text-xs space-y-1">
             <div className="flex items-center gap-1.5 font-bold text-soil-primary">
               <MapPin className="w-3.5 h-3.5" />
-              <span>{t("geo.gatNo")} {field.gat_no}</span>
+              <span>{formatGatLabel(field.gat_no, language === "mr")}</span>
             </div>
             <p className="text-[11px] text-text-muted truncate">
-              {location?.village}, {location?.taluka}
+              {translateGeoName(location?.village, language === "mr")}, {translateGeoName(location?.taluka, language === "mr")}
             </p>
           </div>
         ) : null}
@@ -88,7 +90,7 @@ export const Sidebar: React.FC = () => {
         <div className="p-3 bg-surface-subtle rounded-xl border border-surface-border text-xs text-text-muted">
           <p className="font-semibold text-text-main">SoilPilot</p>
           <p className="mt-0.5 text-[11px] text-text-light">
-            Phase 5: Farm Map Active
+            {language === "mr" ? "डिजिटल शेत नकाशा सक्रिय" : "Phase 5: Farm Map Active"}
           </p>
 
         </div>

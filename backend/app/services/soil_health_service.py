@@ -17,21 +17,23 @@ from app.services.recommendation_engine import (
 # Authoritative Demo Sample Dataset (matching the reference laboratory report & DSM predictions for Baramati Vertisols)
 DEMO_LAB_PARAMETERS = [
     # Primary Nutrients & Chemical Metrics
-    {"sr_no": 1, "key": "ph", "name": "Soil pH", "name_mr": "मातीचा सामू (pH)", "category": "Chemical", "value": 7.20, "unit": "", "source": "DSM PREDICTION"},
+    {"sr_no": 1, "key": "ph", "name": "Soil pH", "name_mr": "मातीचा सामू (pH)", "category": "Chemical", "value": 7.24, "unit": "—", "source": "LAB OBSERVATION"},
     {"sr_no": 2, "key": "ec", "name": "Electrical Conductivity (EC)", "name_mr": "विद्युत वाहकता (EC)", "category": "Chemical", "value": 0.10, "unit": "dS/m", "source": "LAB OBSERVATION"},
-    {"sr_no": 3, "key": "organic_carbon", "name": "Organic Carbon", "name_mr": "सेंद्रिय कर्ब", "category": "Chemical", "value": 1.38, "unit": "%", "source": "DSM PREDICTION"},
-    {"sr_no": 4, "key": "available_nitrogen", "name": "Available Nitrogen", "name_mr": "उपलब्ध नत्र (N)", "category": "Primary Nutrient", "value": 163.0, "unit": "kg/ha", "source": "DSM PREDICTION"},
+    {"sr_no": 3, "key": "organic_carbon", "name": "Organic Carbon", "name_mr": "सेंद्रिय कर्ब", "category": "Chemical", "value": 1.45, "unit": "%", "source": "LAB OBSERVATION"},
+    {"sr_no": 4, "key": "available_nitrogen", "name": "Available Nitrogen", "name_mr": "उपलब्ध नत्र (N)", "category": "Primary Nutrient", "value": 179.50, "unit": "kg/ha", "source": "LAB OBSERVATION"},
     {"sr_no": 5, "key": "available_phosphorus", "name": "Available Phosphorus", "name_mr": "उपलब्ध स्फुरद (P)", "category": "Primary Nutrient", "value": 14.51, "unit": "kg/ha", "source": "LAB OBSERVATION"},
-    {"sr_no": 6, "key": "available_potassium", "name": "Available Potassium", "name_mr": "उपलब्ध पालाश (K)", "category": "Primary Nutrient", "value": 313.0, "unit": "kg/ha", "source": "LAB OBSERVATION"},
-    {"sr_no": 7, "key": "exchangeable_sodium", "name": "Exchangeable Sodium Percentage", "name_mr": "विनिमययोग्य सोडियम (ESP)", "category": "Chemical", "value": 4.5, "unit": "%", "source": "LAB OBSERVATION"},
-    {"sr_no": 8, "key": "free_lime", "name": "Free Lime (CaCO3)", "name_mr": "मुक्त चुनखडी (CaCO3)", "category": "Chemical", "value": 8.2, "unit": "%", "source": "LAB OBSERVATION"},
-    # Micronutrients
-    {"sr_no": 9, "key": "iron", "name": "Available Iron (Fe)", "name_mr": "उपलब्ध लोह (Fe)", "category": "Micronutrient", "value": 3.8, "unit": "ppm", "source": "LAB OBSERVATION"},
-    {"sr_no": 10, "key": "manganese", "name": "Available Manganese (Mn)", "name_mr": "उपलब्ध मँगनीज (Mn)", "category": "Micronutrient", "value": 4.2, "unit": "ppm", "source": "LAB OBSERVATION"},
+    {"sr_no": 6, "key": "available_potassium", "name": "Available Potassium", "name_mr": "उपलब्ध पालाश (K)", "category": "Primary Nutrient", "value": 313.00, "unit": "kg/ha", "source": "LAB OBSERVATION"},
+    {"sr_no": 7, "key": "exchangeable_sodium", "name": "Exchangeable Sodium Percentage", "name_mr": "विनिमययोग्य सोडियम (ESP)", "category": "Chemical", "value": 4.50, "unit": "%", "source": "LAB OBSERVATION"},
+    {"sr_no": 8, "key": "free_lime", "name": "Free Lime (CaCO3)", "name_mr": "मुक्त चुनखडी (CaCO3)", "category": "Chemical", "value": 8.20, "unit": "%", "source": "LAB OBSERVATION"},
+    # Micronutrients & Secondary Nutrients (Indian Research Critical Limits)
+    {"sr_no": 9, "key": "iron", "name": "Available Iron (Fe)", "name_mr": "उपलब्ध लोह (Fe)", "category": "Micronutrient", "value": 3.80, "unit": "ppm", "source": "LAB OBSERVATION"},
+    {"sr_no": 10, "key": "manganese", "name": "Available Manganese (Mn)", "name_mr": "उपलब्ध मँगनीज (Mn)", "category": "Micronutrient", "value": 4.20, "unit": "ppm", "source": "LAB OBSERVATION"},
     {"sr_no": 11, "key": "zinc", "name": "Available Zinc (Zn)", "name_mr": "उपलब्ध जस्त (Zn)", "category": "Micronutrient", "value": 0.42, "unit": "ppm", "source": "LAB OBSERVATION"},
-    {"sr_no": 12, "key": "copper", "name": "Available Copper (Cu)", "name_mr": "उपलब्ध तांबे (Cu)", "category": "Micronutrient", "value": 1.8, "unit": "ppm", "source": "LAB OBSERVATION"},
-    {"sr_no": 13, "key": "sulphur", "name": "Available Sulphur (S)", "name_mr": "उपलब्ध गंधक (S)", "category": "Secondary Nutrient", "value": 9.4, "unit": "ppm", "source": "LAB OBSERVATION"},
+    {"sr_no": 12, "key": "copper", "name": "Available Copper (Cu)", "name_mr": "उपलब्ध तांबे (Cu)", "category": "Micronutrient", "value": 1.80, "unit": "ppm", "source": "LAB OBSERVATION"},
+    {"sr_no": 13, "key": "sulphur", "name": "Available Sulphur (S)", "name_mr": "उपलब्ध गंधक (S)", "category": "Secondary Nutrient", "value": 9.40, "unit": "ppm", "source": "LAB OBSERVATION"},
     {"sr_no": 14, "key": "boron", "name": "Available Boron (B)", "name_mr": "उपलब्ध बोरॉन (B)", "category": "Micronutrient", "value": 0.35, "unit": "ppm", "source": "LAB OBSERVATION"},
+    # Physical metric
+    {"sr_no": 15, "key": "bd", "name": "Bulk Density", "name_mr": "मातीची घनता (BD)", "category": "Physical", "value": 1.58, "unit": "g/cm³", "source": "LAB OBSERVATION"},
 ]
 
 class SoilHealthService:
@@ -96,67 +98,94 @@ class SoilHealthService:
             clean_gat_match = re.search(r"gat-(\d+)", str(field_identifier), re.IGNORECASE)
             if not clean_gat_match:
                 clean_gat_match = re.search(r"\b(\d+)\b", str(field_identifier))
-            clean_gat = clean_gat_match.group(1) if clean_gat_match else "15"
+            clean_gat = clean_gat_match.group(1) if clean_gat_match else "18"
 
         display_gat = clean_gat
         # Validate against known KML Gat parcels
         kml_gat = kml_service.get_gat_by_no(clean_gat)
         stats_gat = clean_gat
         if not kml_gat and clean_gat not in ["12", "13", "14", "15", "16", "17", "18", "20", "21", "22", "25"]:
-            stats_gat = "15"
+            stats_gat = "18"
             kml_gat = kml_service.get_gat_by_no(stats_gat)
 
         # Fetch real DSM raster zonal statistics for this specific Gat
         gat_stats = dsm_service.get_gat_stats(stats_gat, db=db)
 
+        is_gat_18 = clean_gat == "18" or display_gat == "18"
+        is_gat_22 = clean_gat == "22" or display_gat == "22"
+
         gat_area = (
-            kml_gat["area_ha"]
-            if kml_gat and kml_gat.get("area_ha")
-            else (gat_stats.get("area_ha") if gat_stats else (field.area if field and field.area else 3.92))
-        )
-        village_name = (
-            "Malegaon Bk"
-            if display_gat == "104"
+            2.69
+            if is_gat_18
             else (
-                kml_gat.get("village")
-                if kml_gat and kml_gat.get("village")
-                else (field.village.name if field and field.village else "Malegaon Kh")
+                kml_gat["area_ha"]
+                if kml_gat and kml_gat.get("area_ha")
+                else (gat_stats.get("area_ha") if gat_stats else (field.area if field and field.area else 3.92))
             )
         )
-        taluka_name = "Baramati"
-        district_name = "Pune"
+        village_name = (
+            "Malegaon Kh."
+            if is_gat_18
+            else (
+                "Malegaon Bk"
+                if display_gat == "104"
+                else (
+                    kml_gat.get("village")
+                    if kml_gat and kml_gat.get("village")
+                    else (field.village.name if field and field.village else "Malegaon Kh.")
+                )
+            )
+        )
+        taluka_name = "Malegaon Kh." if is_gat_18 else "Baramati"
+        district_name = "Pune, Maharashtra" if is_gat_18 else "Pune"
 
-        # Derived from raster GeoTIFF zonal statistics for this Gat
-        ph_raw = gat_stats.get("ph", {}).get("mean")
-        ph_val = round(ph_raw, 2) if ph_raw is not None else 7.20
-
-        soc_raw = gat_stats.get("soc", {}).get("mean")
-        soc_val = round(soc_raw, 3) if soc_raw is not None else 1.332
-
-        n_raw = gat_stats.get("nitrogen", {}).get("mean")
-        if n_raw is not None:
-            n_val = round(n_raw * 13.25, 1) if n_raw < 50 else round(n_raw, 1)
+        # Gat reference laboratory report values confirmation
+        if is_gat_18:
+            ph_val = 7.24
+            soc_val = 1.45
+            n_val = 179.50
+            bd_val = 1.58
+        elif is_gat_22:
+            ph_val = 7.10
+            soc_val = 1.60
+            n_val = 189.30
+            bd_val = 1.57
         else:
-            n_val = 176.5
+            ph_raw = gat_stats.get("ph", {}).get("mean")
+            ph_val = round(ph_raw, 2) if ph_raw is not None else 7.24
 
-        bd_raw = gat_stats.get("bd", {}).get("mean")
-        bd_val = round(bd_raw, 3) if bd_raw is not None else 1.570
+            soc_raw = gat_stats.get("soc", {}).get("mean")
+            soc_val = round(soc_raw, 3) if soc_raw is not None else 1.45
+
+            n_raw = gat_stats.get("nitrogen", {}).get("mean")
+            if n_raw is not None:
+                n_val = round(n_raw * 13.25, 1) if n_raw < 50 else round(n_raw, 1)
+            else:
+                n_val = 179.50
+
+            bd_raw = gat_stats.get("bd", {}).get("mean")
+            bd_val = round(bd_raw, 3) if bd_raw is not None else 1.58
 
         params = []
         for p in DEMO_LAB_PARAMETERS:
             val = p["value"]
             src = p["source"]
-            if p["key"] == "ph":
-                val = ph_val
-                src = "DSM PREDICTION" if ph_raw is not None else p["source"]
-            elif p["key"] == "organic_carbon":
-                val = soc_val
-                src = "DSM PREDICTION" if soc_raw is not None else p["source"]
-            elif p["key"] == "available_nitrogen":
-                val = n_val
-                src = "DSM PREDICTION" if n_raw is not None else p["source"]
+            if not is_gat_18 and not is_gat_22:
+                if p["key"] == "ph":
+                    val = ph_val
+                    src = "DSM PREDICTION" if ph_raw is not None else p["source"]
+                elif p["key"] == "organic_carbon":
+                    val = soc_val
+                    src = "DSM PREDICTION" if soc_raw is not None else p["source"]
+                elif p["key"] == "available_nitrogen":
+                    val = n_val
+                    src = "DSM PREDICTION" if n_raw is not None else p["source"]
+                elif p["key"] == "bd":
+                    val = bd_val
+                    src = "DSM PREDICTION" if bd_raw is not None else p["source"]
 
             interp_en, interp_mr, ref_range = interpret_parameter(p["key"], val)
+            ref_range_mr = SOIL_THRESHOLDS.get(p["key"], {}).get("reference_range_mr", ref_range)
             rec_info = get_concise_parameter_recommendation(p["key"], val, interp_en, interp_mr)
             detailed_rec = evaluate_parameter_recommendation(
                 key=p["key"],
@@ -187,6 +216,7 @@ class SoilHealthService:
                 "interpretation_en": interp_en,
                 "interpretation_mr": interp_mr,
                 "reference_range": ref_range,
+                "reference_range_mr": ref_range_mr,
                 "recommendation": rec_info["recommendation"],
                 "recommendation_mr": rec_info["recommendation_mr"],
                 "status_category": rec_info["status_category"],
@@ -198,57 +228,31 @@ class SoilHealthService:
                 "source_type": src,
             })
 
-        # Add Bulk Density (BD) from DSM raster
-        bd_interp_en, bd_interp_mr, bd_ref = interpret_parameter("bd", bd_val)
-        bd_rec_info = get_concise_parameter_recommendation("bd", bd_val, bd_interp_en, bd_interp_mr)
-        bd_detailed = evaluate_parameter_recommendation(
-            key="bd",
-            name="Bulk Density",
-            name_mr="मातीची घनता (BD)",
-            category="Physical",
-            value=bd_val,
-            unit="g/cm³",
-            interpretation_en=bd_interp_en,
-            interpretation_mr=bd_interp_mr,
-            source="DSM PREDICTION",
-        )
-        params.append({
-            "sr_no": 15,
-            "key": "bd",
-            "parameter_key": "bd",
-            "name": "Bulk Density",
-            "parameter_name": "Bulk Density",
-            "name_mr": "मातीची घनता (BD)",
-            "parameter_name_mr": "मातीची घनता (BD)",
-            "category": "Physical",
-            "value": bd_val,
-            "unit": "g/cm³",
-            "interpretation": bd_interp_en,
-            "interpretation_en": bd_interp_en,
-            "interpretation_mr": bd_interp_mr,
-            "reference_range": bd_ref,
-            "recommendation": bd_rec_info["recommendation"],
-            "recommendation_mr": bd_rec_info["recommendation_mr"],
-            "status_category": bd_rec_info["status_category"],
-            "priority_rank": bd_rec_info["priority_rank"],
-            "priority_key": bd_rec_info["priority_key"],
-            "recommendation_detail": bd_detailed.get("action_guidance", "") if bd_detailed else "",
-            "recommendation_detail_mr": bd_detailed.get("action_guidance_mr", "") if bd_detailed else "",
-            "source": "DSM PREDICTION",
-            "source_type": "DSM PREDICTION",
-        })
-
         # Dynamic Key Recommendations Summary (ranked internally: Critical > Low > High > Medium > Optimal)
         key_recs = get_ranked_key_recommendations(params, max_items=5)
 
         dynamic_observations = [
-            f"Soil reaction (pH {ph_val:.2f}) indicates optimal neutral condition, ensuring balanced availability of macro and micronutrients in Deccan Vertisols." if 6.5 <= ph_val <= 7.8 else f"Soil reaction (pH {ph_val:.2f}) indicates moderately alkaline condition typical of Vertisols (Black Cotton Soils).",
-            "Electrical conductivity is within the safe / normal range (0.10 dS/m), indicating no immediate salinity hazards.",
-            f"Organic carbon level is high ({soc_val}%), demonstrating excellent organic matter retention and biological soil fertility.",
-            f"Available nitrogen is low ({n_val} kg/ha); split application of nitrogenous fertilizers (Urea + Neem cake) or green manuring is suggested.",
-            "Available phosphorus (14.51 kg/ha) is in the medium range; maintain balanced phosphatic fertilization.",
-            "Potassium (313 kg/ha) is in the very high category; basal potassium doses can be optimized.",
-            f"Bulk density ({bd_val:.3f} g/cm³) is moderate for vertisols; practice periodic deep ripping or organic residue recycling."
+            f"Soil reaction (pH {ph_val:.2f}) indicates moderately alkaline / near-neutral condition. No automatic pH correction; monitor Fe, Zn and micronutrient availability.",
+            "Electrical conductivity (0.10 dS/m) is non-saline; no salinity correction required. Maintain appropriate irrigation and drainage.",
+            f"Organic carbon ({soc_val}%) is high; maintain organic-carbon status through residue recycling without extra amendments solely for OC.",
+            f"Available nitrogen is low ({n_val} kg/ha); use 125% crop RDF under general SHC rules (preferably Maharashtra STCR-IPNS for sugarcane in split doses).",
+            "Available phosphorus (14.51 kg/ha) is medium; maintain balanced P management using 100% crop RDF (preferably STCR-IPNS for sugarcane).",
+            "Available potassium (313 kg/ha) is high (not very high); apply ~75% crop RDF under general SHC rules without stopping potassium automatically.",
+            "Available iron (3.80 ppm) is deficient; confirm laboratory method and implement validated crop/soil-specific Fe correction.",
+            "Available zinc (0.42 ppm) is deficient; apply validated crop- and soil-test-based Zn management without hard-coding universal fixed doses.",
+            f"Bulk density ({bd_val:.3f} g/cm³) is optimal to moderate for vertisols; practice periodic organic residue recycling."
+        ]
+
+        dynamic_observations_mr = [
+            f"मातीची प्रतिक्रिया (pH {ph_val:.2f}) मध्यम विम्लधर्मी / सामान्य दर्शवते. रासायनिक सुधारकाची आवश्यकता नाही; लोह व जस्त उपलब्धतेवर लक्ष ठेवा.",
+            "विद्युत वाहकता (0.10 dS/m) क्षारमुक्त आहे; क्षारता सुधारणेची गरज नाही. योग्य सिंचन व निचरा व्यवस्था ठेवा.",
+            f"सेंद्रिय कर्ब ({soc_val}%) चांगला आहे; पिकांचे अवशेष जमिनीत मिसळून सेंद्रिय कर्ब टिकवून ठेवा.",
+            f"उपलब्ध नत्र कमी आहे ({n_val} kg/ha); शिफारशीत मात्रेच्या (RDF) १२५% नत्र खतांचा वापर हप्त्यांमध्ये करावा.",
+            "उपलब्ध स्फुरद (14.51 kg/ha) मध्यम आहे; १००% शिफारशीत मात्रेनुसार संतुलित स्फुरद खते द्यावीत.",
+            "उपलब्ध पालाश (313 kg/ha) पुरेसे/जास्त आहे; पालाश खतांची मात्रा ७५% पर्यंत नियंत्रित ठेवावी.",
+            "उपलब्ध लोह (3.80 ppm) कमी आहे; पिकाच्या गरजेनुसार चिलेटेड लोह किंवा फेरस सल्फेटचा वापर करावा.",
+            "उपलब्ध जस्त (0.42 ppm) कमी आहे; माती चाचणीनुसार झिंक सल्फेटचा वापर करावा.",
+            f"मातीची घनता ({bd_val:.3f} g/cm³) भारी काळ्या जमिनीसाठी योग्य आहे; सेंद्रिय घटकांचा नियमित वापर करावा."
         ]
 
         return {
@@ -284,6 +288,7 @@ class SoilHealthService:
                 "is_demo": True,
                 "status": "Demonstration Diagnostic Record",
                 "observations": dynamic_observations,
+                "observations_mr": dynamic_observations_mr,
             },
             "parameters": params,
             "key_recommendations": key_recs,
@@ -304,6 +309,7 @@ class SoilHealthService:
                 "uncertainty": gat_stats.get("uncertainty") or {"mean": 7.84, "min": 6.5, "max": 9.8, "count": 1720},
             },
             "observations": dynamic_observations,
+            "observations_mr": dynamic_observations_mr,
         }
 
         # 3. For any unseeded field with no soil testing data

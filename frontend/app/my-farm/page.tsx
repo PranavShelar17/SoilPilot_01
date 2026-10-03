@@ -19,11 +19,12 @@ import {
   ChevronDown,
   Lock,
 } from "lucide-react";
+import { translateGeoName, translateFarmerName } from "@/i18n/marathiHelper";
 
 const DEFAULT_GATS = ["12", "13", "14", "15", "16", "17", "18", "20", "21", "22", "25"];
 
 function MyFarmContent() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { farmer, field, location } = useAuth();
   const searchParams = useSearchParams();
   const urlGat = searchParams?.get("gat");
@@ -131,7 +132,7 @@ function MyFarmContent() {
               </h1>
               <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-soil-primaryLight text-soil-primary border border-soil-secondary/30">
                 <CheckCircle className="w-3 h-3" />
-                <span>Phase 5</span>
+                <span>{t("myFarm.phase5Tag") || (locale === "mr" ? "सक्रिय शेत" : "Phase 5")}</span>
               </span>
             </div>
             <p className="text-xs sm:text-sm text-text-muted mt-0.5">
@@ -147,7 +148,7 @@ function MyFarmContent() {
             <div className="relative inline-flex items-center bg-surface-subtle border border-surface-border rounded-xl px-3 py-1.5 shadow-xs hover:border-soil-primary/40 transition-colors">
               <MapPin className="w-3.5 h-3.5 text-soil-primary shrink-0 mr-1.5" />
               <span className="text-xs text-text-muted mr-1.5 font-medium">
-                {village} • {t("geo.gatNo")}
+                {(locale === "mr" ? translateGeoName(village) : village)} • {t("geo.gatNo")}
               </span>
               <select
                 id="selected-gat-dropdown"
@@ -167,12 +168,12 @@ function MyFarmContent() {
           ) : (
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
               <Lock className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{village} • {t("geo.gatNo")} {gatNo} (Your Farm Boundary)</span>
+              <span>{(locale === "mr" ? translateGeoName(village) : village)} • {t("geo.gatNo")} {gatNo} ({locale === "mr" ? "तुमची शेत सीमा" : "Your Farm Boundary"})</span>
             </div>
           )}
 
           <span className="text-text-light font-normal text-xs hidden sm:inline">
-            ({taluka}, {district})
+            ({locale === "mr" ? translateGeoName(taluka) : taluka}, {locale === "mr" ? translateGeoName(district) : district})
           </span>
 
           {isDemo && (
@@ -234,7 +235,7 @@ function MyFarmContent() {
               {t("geo.village")}
             </span>
             <span className="text-base font-bold text-text-main block">
-              {village || t("dashboard.notAvailable")}
+              {locale === "mr" ? translateGeoName(village) : (village || t("dashboard.notAvailable"))}
             </span>
           </div>
 
@@ -244,7 +245,7 @@ function MyFarmContent() {
               {t("geo.taluka")}
             </span>
             <span className="text-base font-bold text-text-main block">
-              {taluka || t("dashboard.notAvailable")}
+              {locale === "mr" ? translateGeoName(taluka) : (taluka || t("dashboard.notAvailable"))}
             </span>
           </div>
 
@@ -254,7 +255,7 @@ function MyFarmContent() {
               {t("geo.district")} & {t("geo.state")}
             </span>
             <span className="text-base font-bold text-text-main block">
-              {district}, {state}
+              {locale === "mr" ? `${translateGeoName(district)}, ${translateGeoName(state)}` : `${district}, ${state}`}
             </span>
           </div>
 
@@ -265,7 +266,7 @@ function MyFarmContent() {
               <span>{t("myFarm.registeredLandholder")}</span>
             </span>
             <span className="text-base font-bold text-text-main block truncate">
-              {farmerName}
+              {locale === "mr" ? translateFarmerName(farmerName) : farmerName}
             </span>
           </div>
         </div>
@@ -290,9 +291,10 @@ function MyFarmContent() {
 }
 
 export default function MyFarmPage() {
+  const { t, locale } = useI18n();
   return (
     <ProtectedRoute>
-      <Suspense fallback={<div className="p-8 text-center text-text-muted">Loading Farm Map...</div>}>
+      <Suspense fallback={<div className="p-8 text-center text-text-muted">{locale === "mr" ? "शेत नकाशा लोड होत आहे..." : "Loading Farm Map..."}</div>}>
         <MyFarmContent />
       </Suspense>
     </ProtectedRoute>

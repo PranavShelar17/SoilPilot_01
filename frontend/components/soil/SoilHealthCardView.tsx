@@ -25,7 +25,10 @@ import {
   RefreshCw,
   FlaskConical,
   ArrowLeft,
+  BookOpen,
 } from "lucide-react";
+import { SoilReferenceStandardsTable } from "./SoilReferenceStandardsTable";
+import { translateGeoName } from "@/i18n/marathiHelper";
 
 interface SoilHealthCardViewProps {
   fieldIdOverride?: string | number;
@@ -46,7 +49,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
     }
     const fieldGat = field?.gat_no?.replace(/[^\d]/g, "");
     if (fieldGat && validGats.includes(fieldGat)) return fieldGat;
-    return "15";
+    return "18";
   });
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
     }
   }, [urlGat, field?.gat_no]);
 
-  const [activeTab, setActiveTab] = useState<"detailed" | "dsm_matrix" | "summary">("detailed");
+  const [activeTab, setActiveTab] = useState<"detailed" | "dsm_matrix" | "summary" | "standards">("detailed");
   const [report, setReport] = useState<SoilHealthReport | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +119,9 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           {t("soilHealthCard.errorTitle")}
         </h2>
         <p className="text-xs text-stone-600">
-          Please check your connection or verify that your field details are valid.
+          {locale === "mr"
+            ? "कृपया आपले इंटरनेट कनेक्शन तपासा किंवा शेताची माहिती योग्य असल्याची खात्री करा."
+            : "Please check your connection or verify that your field details are valid."}
         </p>
         <button
           type="button"
@@ -166,8 +171,8 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded-lg text-xs font-bold shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>
-              {report?.field?.village || "Malegaon Kh"} &bull; {t("geo.gatNo") || "Gat No."} {selectedGat}
-              {report?.field?.area ? ` (${report.field.area} Ha)` : ""}
+              {(locale === "mr" ? translateGeoName(report?.field?.village || "Malegaon Kh") : (report?.field?.village || "Malegaon Kh"))} &bull; {t("geo.gatNo") || (locale === "mr" ? "गट क्र." : "Gat No.")} {selectedGat}
+              {report?.field?.area ? ` (${report.field.area} ${locale === "mr" ? "हेक्टर" : "Ha"})` : ""}
             </span>
           </span>
         </div>
@@ -215,6 +220,19 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           >
             <LayoutGrid className="w-4 h-4" />
             <span>{t("soilHealthCard.viewSummary") || "Nutrient Summary"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("standards")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "standards"
+                ? "bg-white text-soil-primary shadow-xs"
+                : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-soil-primary" />
+            <span>{t("soilHealthCard.viewStandards") || "Reference Standards & Norms"}</span>
           </button>
         </div>
 
@@ -283,7 +301,9 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
       </div>
 
       {/* Main Content Area */}
-      {activeTab === "dsm_matrix" ? (
+      {activeTab === "standards" ? (
+        <SoilReferenceStandardsTable />
+      ) : activeTab === "dsm_matrix" ? (
         <div className="space-y-4">
           <GatSoilHealthPanel
             dsmStats={report.dsm_stats}
@@ -320,25 +340,15 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           />
 
           {/* 3. Laboratory Chemical & Physical Soil Analysis Table */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 font-sans">
-                Laboratory Soil Chemical &amp; Nutrient Analysis
-              </h3>
-              <span className="text-[11px] text-stone-500 font-medium">
-                ADT AI Training Foundation &bull; Diagnostic Matrix
-              </span>
-            </div>
+          <SoilParameterTable parameters={report.parameters} />
 
-            <SoilParameterTable parameters={report.parameters} />
-
-            <SoilReportFooter
-              isDemo={report.is_demo}
-              reportDate={report.report?.report_date}
-              reportNo={report.report?.report_no}
-              observations={report.observations || report.report?.observations}
-            />
-          </div>
+          {/* 4. Report Footer */}
+          <SoilReportFooter
+            isDemo={report.is_demo}
+            reportDate={report.report?.report_date}
+            reportNo={report.report?.report_no}
+            observations={report.observations || report.report?.observations}
+          />
         </div>
       )}
     </div>

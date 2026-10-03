@@ -316,6 +316,7 @@ def seed_demo_data():
         # 6. Additional Verifiable Cadastral Parcels across Talukas
         demo_fields_spec = [
             # Baramati
+            ("Baramati", "Malegaon Bk", "123", 2.45, farmer_patil.id, "MULTIPOLYGON(((74.5000 18.1500, 74.5050 18.1500, 74.5050 18.1550, 74.5000 18.1550, 74.5000 18.1500)))"),
             ("Baramati", "Katewadi", "45", 3.80, farmer_deshmukh.id, "MULTIPOLYGON(((74.6100 18.1800, 74.6150 18.1800, 74.6150 18.1850, 74.6100 18.1850, 74.6100 18.1800)))"),
             ("Baramati", "Dorlewadi", "78", 2.10, farmer_shinde.id, "MULTIPOLYGON(((74.6300 18.1900, 74.6340 18.1900, 74.6340 18.1940, 74.6300 18.1940, 74.6300 18.1900)))"),
             # Daund

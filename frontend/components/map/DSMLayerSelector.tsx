@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useI18n } from "@/i18n/useI18n";
-import { DSMLayerConfig, DSMLayerId } from "@/types/gis";
+import { DSMLayerConfig, DSMLayerId, DSMLayerCategoryId } from "@/types/gis";
 import type { BasemapStyle } from "./SoilMapViewer";
 import {
   Layers,
@@ -10,6 +10,11 @@ import {
   Moon,
   Map as StreetIcon,
   Mountain,
+  Sprout,
+  Compass,
+  CheckCircle2,
+  ChevronDown,
+  Info,
 } from "lucide-react";
 
 interface DSMLayerSelectorProps {
@@ -23,74 +28,45 @@ interface DSMLayerSelectorProps {
   className?: string;
 }
 
-const LAYER_META: Record<
-  string,
-  { marathi: string; scorpan: string; color: string; badgeBg: string; badgeText: string }
-> = {
-  ndvi: {
-    marathi: "वनस्पती निर्देशांक (NDVI)",
-    scorpan: "Organisms",
-    color: "#22c55e",
-    badgeBg: "bg-emerald-950/60 border border-emerald-700/50",
+interface CategoryDefinition {
+  id: DSMLayerCategoryId;
+  icon: React.ReactNode;
+  enTitle: string;
+  mrTitle: string;
+  badgeBg: string;
+  badgeBorder: string;
+  badgeText: string;
+}
+
+const CATEGORIES: CategoryDefinition[] = [
+  {
+    id: "soil_properties",
+    icon: <Sprout className="w-4 h-4 text-emerald-400" />,
+    enTitle: "1. Soil Properties (0–30 cm Root-Zone)",
+    mrTitle: "१. मातीचे गुणधर्म (०-३० सेमी प्रमाणबद्ध)",
+    badgeBg: "bg-emerald-950/60",
+    badgeBorder: "border-emerald-700/50",
     badgeText: "text-emerald-300",
   },
-  evi: {
-    marathi: "हवीत वनस्पती निर्देशांक (EVI)",
-    scorpan: "Organisms",
-    color: "#ec4899",
-    badgeBg: "bg-pink-950/60 border border-pink-700/50",
-    badgeText: "text-pink-300",
-  },
-  ph: {
-    marathi: "मातीचा pH (प्रतिक्रिया)",
-    scorpan: "Soil",
-    color: "#f97316",
-    badgeBg: "bg-amber-950/60 border border-amber-700/50",
+  {
+    id: "topography",
+    icon: <Mountain className="w-4 h-4 text-amber-400" />,
+    enTitle: "2. Topography & Elevation",
+    mrTitle: "२. भूरूप आणि उंची",
+    badgeBg: "bg-amber-950/60",
+    badgeBorder: "border-amber-700/50",
     badgeText: "text-amber-300",
   },
-  soc: {
-    marathi: "मातीत कार्बन (SOC)",
-    scorpan: "Soil",
-    color: "#eab308",
-    badgeBg: "bg-yellow-950/60 border border-yellow-700/50",
-    badgeText: "text-yellow-300",
-  },
-  nitrogen: {
-    marathi: "उपलब्ध नत्र (N)",
-    scorpan: "Primary",
-    color: "#06b6d4",
-    badgeBg: "bg-cyan-950/60 border border-cyan-700/50",
+  {
+    id: "land_use",
+    icon: <Compass className="w-4 h-4 text-cyan-400" />,
+    enTitle: "3. Land Use & Multi-Spectral Indices",
+    mrTitle: "३. जमीन वापर आणि बहु-स्पेक्ट्रल निर्देशांक",
+    badgeBg: "bg-cyan-950/60",
+    badgeBorder: "border-cyan-700/50",
     badgeText: "text-cyan-300",
   },
-  bd: {
-    marathi: "घनता (Bulk Density)",
-    scorpan: "Soil",
-    color: "#6366f1",
-    badgeBg: "bg-indigo-950/60 border border-indigo-700/50",
-    badgeText: "text-indigo-300",
-  },
-  elevation: {
-    marathi: "उंची (Elevation)",
-    scorpan: "Relief",
-    color: "#3b82f6",
-    badgeBg: "bg-blue-950/60 border border-blue-700/50",
-    badgeText: "text-blue-300",
-  },
-  uncertainty: {
-    marathi: "अनिश्चितता (Uncertainty)",
-    scorpan: "Model",
-    color: "#a855f7",
-    badgeBg: "bg-purple-950/60 border border-purple-700/50",
-    badgeText: "text-purple-300",
-  },
-  farm_boundary: {
-    marathi: "शेताची हद्द (Boundary)",
-    scorpan: "Cadastre",
-    color: "#10b981",
-    badgeBg: "bg-emerald-950/60 border border-emerald-700/50",
-    badgeText: "text-emerald-300",
-  },
-};
+];
 
 export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
   layers,
@@ -102,99 +78,204 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
   onBasemapChange,
   className = "",
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  // Find active layer object
+  const activeLayer = layers.find((l) => l.id === activeLayerId) || layers[0];
+
+  // Determine current active category
+  const activeCategoryId: DSMLayerCategoryId =
+    (activeLayer?.category as DSMLayerCategoryId) ||
+    (activeLayerId === "elevation" || activeLayerId === "slope"
+      ? "topography"
+      : ["lulc", "kharif_rgb", "rabi_rgb", "ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(activeLayerId)
+      ? "land_use"
+      : "soil_properties");
+
+  // Group layers into the 3 categories
+  const soilLayers = layers.filter(
+    (l) =>
+      l.category === "soil_properties" ||
+      ["bdod", "cec", "cfvo", "clay", "sand", "silt", "soc", "nitrogen", "ph", "soil_texture", "bd"].includes(l.id)
+  );
+
+  const topoLayers = layers.filter(
+    (l) => l.category === "topography" || ["elevation", "slope"].includes(l.id)
+  );
+
+  const landUseLayers = layers.filter(
+    (l) =>
+      l.category === "land_use" ||
+      [
+        "lulc",
+        "kharif_rgb",
+        "rabi_rgb",
+        "ndvi",
+        "evi",
+        "savi",
+        "ndmi",
+        "ndre",
+        "bsi",
+        "ndwi",
+        "uncertainty",
+      ].includes(l.id)
+  );
+
+  const getCategoryLayers = (catId: DSMLayerCategoryId): DSMLayerConfig[] => {
+    switch (catId) {
+      case "soil_properties":
+        return soilLayers;
+      case "topography":
+        return topoLayers;
+      case "land_use":
+        return landUseLayers;
+      default:
+        return [];
+    }
+  };
+
+  const getLayerDisplayName = (layer: DSMLayerConfig) => {
+    if (locale === "mr") {
+      return layer.marathiName || layer.name || layer.shortName;
+    }
+    return layer.name || layer.shortName;
+  };
 
   return (
     <div
-      className={`bg-slate-900 text-white rounded-2xl border border-slate-800 p-4 shadow-xl space-y-4 select-none ${className}`}
+      className={`bg-slate-900/95 backdrop-blur-md text-white rounded-2xl border border-slate-800 p-4 shadow-2xl space-y-4 select-none ${className}`}
     >
-      {/* Title & Dropdown Header (Screenshot 2) */}
-      <div className="space-y-2">
-        <h3 className="text-base font-extrabold text-white tracking-tight">Soil Map</h3>
-        <div>
-          <label className="block text-[11px] font-semibold text-slate-400 mb-1">Select Layer</label>
-          <div className="relative">
-            <select
-              value={activeLayerId}
-              onChange={(e) => onSelectLayer(e.target.value as DSMLayerId)}
-              className="w-full bg-slate-800/90 text-white font-medium text-xs rounded-xl px-3 py-2 border border-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer appearance-none pr-8"
-            >
-              {layers.map((l) => (
-                <option key={l.id} value={l.id} className="bg-slate-900 text-white">
-                  {l.name || l.shortName}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-3 top-2.5 pointer-events-none text-slate-400 text-xs">▼</div>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            <Layers className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white tracking-tight">
+              {locale === "mr" ? "डिजिटल सॉईल मॅपिंग स्तर" : "DSM Spatial Layers"}
+            </h3>
+            <p className="text-[10px] text-slate-400 font-medium">
+              {locale === "mr" ? "माळेगाव खुर्द पायलट (२२ स्तर)" : "Malegaon Khurd Pilot (22 Layers)"}
+            </p>
           </div>
         </div>
+
+        {activeLayer && (
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
+            {activeLayer.unit || "unit"}
+          </span>
+        )}
       </div>
 
-      {/* Section Header: SCORPAN RASTER LAYERS */}
-      <div className="pt-1">
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-          SCORPAN RASTER LAYERS
+      {/* 3 DISTINCT CATEGORY DROPDOWNS */}
+      <div className="space-y-3">
+        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+          <span>{locale === "mr" ? "३ स्तर वर्ग ड्रॉपडाउन्स" : "3 LAYER CATEGORY SELECTORS"}</span>
+          <span className="text-[10px] text-emerald-400 font-semibold lowercase">
+            {layers.length} {locale === "mr" ? "एकूण स्तर" : "total layers"}
+          </span>
         </div>
 
-        <div className="space-y-1.5">
-          {layers
-            .filter((l) => l.id !== "farm_boundary")
-            .map((layer) => {
-              const isSelected = layer.id === activeLayerId;
-              const meta = LAYER_META[layer.id] || {
-                marathi: layer.unit,
-                scorpan: "DSM",
-                color: "#10b981",
-                badgeBg: "bg-slate-800 border border-slate-700",
-                badgeText: "text-slate-300",
-              };
+        {CATEGORIES.map((cat, idx) => {
+          const catLayers = getCategoryLayers(cat.id);
+          const isCategoryActive = activeCategoryId === cat.id;
+          const isCategorySelectedLayer = catLayers.some((l) => l.id === activeLayerId);
 
-              return (
-                <button
-                  key={layer.id}
-                  type="button"
-                  onClick={() => onSelectLayer(layer.id)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl border transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
-                    isSelected
-                      ? "bg-emerald-950/50 border-emerald-500/80 shadow-md ring-1 ring-emerald-500/30"
-                      : "bg-slate-800/40 hover:bg-slate-800 border-slate-800 hover:border-slate-700"
+          return (
+            <div
+              key={cat.id}
+              className={`rounded-xl border p-2.5 transition-all ${
+                isCategorySelectedLayer
+                  ? `${cat.badgeBg} ${cat.badgeBorder} shadow-sm ring-1 ring-emerald-500/20`
+                  : "bg-slate-800/40 border-slate-800 hover:border-slate-700"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  {cat.icon}
+                  <label
+                    htmlFor={`select-${cat.id}`}
+                    className={`text-[11px] font-bold tracking-tight cursor-pointer ${
+                      isCategorySelectedLayer ? "text-white" : "text-slate-300"
+                    }`}
+                  >
+                    {locale === "mr" ? cat.mrTitle : cat.enTitle}
+                  </label>
+                </div>
+
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800/80 text-slate-400 border border-slate-700/60">
+                  {catLayers.length} {locale === "mr" ? "स्तर" : "layers"}
+                </span>
+              </div>
+
+              {/* Native Accessible Dropdown Select */}
+              <div className="relative">
+                <select
+                  id={`select-${cat.id}`}
+                  value={isCategorySelectedLayer ? activeLayerId : ""}
+                  onChange={(e) => {
+                    const selectedVal = e.target.value as DSMLayerId;
+                    if (selectedVal) {
+                      onSelectLayer(selectedVal);
+                    }
+                  }}
+                  className={`w-full text-xs font-semibold rounded-lg px-2.5 py-2 border cursor-pointer appearance-none pr-8 transition-colors ${
+                    isCategorySelectedLayer
+                      ? "bg-slate-900/90 text-white border-emerald-500/60 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                      : "bg-slate-900/60 text-slate-300 border-slate-700 hover:border-slate-600"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
-                      style={{ backgroundColor: meta.color }}
-                    />
-                    <div className="min-w-0">
-                      <div
-                        className={`text-xs font-bold truncate leading-tight ${
-                          isSelected ? "text-white" : "text-slate-200"
-                        }`}
-                      >
-                        {layer.name || layer.shortName}
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate mt-0.5 font-medium">
-                        {layer.marathiName || meta.marathi}
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-md ${meta.badgeBg} ${meta.badgeText}`}
-                  >
-                    {meta.scorpan}
-                  </span>
-                </button>
-              );
-            })}
-        </div>
+                  <option value="" disabled className="bg-slate-900 text-slate-500">
+                    {locale === "mr"
+                      ? `-- ${cat.mrTitle.split(" ")[1] || "स्तर"} निवडा (${catLayers.length}) --`
+                      : `-- Select ${cat.enTitle.split(". ")[1] || "Layer"} (${catLayers.length}) --`}
+                  </option>
+                  {catLayers.map((l) => (
+                    <option key={l.id} value={l.id} className="bg-slate-900 text-white py-1">
+                      {getLayerDisplayName(l)} {l.unit ? `[${l.unit}]` : ""}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-2.5 top-2.5 pointer-events-none text-slate-400 text-xs">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Overlay Opacity Slider (Screenshot 2) */}
+      {/* ACTIVE LAYER BADGE & INFO */}
+      {activeLayer && (
+        <div className="p-2.5 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-1">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span className="text-slate-400 flex items-center gap-1 text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              {locale === "mr" ? "सध्या सक्रिय स्तर:" : "Active Layer:"}
+            </span>
+            <span className="text-emerald-400 font-bold truncate text-[11px]">
+              {activeLayer.unit ? `[${activeLayer.unit}]` : ""}
+            </span>
+          </div>
+          <div className="text-xs font-extrabold text-white leading-tight">
+            {getLayerDisplayName(activeLayer)}
+          </div>
+          {activeLayer.description && (
+            <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed font-normal pt-0.5">
+              {activeLayer.description}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Overlay Opacity Slider */}
       {onOpacityChange && (
         <div className="pt-2 border-t border-slate-800 space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-300 font-semibold">Overlay Opacity</span>
+            <span className="text-slate-300 font-semibold">
+              {t("soilMap.overlayOpacity") || "Overlay Opacity"}
+            </span>
             <span className="font-mono font-bold text-emerald-400">{Math.round(opacity * 100)}%</span>
           </div>
           <input
@@ -209,16 +290,34 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
         </div>
       )}
 
-      {/* BASEMAP STYLE (Screenshot 2) */}
+      {/* BASEMAP STYLE */}
       {onBasemapChange && (
         <div className="pt-2 border-t border-slate-800 space-y-2">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">BASEMAP STYLE</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            {t("soilMap.basemapStyle") || "BASEMAP STYLE"}
+          </div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {[
-              { id: "satellite" as const, label: "Satellite", icon: <Satellite className="w-3.5 h-3.5" /> },
-              { id: "dark" as const, label: "Dark Matter", icon: <Moon className="w-3.5 h-3.5" /> },
-              { id: "street" as const, label: "Open Street", icon: <StreetIcon className="w-3.5 h-3.5" /> },
-              { id: "topo" as const, label: "Topographic", icon: <Mountain className="w-3.5 h-3.5" /> },
+              {
+                id: "satellite" as const,
+                label: locale === "mr" ? "उपग्रह (Satellite)" : "Satellite",
+                icon: <Satellite className="w-3.5 h-3.5" />,
+              },
+              {
+                id: "dark" as const,
+                label: locale === "mr" ? "गडद (Dark)" : "Dark Matter",
+                icon: <Moon className="w-3.5 h-3.5" />,
+              },
+              {
+                id: "street" as const,
+                label: locale === "mr" ? "रस्ते (Street)" : "Open Street",
+                icon: <StreetIcon className="w-3.5 h-3.5" />,
+              },
+              {
+                id: "topo" as const,
+                label: locale === "mr" ? "स्थलाकृतिक (Topo)" : "Topographic",
+                icon: <Mountain className="w-3.5 h-3.5" />,
+              },
             ].map((bm) => {
               const active = basemap === bm.id;
               return (
@@ -226,14 +325,14 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
                   key={bm.id}
                   type="button"
                   onClick={() => onBasemapChange(bm.id)}
-                  className={`flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl font-semibold border transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl font-semibold border transition-all cursor-pointer ${
                     active
                       ? "bg-emerald-950/60 border-emerald-500 text-white shadow-xs"
                       : "bg-slate-800/40 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800"
                   }`}
                 >
                   {bm.icon}
-                  <span className="truncate">{bm.label}</span>
+                  <span className="truncate text-[11px]">{bm.label}</span>
                 </button>
               );
             })}

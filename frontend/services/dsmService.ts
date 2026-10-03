@@ -73,14 +73,22 @@ async function fetchOk(input: string, init?: RequestInit): Promise<Response> {
 }
 
 function toLayerConfig(m: DSMManifestLayer, bounds: BBox, base?: DSMLayerConfig): DSMLayerConfig {
-  const local = base ?? DSM_LAYERS[m.id];
+  const local = base ?? DSM_LAYERS[m.id as DSMLayerId];
   const span = m.max - m.min;
   const colorStops: ColorStop[] = m.legendStops.map((s) => ({
     value: Number(s.value.toFixed(3)),
     color: s.color,
+    label: s.label,
   }));
   return {
-    ...local,
+    ...(local || {}),
+    id: m.id as DSMLayerId,
+    nameKey: local?.nameKey || `dsm.layers.${m.id}.name`,
+    shortName: local?.shortName || m.id.toUpperCase(),
+    descriptionKey: local?.descriptionKey || `dsm.layers.${m.id}.desc`,
+    sourceType: local?.sourceType || "SATELLITE DERIVED",
+    sourceLabel: local?.sourceLabel || "Malegaon Khurd DSM",
+    isDefault: local?.isDefault,
     name: m.name,
     unit: m.unit,
     status: "available",
@@ -93,6 +101,8 @@ function toLayerConfig(m: DSMManifestLayer, bounds: BBox, base?: DSMLayerConfig)
     rasterGridUrl: url(m.grid.file),
     gridMeta: m.grid,
     category: m.category,
+    categoryLabel: m.categoryLabel || local?.categoryLabel,
+    categoryLabelMr: m.categoryLabelMr || local?.categoryLabelMr,
     marathiName: m.marathiName,
     description: m.description,
     mean: m.mean,

@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { soilHealthService } from "@/services/soilHealthService";
 import { SoilHealthSummary } from "@/types/soilHealth";
 import { FlaskConical, ArrowRight, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
+import { translateStatus } from "@/i18n/marathiHelper";
 
 export const SoilOverview: React.FC = () => {
   const { t, locale } = useI18n();
@@ -48,7 +49,7 @@ export const SoilOverview: React.FC = () => {
       label: isMr ? "मातीचा सामू (pH)" : "Soil pH",
       value: hasReport && summary?.ph !== undefined && summary?.ph !== null ? summary.ph : t("dashboard.notAvailable"),
       unit: "pH",
-      status: hasReport ? (summary?.ph_status || "Alkaline") : t("dashboard.pending"),
+      status: hasReport ? (isMr ? translateStatus(summary?.ph_status || "Alkaline", true) : (summary?.ph_status || "Alkaline")) : t("dashboard.pending"),
       statusColor: "text-amber-800 bg-amber-100 border-amber-300",
     },
     {
@@ -119,7 +120,7 @@ export const SoilOverview: React.FC = () => {
         </p>
         {hasReport && summary?.report_no && (
           <span className="font-mono text-[11px] text-stone-500 font-medium">
-            Ref: {summary.report_no} ({summary.report_date || "20-09-2026"})
+            {isMr ? "संदर्भ:" : "Ref:"} {summary.report_no} ({summary.report_date || "20-09-2026"})
           </span>
         )}
       </div>

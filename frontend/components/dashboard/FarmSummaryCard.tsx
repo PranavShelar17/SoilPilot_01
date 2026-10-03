@@ -3,6 +3,7 @@
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { Tractor, Info, MapPin } from "lucide-react";
+import { translateGeoName, translateUnit, formatGatLabel } from "@/i18n/marathiHelper";
 
 interface FarmSummaryCardProps {
   gatNo: string;
@@ -25,11 +26,12 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
   areaUnit = "hectare",
   isDemo = false,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isMr = locale === "mr";
 
   const formattedArea =
     area !== null && area !== undefined && area > 0
-      ? `${area} ${areaUnit}`
+      ? `${area} ${translateUnit(areaUnit, isMr)}`
       : t("dashboard.notAvailable");
 
   return (
@@ -55,7 +57,7 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
         <div className="p-3 bg-surface-subtle rounded-xl border border-surface-border space-y-1">
           <span className="text-text-muted block font-medium">{t("geo.gatNo")}</span>
           <span className="text-base font-bold text-text-main block">
-            {gatNo || t("dashboard.notAvailable")}
+            {formatGatLabel(gatNo, isMr) || t("dashboard.notAvailable")}
           </span>
         </div>
 
@@ -69,14 +71,14 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
         <div className="p-3 bg-surface-subtle rounded-xl border border-surface-border space-y-1">
           <span className="text-text-muted block font-medium">{t("geo.village")}</span>
           <span className="text-sm font-bold text-text-main block truncate" title={village}>
-            {village || t("dashboard.notAvailable")}
+            {translateGeoName(village, isMr) || t("dashboard.notAvailable")}
           </span>
         </div>
 
         <div className="p-3 bg-surface-subtle rounded-xl border border-surface-border space-y-1">
           <span className="text-text-muted block font-medium">{t("geo.taluka")}</span>
           <span className="text-sm font-bold text-text-main block truncate" title={taluka}>
-            {taluka || t("dashboard.notAvailable")}
+            {translateGeoName(taluka, isMr) || t("dashboard.notAvailable")}
           </span>
         </div>
       </div>
@@ -88,7 +90,7 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
           <span>{t("geo.district")} & {t("geo.state")}</span>
         </div>
         <span className="font-semibold text-text-main">
-          {district || "Pune"}, {state || "Maharashtra"}
+          {translateGeoName(district || "Pune", isMr)}, {translateGeoName(state || "Maharashtra", isMr)}
         </span>
       </div>
 

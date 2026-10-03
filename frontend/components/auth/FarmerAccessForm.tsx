@@ -23,6 +23,7 @@ import {
   MapPin,
   Lock,
 } from "lucide-react";
+import { translateGeoName, formatGatLabel } from "@/i18n/marathiHelper";
 
 interface FarmerAccessFormProps {
   className?: string;
@@ -544,7 +545,7 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
                   </option>
                   {talukas.map((tk) => (
                     <option key={tk.id} value={tk.id}>
-                      {tk.name}
+                      {translateGeoName(tk.name, language === "mr")}
                     </option>
                   ))}
                 </select>
@@ -579,7 +580,7 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
                   </option>
                   {villages.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.name}
+                      {translateGeoName(v.name, language === "mr")}
                     </option>
                   ))}
                 </select>
@@ -615,7 +616,7 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
             {!selectedVillageId && (
               <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md font-medium border border-amber-200">
                 <Lock className="w-3 h-3" />
-                Locked (Complete Step 1)
+                {t("auth.step1Locked")}
               </span>
             )}
           </div>
@@ -624,10 +625,10 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
             <div className="p-4 rounded-xl bg-surface-subtle/80 border border-surface-border text-center space-y-1">
               <div className="flex items-center justify-center gap-1.5 text-xs font-semibold text-text-muted">
                 <Lock className="w-3.5 h-3.5 text-text-light" />
-                <span>Step 1 must be completed first</span>
+                <span>{t("auth.step1Required")}</span>
               </div>
               <p className="text-[11px] text-text-muted">
-                Select your State, District, Taluka, and Village above to unlock the Gat survey list.
+                {t("auth.step1Hint")}
               </p>
             </div>
           ) : (
@@ -707,7 +708,7 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-soil-cream text-soil-primary hover:bg-soil-beige/80 transition-colors text-xs font-semibold border border-soil-secondary/40 shadow-xs cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5 text-soil-secondary" />
-          <span>Quick Demo: Baramati → Malegaon Kh → Gat 22</span>
+          <span>{t("auth.quickDemoButton")}</span>
         </button>
       </div>
     </div>

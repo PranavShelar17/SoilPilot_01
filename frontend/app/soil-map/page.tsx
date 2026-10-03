@@ -19,8 +19,32 @@ import { collectionToKml, downloadTextFile } from "@/lib/kml/exportKml";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Layers, MapPin, AlertTriangle, ShieldAlert, FileBadge, Lightbulb, Lock, ShieldCheck, Loader2 } from "lucide-react";
+import { translateGeoName } from "@/i18n/marathiHelper";
 
-const RASTER_IDS: DSMRasterLayerId[] = ["ndvi", "evi", "ph", "soc", "nitrogen", "bd", "elevation", "uncertainty"];
+const RASTER_IDS: DSMRasterLayerId[] = [
+  "bdod",
+  "cec",
+  "cfvo",
+  "clay",
+  "sand",
+  "silt",
+  "soc",
+  "nitrogen",
+  "ph",
+  "soil_texture",
+  "elevation",
+  "slope",
+  "lulc",
+  "kharif_rgb",
+  "rabi_rgb",
+  "ndvi",
+  "evi",
+  "savi",
+  "ndmi",
+  "ndre",
+  "bsi",
+  "ndwi",
+];
 
 function SoilMapContent() {
   const { t, locale } = useI18n();
@@ -367,18 +391,18 @@ function SoilMapContent() {
             <div className="px-3.5 py-1.5 rounded-xl bg-surface-subtle border border-surface-border flex items-center gap-2 text-xs font-semibold text-text-main shadow-xs">
               <MapPin className="w-3.5 h-3.5 text-soil-primary" />
               <span>
-                {villageDisplay}, {talukaDisplay}
+                {(locale === "mr" ? translateGeoName(villageDisplay) : villageDisplay)}, {(locale === "mr" ? translateGeoName(talukaDisplay) : talukaDisplay)}
               </span>
             </div>
             {isAdmin ? (
               <div className="px-2.5 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 text-[11px] font-bold flex items-center gap-1 shadow-xs">
                 <ShieldCheck className="w-3 h-3 text-purple-600" />
-                <span>ADMIN VIEW • ALL GATS</span>
+                <span>{t("soilMap.adminViewAllGats") || (locale === "mr" ? "प्रशासक दृश्य • सर्व गट" : "ADMIN VIEW • ALL GATS")}</span>
               </div>
             ) : (
               <div className="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold flex items-center gap-1 shadow-xs">
                 <Lock className="w-3 h-3 text-emerald-600" />
-                <span>GAT {gatDisplay} ONLY</span>
+                <span>{t("soilMap.gatOnly") ? t("soilMap.gatOnly", { gat: gatDisplay }) : (locale === "mr" ? `फक्त गट ${gatDisplay}` : `GAT ${gatDisplay} ONLY`)}</span>
               </div>
             )}
           </div>
@@ -455,13 +479,16 @@ function SoilMapContent() {
 }
 
 export default function SoilMapPage() {
+  const { t, locale } = useI18n();
   return (
     <Suspense
       fallback={
         <div className="flex h-screen items-center justify-center bg-slate-900 text-white">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-soil-primary" />
-            <span className="text-sm font-semibold text-slate-300">Loading Soil Map...</span>
+            <span className="text-sm font-semibold text-slate-300">
+              {t("soilMap.loadingMap") || (locale === "mr" ? "माती नकाशा लोड होत आहे..." : "Loading Soil Map...")}
+            </span>
           </div>
         </div>
       }

@@ -38,18 +38,26 @@ export const reportService = {
    * Trigger download of official Soil Health Card PDF from backend.
    */
   async downloadSoilHealthCardPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
+    const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
+    let filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}.pdf`;
+
     const response = await api.get(`/reports/${fieldId}/soil-health-card/pdf`, {
       params: { lang },
       responseType: "blob",
     });
 
-    let filename = `SoilPilot_Soil_Health_Card_Gat_${fieldId}.pdf`;
-    const disposition = response.headers["content-disposition"];
-    if (disposition && disposition.indexOf("filename=") !== -1) {
-      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-      if (matches != null && matches[1]) {
-        filename = matches[1].replace(/['"]/g, "");
+    const disposition =
+      response.headers["content-disposition"] ||
+      response.headers["Content-Disposition"];
+    if (disposition) {
+      const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
+      if (match && match[1]) {
+        filename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
       }
+    }
+
+    if (!filename.toLowerCase().endsWith(".pdf")) {
+      filename += ".pdf";
     }
 
     const blob = new Blob([response.data], { type: "application/pdf" });
@@ -57,28 +65,48 @@ export const reportService = {
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = filename;
+    link.setAttribute("download", filename);
+    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
+
+    // Delay cleanup to allow browser download manager to capture download name and stream
+    setTimeout(() => {
+      try {
+        if (link.parentNode) {
+          document.body.removeChild(link);
+        }
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        // ignore
+      }
+    }, 30000);
   },
 
   /**
    * Trigger download of official Detailed Soil Report PDF from backend.
    */
   async downloadDetailedReportPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
+    const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
+    let filename = `SoilPilot_Detailed_Soil_Report_Gat_${cleanGat}.pdf`;
+
     const response = await api.get(`/reports/${fieldId}/detailed/pdf`, {
       params: { lang },
       responseType: "blob",
     });
 
-    let filename = `SoilPilot_Detailed_Soil_Report_Gat_${fieldId}.pdf`;
-    const disposition = response.headers["content-disposition"];
-    if (disposition && disposition.indexOf("filename=") !== -1) {
-      const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
-      if (matches != null && matches[1]) {
-        filename = matches[1].replace(/['"]/g, "");
+    const disposition =
+      response.headers["content-disposition"] ||
+      response.headers["Content-Disposition"];
+    if (disposition) {
+      const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
+      if (match && match[1]) {
+        filename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
       }
+    }
+
+    if (!filename.toLowerCase().endsWith(".pdf")) {
+      filename += ".pdf";
     }
 
     const blob = new Blob([response.data], { type: "application/pdf" });
@@ -86,10 +114,22 @@ export const reportService = {
     const link = document.createElement("a");
     link.href = blobUrl;
     link.download = filename;
+    link.setAttribute("download", filename);
+    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
+
+    // Delay cleanup to allow browser download manager to capture download name and stream
+    setTimeout(() => {
+      try {
+        if (link.parentNode) {
+          document.body.removeChild(link);
+        }
+        window.URL.revokeObjectURL(blobUrl);
+      } catch (e) {
+        // ignore
+      }
+    }, 30000);
   },
 
   /**

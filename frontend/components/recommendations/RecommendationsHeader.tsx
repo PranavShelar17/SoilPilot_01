@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useI18n } from "@/i18n/useI18n";
 import { Lightbulb, FileText, MapPin, Sparkles } from "lucide-react";
 
+import { translateGeoName } from "@/i18n/marathiHelper";
+
 interface RecommendationsHeaderProps {
   village: string;
   gatNo: string;
@@ -20,7 +22,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
   areaUnit = "Ha",
   isDemo = false,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   return (
     <div className="bg-white rounded-2xl border border-surface-border p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -38,7 +40,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
               {isDemo && (
                 <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300 rounded-full flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />
-                  DEMO DATA
+                  {t("common.demoData")}
                 </span>
               )}
             </div>
@@ -54,7 +56,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
         {/* Field Context Pill */}
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-subtle border border-surface-border text-xs font-semibold text-text-main">
           <MapPin className="w-3.5 h-3.5 text-soil-primary shrink-0" />
-          <span>{village || "Malegaon"}</span>
+          <span>{locale === "mr" ? translateGeoName(village || "Malegaon") : (village || "Malegaon")}</span>
           <span className="text-surface-borderStrong">•</span>
           <span className="text-soil-primary font-bold">
             {t("recommendations.gat")} {gatNo || "13"}
@@ -63,7 +65,7 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
             <>
               <span className="text-surface-borderStrong">•</span>
               <span className="text-text-muted">
-                {area} {areaUnit}
+                {area} {locale === "mr" ? (areaUnit === "Ha" || areaUnit === "ha" ? "हेक्टर" : "एकर") : areaUnit}
               </span>
             </>
           )}

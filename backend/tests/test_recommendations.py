@@ -27,13 +27,13 @@ def test_recommendation_engine_ph_rules():
     assert "manures" in rec_alkaline["action_guidance"].lower() or "fertilizers" in rec_alkaline["action_guidance"].lower()
     assert "खते" in rec_alkaline["action_guidance_mr"]
 
-    # Strongly Acidic soil (pH 5.2)
+    # Strongly Acidic soil (pH < 5.0, e.g. 4.8)
     rec_acidic = evaluate_parameter_recommendation(
         key="ph",
         name="Soil pH",
         name_mr="मातीचा सामू (pH)",
         category="Primary",
-        value=5.2,
+        value=4.8,
         unit="",
         interpretation_en="Strongly Acidic",
         interpretation_mr="तीव्र आम्लधर्मी",

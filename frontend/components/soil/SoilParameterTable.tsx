@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { SoilParameter } from "@/types/soilHealth";
-import { Info, X, Lightbulb } from "lucide-react";
-import { getConciseParameterRecommendation } from "@/lib/soilRecommendations";
+import {
+  getConciseParameterRecommendation,
+  getCleanReferenceRange,
+  getCleanReferenceRangeMr,
+} from "@/lib/soilRecommendations";
+import { translateParamName, translateStatus } from "@/i18n/marathiHelper";
 
 interface SoilParameterTableProps {
   parameters: SoilParameter[];
@@ -12,76 +16,57 @@ interface SoilParameterTableProps {
 
 export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ parameters }) => {
   const { t, locale } = useI18n();
-  const [selectedParam, setSelectedParam] = useState<SoilParameter | null>(null);
+  const isMr = locale === "mr";
 
-  const getStatusBadge = (interpretation: string, statusCategory?: string) => {
+  const renderInterpretationText = (interpretation: string, statusCategory?: string) => {
     const lower = (interpretation || statusCategory || "").toLowerCase();
 
-    // Optimal / Good
-    if (
-      lower.includes("optimal") ||
-      lower.includes("good") ||
-      lower.includes("sufficient") ||
-      lower.includes("normal") ||
-      lower.includes("safe") ||
-      lower.includes("सुरक्षित") ||
-      lower.includes("पुरेसे")
-    ) {
+    // High -> Vibrant Blue
+    if (lower.includes("high") || lower.includes("जास्त")) {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+        <span className="font-bold text-[#1565c0]">
           {interpretation}
         </span>
       );
     }
 
-    // Medium / Moderate
-    if (
-      lower.includes("medium") ||
-      lower.includes("moderate") ||
-      lower.includes("alkaline") ||
-      lower.includes("विम्लधर्मी") ||
-      lower.includes("मध्यम")
-    ) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
-          {interpretation}
-        </span>
-      );
-    }
-
-    // High / Very High
-    if (lower.includes("very high") || lower.includes("high") || lower.includes("जास्त") || lower.includes("भरपूर")) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-          {interpretation}
-        </span>
-      );
-    }
-
-    // Low / Acidic / Deficient / Critical
+    // Low / Deficient -> Red / Crimson
     if (
       lower.includes("low") ||
-      lower.includes("acidic") ||
       lower.includes("deficient") ||
       lower.includes("critical") ||
-      lower.includes("saline") ||
-      lower.includes("sodic") ||
       lower.includes("कमी") ||
-      lower.includes("आम्लधर्मी") ||
       lower.includes("कमतरता")
     ) {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-300">
+        <span className="font-bold text-[#d32f2f]">
           {interpretation}
         </span>
       );
     }
 
+    // Marginal -> Amber / Brown
+    if (lower.includes("marginal") || lower.includes("सीमांत")) {
+      return (
+        <span className="font-bold text-[#b45309]">
+          {interpretation}
+        </span>
+      );
+    }
+
+    // Suitable, Non-saline, Normal, Medium, Sufficient, Moderate Density -> Bold Dark
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-stone-100 text-stone-700 border border-stone-300">
-        {interpretation || t("soilHealthCard.notAvailable")}
+      <span className="font-bold text-stone-900">
+        {interpretation || "—"}
       </span>
     );
+  };
+
+  const formatObservedValue = (val: any) => {
+    if (val === null || val === undefined) return "—";
+    const num = Number(val);
+    if (isNaN(num)) return String(val);
+    return num.toFixed(2);
   };
 
   if (!parameters || parameters.length === 0) {
@@ -95,39 +80,48 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
   }
 
   return (
-    <>
-      <div className="overflow-x-auto rounded-md border border-stone-800 bg-white mb-6 shadow-xs">
+    <div className="mb-6">
+      {/* Section Title */}
+      <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2">
+        {isMr ? "प्रयोगशाळा मृदा रासायनिक आणि पोषकतत्व विश्लेषण" : "LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS"}
+      </h3>
+
+      <div className="overflow-x-auto rounded-sm border border-stone-300 bg-white shadow-xs">
         <table className="w-full text-left text-xs border-collapse min-w-[760px] print:min-w-0">
-          <thead className="bg-stone-800 text-white uppercase text-[11px] tracking-wider font-sans">
+          <thead className="bg-[#1e5622] text-white uppercase text-[11px] tracking-wider font-sans">
             <tr>
-              <th className="py-2.5 px-3 border-r border-stone-700 w-12 text-center">
-                {t("soilHealthCard.tableSrNo")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-14 text-center">
+                {isMr ? "अ.क्र." : "SR. NO."}
               </th>
-              <th className="py-2.5 px-3 border-r border-stone-700 w-44">
-                {t("soilHealthCard.tableParam")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-48">
+                {isMr ? "घटक / निर्देशांक" : "PARAMETER"}
               </th>
-              <th className="py-2.5 px-3 border-r border-stone-700 text-right w-24">
-                {t("soilHealthCard.tableValue")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] text-center w-28">
+                {isMr ? "निरीक्षित मूल्य" : "OBSERVED VALUE"}
               </th>
-              <th className="py-2.5 px-3 border-r border-stone-700 w-20">
-                {t("soilHealthCard.tableUnit")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] text-center w-20">
+                {isMr ? "एकक" : "UNIT"}
               </th>
-              <th className="py-2.5 px-3 border-r border-stone-700 w-32">
-                {t("soilHealthCard.tableInterp")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-32">
+                {isMr ? "निष्कर्ष" : "INTERPRETATION"}
               </th>
-              <th className="py-2.5 px-3 border-r border-stone-700 w-36">
-                {t("soilHealthCard.tableRange")}
+              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-40">
+                {isMr ? "संदर्भ श्रेणी" : "REFERENCE RANGE"}
               </th>
               <th className="py-2.5 px-3">
-                {t("soilHealthCard.tableRec") || "RECOMMENDATION"}
+                {isMr ? "शिफारस" : "RECOMMENDATION"}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-300 font-sans">
+          <tbody className="divide-y divide-stone-200 font-sans">
             {parameters.map((param, index) => {
-              const displayName = locale === "mr" && param.name_mr ? param.name_mr : param.name;
-              const displayInterp = locale === "mr" && param.interpretation_mr ? param.interpretation_mr : param.interpretation;
-              // Use backend recommendation if present; otherwise compute client-side
+              const displayName =
+                isMr
+                  ? param.name_mr || translateParamName(param.key || param.name, true)
+                  : param.name;
+              const rawInterp = isMr && param.interpretation_mr ? param.interpretation_mr : param.interpretation;
+              const displayInterp = isMr ? translateStatus(rawInterp, true) : rawInterp;
+              
               const fallbackRec = getConciseParameterRecommendation(
                 param.key,
                 param.value,
@@ -135,52 +129,39 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
                 param.interpretation_mr,
               );
               const recText =
-                locale === "mr" && param.recommendation_mr
+                isMr && param.recommendation_mr
                   ? param.recommendation_mr
-                  : param.recommendation || (locale === "mr" ? fallbackRec.recommendation_mr : fallbackRec.recommendation);
+                  : param.recommendation || (isMr ? fallbackRec.recommendation_mr : fallbackRec.recommendation);
 
               return (
                 <tr
                   key={param.key || index}
-                  className={index % 2 === 0 ? "bg-white hover:bg-stone-50/80" : "bg-stone-50/50 hover:bg-stone-100/60"}
+                  className="bg-white hover:bg-stone-50/70"
                 >
-                  <td className="py-2 px-3 border-r border-stone-300 text-center font-mono font-medium text-stone-700">
+                  <td className="py-2 px-3 border-r border-stone-200 text-center font-mono font-medium text-stone-700">
                     {param.sr_no || index + 1}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-300 font-bold text-stone-900">
+                  <td className="py-2 px-3 border-r border-stone-200 text-stone-900 font-medium">
                     {displayName}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-300 text-right font-mono font-black text-stone-950 text-sm">
-                    {param.value !== null && param.value !== undefined
-                      ? param.value
-                      : t("soilHealthCard.notAvailable")}
+                  <td className="py-2 px-3 border-r border-stone-200 text-center font-mono font-bold text-stone-950 text-xs">
+                    {formatObservedValue(param.value)}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-300 text-stone-700 font-medium">
+                  <td className="py-2 px-3 border-r border-stone-200 text-center text-stone-700 font-medium">
                     {param.unit || "—"}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-300">
+                  <td className="py-2 px-3 border-r border-stone-200">
                     {param.value !== null && param.value !== undefined
-                      ? getStatusBadge(displayInterp, param.status_category)
-                      : <span className="text-stone-400 italic">{t("soilHealthCard.notAvailable")}</span>}
+                      ? renderInterpretationText(displayInterp, param.status_category)
+                      : <span className="text-stone-400 italic">—</span>}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-300 text-stone-600 text-[11px] font-sans">
-                    {param.reference_range || "—"}
+                  <td className="py-2 px-3 border-r border-stone-200 text-stone-800 text-xs font-medium whitespace-nowrap">
+                    {isMr
+                      ? getCleanReferenceRangeMr(param.key, param.reference_range)
+                      : getCleanReferenceRange(param.key, param.reference_range)}
                   </td>
-                  <td className="py-2 px-3 text-stone-800 leading-relaxed text-[11.5px]">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-normal">{recText}</span>
-                      {(param.recommendation_detail || param.recommendation_detail_mr) && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedParam(param)}
-                          className="shrink-0 text-[10px] text-soil-primary hover:text-soil-primaryHover font-bold inline-flex items-center gap-0.5 hover:underline print:hidden cursor-pointer"
-                          title="View detailed recommendation"
-                        >
-                          <Info className="w-3 h-3" />
-                          <span>{t("soilHealthCard.tableRecDetails") || "Details"}</span>
-                        </button>
-                      )}
-                    </div>
+                  <td className="py-2 px-3 text-stone-800 leading-snug text-[11.5px]">
+                    <span className="font-normal">{recText}</span>
                   </td>
                 </tr>
               );
@@ -189,87 +170,12 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
         </table>
       </div>
 
-      {/* Recommendation Details Modal */}
-      {selectedParam && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in print:hidden">
-          <div className="bg-white rounded-2xl border border-stone-300 shadow-xl max-w-lg w-full overflow-hidden">
-            <div className="bg-stone-800 text-white p-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-amber-400" />
-                <h3 className="font-bold text-sm">
-                  {locale === "mr" && selectedParam.name_mr ? selectedParam.name_mr : selectedParam.name} — {locale === "mr" ? "सविस्तर शिफारस" : "Recommendation Guidance"}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedParam(null)}
-                className="text-stone-300 hover:text-white p-1 rounded-lg hover:bg-stone-700 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4 text-xs text-stone-700">
-              <div className="grid grid-cols-2 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-stone-500 block">
-                    {t("soilHealthCard.tableValue")}
-                  </span>
-                  <span className="text-sm font-black font-mono text-stone-900">
-                    {selectedParam.value} {selectedParam.unit}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-stone-500 block">
-                    {t("soilHealthCard.tableInterp")}
-                  </span>
-                  <span className="text-xs font-bold text-stone-800">
-                    {locale === "mr" && selectedParam.interpretation_mr ? selectedParam.interpretation_mr : selectedParam.interpretation}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-[11px] uppercase font-bold text-soil-primary tracking-wide mb-1">
-                  {locale === "mr" ? "शेतासाठी शिफारस:" : "Actionable Soil Guidance:"}
-                </h4>
-                <p className="text-xs font-medium text-stone-900 leading-relaxed bg-soil-cream/40 p-3 rounded-lg border border-soil-secondary/30">
-                  {locale === "mr" && selectedParam.recommendation_mr ? selectedParam.recommendation_mr : selectedParam.recommendation}
-                </p>
-              </div>
-
-              {(selectedParam.recommendation_detail || selectedParam.recommendation_detail_mr) && (
-                <div>
-                  <h4 className="text-[11px] uppercase font-bold text-stone-600 tracking-wide mb-1">
-                    {locale === "mr" ? "कृषी व्यवस्थापन सल्ला:" : "Agronomic Advisory Note:"}
-                  </h4>
-                  <p className="text-xs text-stone-700 leading-relaxed">
-                    {locale === "mr" && selectedParam.recommendation_detail_mr
-                      ? selectedParam.recommendation_detail_mr
-                      : selectedParam.recommendation_detail}
-                  </p>
-                </div>
-              )}
-
-              <div className="pt-2 text-[10.5px] text-stone-500 border-t border-stone-200">
-                {locale === "mr"
-                  ? "टीप: खतांची निश्चित मात्रा निवडलेल्या पिकाच्या गरजेनुसार व कृषी विद्यापीठाच्या नियमावलीनुसार ठरवावी."
-                  : "Note: Informational soil guidance. Quantitative fertilizer doses should be aligned with specific crop requirements and agricultural university standards."}
-              </div>
-            </div>
-
-            <div className="p-3 bg-stone-50 border-t border-stone-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedParam(null)}
-                className="px-4 py-1.5 bg-stone-800 text-white text-xs font-bold rounded-lg hover:bg-stone-900 transition-colors"
-              >
-                {locale === "mr" ? "बंद करा" : "Close"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      {/* Note below table */}
+      <p className="text-[#dc2626] font-medium text-xs mt-3">
+        {isMr
+          ? "टीप: या अहवालातील मातीचे गुणधर्म व निष्कर्ष ०–३० सें.मी. मुळांच्या कार्यक्षेत्रातील खोलीवर आधारित आहेत."
+          : "Note: Soil properties and interpretations in this report are based on the 0–30 cm root-zone soil depth."}
+      </p>
+    </div>
   );
 };

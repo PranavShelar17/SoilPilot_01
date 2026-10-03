@@ -1,764 +1,561 @@
 {
-  "version": "1.2.0-contour-shaded",
-  "updated": "2026-09-25T20:45:00Z",
+  "version": 1,
+  "generatedAt": "2026-10-03T11:33:39+00:00",
+  "crs": "EPSG:4326",
   "bounds": [
-    74.49450173465115,
-    18.15252644078841,
-    74.51695961675414,
-    18.168516452845736
+    74.489561,
+    18.12890075,
+    74.54094463,
+    18.1729182
   ],
+  "size": [
+    572,
+    490
+  ],
+  "sampleKml": {
+    "file": "sample-gats.kml",
+    "label": "Baramati pilot - sample Gat boundaries",
+    "village": "Malegaon",
+    "taluka": "Baramati",
+    "district": "Pune",
+    "state": "Maharashtra"
+  },
   "layers": [
     {
       "id": "ndvi",
+      "key": "NDVI",
       "name": "NDVI Vegetation Index",
       "marathiName": "वनस्पती निर्देशांक (NDVI)",
       "unit": "index",
       "category": "Organisms (O)",
       "description": "Normalized Difference Vegetation Index from Sentinel-2 (10m). Measures crop vigor & canopy density.",
-      "min": 0.05,
-      "max": 0.76,
-      "actual_min": 0.078,
-      "actual_max": 0.768,
-      "levels": [
-        0.05,
-        0.12,
-        0.2,
-        0.26,
-        0.32,
-        0.38,
-        0.44,
-        0.5,
-        0.56,
-        0.62,
-        0.68,
-        0.76
-      ],
-      "mean": 0.398,
-      "std": 0.147,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 0.08,
+      "max": 0.72,
+      "mean": 0.4073,
+      "std": 0.1495,
+      "validPixels": 204729,
       "image": "layers/ndvi.png",
+      "grid": {
+        "file": "grids/ndvi.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 1.4808937435631538e-05,
+        "offset": -0.12936043739318848,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(165, 0, 38)",
-          "value": 0.05
+          "color": "rgb(253, 35, 0)",
+          "value": 0.08
         },
         {
-          "pct": 10,
-          "color": "rgb(214, 47, 38)",
-          "value": 0.12
+          "pct": 14,
+          "color": "rgb(253, 136, 0)",
+          "value": 0.17
         },
         {
-          "pct": 21,
-          "color": "rgb(244, 109, 67)",
-          "value": 0.2
+          "pct": 28,
+          "color": "rgb(254, 187, 0)",
+          "value": 0.259
         },
         {
-          "pct": 30,
-          "color": "rgb(252, 172, 96)",
-          "value": 0.26
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 0.349
         },
         {
-          "pct": 38,
-          "color": "rgb(254, 224, 139)",
-          "value": 0.32
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 0.445
         },
         {
-          "pct": 46,
-          "color": "rgb(254, 254, 189)",
-          "value": 0.38
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 0.534
         },
         {
-          "pct": 55,
-          "color": "rgb(217, 239, 139)",
-          "value": 0.44
-        },
-        {
-          "pct": 63,
-          "color": "rgb(167, 217, 106)",
-          "value": 0.5
-        },
-        {
-          "pct": 72,
-          "color": "rgb(102, 189, 99)",
-          "value": 0.56
-        },
-        {
-          "pct": 80,
-          "color": "rgb(27, 152, 80)",
-          "value": 0.62
-        },
-        {
-          "pct": 89,
-          "color": "rgb(0, 104, 55)",
-          "value": 0.68
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 0.624
         },
         {
           "pct": 100,
-          "color": "rgb(0, 104, 55)",
-          "value": 0.76
+          "color": "rgb(50, 123, 0)",
+          "value": 0.72
         }
-      ],
-      "grid": {
-        "file": "grids/ndvi.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 0.05,
-        "max": 0.76
-      }
+      ]
     },
     {
       "id": "evi",
+      "key": "EVI",
       "name": "EVI Vegetation Index",
       "marathiName": "वर्धित वनस्पती निर्देशांक (EVI)",
       "unit": "index",
       "category": "Organisms (O)",
       "description": "Enhanced Vegetation Index. Reduced atmospheric and soil background interference for high biomass.",
+      "cmap": "DarkerAgro",
       "min": 0.05,
-      "max": 0.7,
-      "actual_min": 0.058,
-      "actual_max": 0.614,
-      "levels": [
-        0.05,
-        0.12,
-        0.2,
-        0.25,
-        0.3,
-        0.35,
-        0.4,
-        0.46,
-        0.52,
-        0.58,
-        0.64,
-        0.7
-      ],
-      "mean": 0.251,
-      "std": 0.101,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "max": 0.52,
+      "mean": 0.252,
+      "std": 0.0989,
+      "validPixels": 204729,
       "image": "layers/evi.png",
+      "grid": {
+        "file": "grids/evi.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 1.0913787394599235e-05,
+        "offset": -0.022196169942617416,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(165, 0, 38)",
+          "color": "rgb(253, 35, 0)",
           "value": 0.05
         },
         {
-          "pct": 11,
-          "color": "rgb(214, 47, 38)",
-          "value": 0.12
+          "pct": 14,
+          "color": "rgb(253, 136, 0)",
+          "value": 0.116
         },
         {
-          "pct": 23,
-          "color": "rgb(244, 109, 67)",
-          "value": 0.2
+          "pct": 28,
+          "color": "rgb(254, 187, 0)",
+          "value": 0.182
         },
         {
-          "pct": 31,
-          "color": "rgb(252, 172, 96)",
-          "value": 0.25
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 0.247
         },
         {
-          "pct": 38,
-          "color": "rgb(254, 224, 139)",
-          "value": 0.3
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 0.318
         },
         {
-          "pct": 46,
-          "color": "rgb(254, 254, 189)",
-          "value": 0.35
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 0.384
         },
         {
-          "pct": 54,
-          "color": "rgb(217, 239, 139)",
-          "value": 0.4
-        },
-        {
-          "pct": 63,
-          "color": "rgb(167, 217, 106)",
-          "value": 0.46
-        },
-        {
-          "pct": 72,
-          "color": "rgb(102, 189, 99)",
-          "value": 0.52
-        },
-        {
-          "pct": 82,
-          "color": "rgb(27, 152, 80)",
-          "value": 0.58
-        },
-        {
-          "pct": 91,
-          "color": "rgb(0, 104, 55)",
-          "value": 0.64
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 0.45
         },
         {
           "pct": 100,
-          "color": "rgb(0, 104, 55)",
-          "value": 0.7
+          "color": "rgb(50, 123, 0)",
+          "value": 0.52
         }
-      ],
-      "grid": {
-        "file": "grids/evi.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 0.05,
-        "max": 0.7
-      }
+      ]
     },
     {
       "id": "ph",
+      "key": "pH",
       "name": "Soil pH (Reaction)",
       "marathiName": "जमिनीचा सामू (pH)",
       "unit": "pH",
       "category": "Soil Chemical (S)",
       "description": "Acidity / Alkalinity level (0-14 scale). Optimal range for Deccan vertisols is 6.5 - 7.8.",
-      "min": 6.0,
-      "max": 8.5,
-      "actual_min": 7.1,
-      "actual_max": 7.3,
-      "levels": [
-        6.0,
-        6.3,
-        6.6,
-        6.9,
-        7.2,
-        7.5,
-        7.8,
-        8.1,
-        8.5
-      ],
-      "mean": 7.202,
-      "std": 0.035,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 7.02,
+      "max": 7.28,
+      "mean": 7.1648,
+      "std": 0.0574,
+      "validPixels": 201717,
       "image": "layers/ph.png",
+      "grid": {
+        "file": "grids/ph.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 4.577779331871445e-06,
+        "offset": 7.0,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(94, 79, 162)",
-          "value": 6.0
+          "color": "rgb(253, 35, 0)",
+          "value": 7.02
         },
         {
-          "pct": 12,
-          "color": "rgb(71, 159, 179)",
-          "value": 6.3
+          "pct": 14,
+          "color": "rgb(253, 136, 0)",
+          "value": 7.056
         },
         {
-          "pct": 24,
-          "color": "rgb(158, 216, 164)",
-          "value": 6.6
+          "pct": 28,
+          "color": "rgb(254, 187, 0)",
+          "value": 7.093
         },
         {
-          "pct": 36,
-          "color": "rgb(236, 247, 162)",
-          "value": 6.9
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 7.129
         },
         {
-          "pct": 48,
-          "color": "rgb(254, 233, 155)",
-          "value": 7.2
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 7.168
         },
         {
-          "pct": 60,
-          "color": "rgb(251, 165, 92)",
-          "value": 7.5
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 7.205
         },
         {
-          "pct": 72,
-          "color": "rgb(226, 83, 73)",
-          "value": 7.8
-        },
-        {
-          "pct": 84,
-          "color": "rgb(158, 1, 66)",
-          "value": 8.1
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 7.241
         },
         {
           "pct": 100,
-          "color": "rgb(158, 1, 66)",
-          "value": 8.5
+          "color": "rgb(50, 123, 0)",
+          "value": 7.28
         }
-      ],
-      "grid": {
-        "file": "grids/ph.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 6.0,
-        "max": 8.5
-      }
+      ]
     },
     {
       "id": "soc",
+      "key": "SOC",
       "name": "Soil Organic Carbon (SOC)",
       "marathiName": "सेंद्रिय कर्ब (SOC)",
       "unit": "%",
       "category": "Soil Chemical (S)",
       "description": "Organic Carbon percentage in topsoil (0-15 cm). Key driver of microbial health and nutrient buffering.",
-      "min": 0.35,
-      "max": 2.2,
-      "actual_min": 1.21,
-      "actual_max": 1.67,
-      "levels": [
-        0.35,
-        0.5,
-        0.62,
-        0.75,
-        0.95,
-        1.2,
-        1.45,
-        1.7,
-        1.95,
-        2.2
-      ],
-      "mean": 1.413,
-      "std": 0.132,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 1.22,
+      "max": 2.05,
+      "mean": 1.5721,
+      "std": 0.2543,
+      "validPixels": 201968,
       "image": "layers/soc.png",
+      "grid": {
+        "file": "grids/soc.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 1.4191107925003847e-05,
+        "offset": 1.2000000476837158,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(255, 255, 229)",
-          "value": 0.35
+          "color": "rgb(253, 35, 0)",
+          "value": 1.22
         },
         {
-          "pct": 8,
-          "color": "rgb(255, 247, 189)",
-          "value": 0.5
+          "pct": 14,
+          "color": "rgb(253, 136, 0)",
+          "value": 1.336
         },
         {
-          "pct": 15,
-          "color": "rgb(254, 227, 146)",
-          "value": 0.62
+          "pct": 28,
+          "color": "rgb(254, 187, 0)",
+          "value": 1.452
         },
         {
-          "pct": 22,
-          "color": "rgb(254, 196, 80)",
-          "value": 0.75
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 1.569
         },
         {
-          "pct": 32,
-          "color": "rgb(254, 153, 41)",
-          "value": 0.95
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 1.693
         },
         {
-          "pct": 46,
-          "color": "rgb(236, 112, 20)",
-          "value": 1.2
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 1.809
         },
         {
-          "pct": 59,
-          "color": "rgb(204, 76, 2)",
-          "value": 1.45
-        },
-        {
-          "pct": 73,
-          "color": "rgb(153, 52, 3)",
-          "value": 1.7
-        },
-        {
-          "pct": 86,
-          "color": "rgb(102, 37, 5)",
-          "value": 1.95
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 1.925
         },
         {
           "pct": 100,
-          "color": "rgb(102, 37, 5)",
-          "value": 2.2
+          "color": "rgb(50, 123, 0)",
+          "value": 2.05
         }
-      ],
-      "grid": {
-        "file": "grids/soc.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 0.35,
-        "max": 2.2
-      }
+      ]
     },
     {
       "id": "nitrogen",
+      "key": "Nitrogen",
       "name": "Available Nitrogen (N)",
       "marathiName": "उपलब्ध नत्र (N)",
       "unit": "mg/kg",
       "category": "Primary Nutrient (S)",
       "description": "Alkaline permanganate extractable Nitrogen (mg/kg). Equivalent to kg/ha (x2 factor).",
-      "min": 10.5,
-      "max": 17.6,
-      "actual_min": 12.12,
-      "actual_max": 14.78,
-      "levels": [
-        10.5,
-        11.5,
-        12.5,
-        13.0,
-        13.8,
-        14.6,
-        15.4,
-        16.0,
-        16.8,
-        17.6
-      ],
-      "mean": 13.093,
-      "std": 0.603,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 12.1,
+      "max": 15.5,
+      "mean": 13.9929,
+      "std": 0.8986,
+      "validPixels": 201717,
       "image": "layers/nitrogen.png",
+      "grid": {
+        "file": "grids/nitrogen.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 5.630664358017671e-05,
+        "offset": 12.0,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(255, 255, 217)",
-          "value": 10.5
+          "color": "rgb(253, 35, 0)",
+          "value": 12.1
         },
         {
           "pct": 14,
-          "color": "rgb(237, 248, 178)",
-          "value": 11.5
+          "color": "rgb(253, 136, 0)",
+          "value": 12.576
         },
         {
           "pct": 28,
-          "color": "rgb(199, 233, 179)",
-          "value": 12.5
+          "color": "rgb(254, 187, 0)",
+          "value": 13.052
         },
         {
-          "pct": 35,
-          "color": "rgb(128, 205, 186)",
-          "value": 13.0
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 13.528
         },
         {
-          "pct": 46,
-          "color": "rgb(65, 182, 195)",
-          "value": 13.8
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 14.038
         },
         {
-          "pct": 58,
-          "color": "rgb(29, 145, 192)",
-          "value": 14.6
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 14.514
         },
         {
-          "pct": 69,
-          "color": "rgb(33, 94, 168)",
-          "value": 15.4
-        },
-        {
-          "pct": 77,
-          "color": "rgb(36, 52, 148)",
-          "value": 16.0
-        },
-        {
-          "pct": 89,
-          "color": "rgb(8, 29, 88)",
-          "value": 16.8
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 14.99
         },
         {
           "pct": 100,
-          "color": "rgb(8, 29, 88)",
-          "value": 17.6
+          "color": "rgb(50, 123, 0)",
+          "value": 15.5
         }
-      ],
-      "grid": {
-        "file": "grids/nitrogen.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 10.5,
-        "max": 17.6
-      }
+      ]
     },
     {
       "id": "bd",
+      "key": "BD",
       "name": "Bulk Density",
       "marathiName": "घनता (Bulk Density)",
       "unit": "g/cm³",
       "category": "Soil Physical (S)",
       "description": "Dry mass of soil per unit volume (g/cm³). Indicator of compaction, root penetration and aeration.",
-      "min": 1.38,
-      "max": 1.66,
-      "actual_min": 1.53,
-      "actual_max": 1.59,
-      "levels": [
-        1.38,
-        1.42,
-        1.45,
-        1.49,
-        1.53,
-        1.58,
-        1.62,
-        1.66
-      ],
-      "mean": 1.569,
-      "std": 0.012,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 1.51,
+      "max": 1.59,
+      "mean": 1.5512,
+      "std": 0.0231,
+      "validPixels": 201968,
       "image": "layers/bd.png",
+      "grid": {
+        "file": "grids/bd.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 1.2207410338960576e-06,
+        "offset": 1.5099999904632568,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(0, 34, 77)",
-          "value": 1.38
+          "color": "rgb(50, 123, 0)",
+          "value": 1.51
         },
         {
           "pct": 14,
-          "color": "rgb(42, 63, 109)",
-          "value": 1.42
+          "color": "rgb(107, 161, 1)",
+          "value": 1.521
         },
         {
-          "pct": 25,
-          "color": "rgb(87, 93, 109)",
-          "value": 1.45
+          "pct": 28,
+          "color": "rgb(164, 196, 0)",
+          "value": 1.532
         },
         {
-          "pct": 39,
-          "color": "rgb(123, 123, 119)",
-          "value": 1.49
+          "pct": 42,
+          "color": "rgb(222, 234, 1)",
+          "value": 1.544
         },
         {
-          "pct": 54,
-          "color": "rgb(165, 155, 115)",
-          "value": 1.53
+          "pct": 57,
+          "color": "rgb(253, 233, 0)",
+          "value": 1.556
         },
         {
           "pct": 71,
-          "color": "rgb(208, 190, 96)",
-          "value": 1.58
+          "color": "rgb(254, 187, 0)",
+          "value": 1.567
         },
         {
-          "pct": 86,
-          "color": "rgb(253, 231, 55)",
-          "value": 1.62
+          "pct": 85,
+          "color": "rgb(253, 136, 0)",
+          "value": 1.578
         },
         {
           "pct": 100,
-          "color": "rgb(253, 231, 55)",
-          "value": 1.66
+          "color": "rgb(253, 35, 0)",
+          "value": 1.59
         }
-      ],
-      "grid": {
-        "file": "grids/bd.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 1.38,
-        "max": 1.66
-      }
+      ]
     },
     {
       "id": "elevation",
+      "key": "Elevation",
       "name": "Elevation (DEM)",
       "marathiName": "उंची (Elevation)",
       "unit": "m",
       "category": "Relief (R)",
       "description": "Height above Mean Sea Level (m) derived from DEM. Controls hydrologic runoff & accumulation.",
-      "min": 540,
-      "max": 590,
-      "actual_min": 553.801,
-      "actual_max": 585.466,
-      "levels": [
-        540,
-        545,
-        550,
-        555,
-        560,
-        565,
-        570,
-        575,
-        580,
-        585,
-        590
-      ],
-      "mean": 568.022,
-      "std": 4.886,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 542.0,
+      "max": 578.0,
+      "mean": 558.72,
+      "std": 8.5951,
+      "validPixels": 204729,
       "image": "layers/elevation.png",
+      "grid": {
+        "file": "grids/elevation.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 0.0009115253285150647,
+        "offset": 539.010986328125,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(51, 51, 153)",
-          "value": 540
+          "color": "rgb(253, 35, 0)",
+          "value": 542.0
         },
         {
-          "pct": 10,
-          "color": "rgb(13, 125, 227)",
-          "value": 545
+          "pct": 14,
+          "color": "rgb(253, 136, 0)",
+          "value": 547.04
         },
         {
-          "pct": 20,
-          "color": "rgb(0, 188, 148)",
-          "value": 550
+          "pct": 28,
+          "color": "rgb(254, 187, 0)",
+          "value": 552.08
         },
         {
-          "pct": 30,
-          "color": "rgb(85, 221, 119)",
-          "value": 555
+          "pct": 42,
+          "color": "rgb(253, 233, 0)",
+          "value": 557.12
         },
         {
-          "pct": 40,
-          "color": "rgb(197, 243, 141)",
-          "value": 560
+          "pct": 57,
+          "color": "rgb(222, 234, 1)",
+          "value": 562.52
         },
         {
-          "pct": 50,
-          "color": "rgb(228, 220, 138)",
-          "value": 565
+          "pct": 71,
+          "color": "rgb(164, 196, 0)",
+          "value": 567.56
         },
         {
-          "pct": 60,
-          "color": "rgb(170, 146, 107)",
-          "value": 570
-        },
-        {
-          "pct": 70,
-          "color": "rgb(141, 109, 102)",
-          "value": 575
-        },
-        {
-          "pct": 80,
-          "color": "rgb(196, 180, 177)",
-          "value": 580
-        },
-        {
-          "pct": 90,
-          "color": "rgb(255, 255, 255)",
-          "value": 585
+          "pct": 85,
+          "color": "rgb(107, 161, 1)",
+          "value": 572.6
         },
         {
           "pct": 100,
-          "color": "rgb(255, 255, 255)",
-          "value": 590
+          "color": "rgb(50, 123, 0)",
+          "value": 578.0
         }
-      ],
-      "grid": {
-        "file": "grids/elevation.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 540,
-        "max": 590
-      }
+      ]
     },
     {
       "id": "uncertainty",
+      "key": "Uncertainty",
       "name": "DSM Prediction Uncertainty",
       "marathiName": "मॉडेल अनिश्चितता (Uncertainty)",
       "unit": "% error",
       "category": "Model Quality (QRF)",
       "description": "Quantile Regression Forest 90% prediction interval error. Lower values represent higher confidence.",
-      "min": 5.0,
-      "max": 20.0,
-      "actual_min": 5.76,
-      "actual_max": 10.339,
-      "levels": [
-        5.0,
-        6.5,
-        8.0,
-        10.0,
-        12.5,
-        15.0,
-        17.5,
-        20.0
-      ],
-      "mean": 7.788,
-      "std": 1.238,
-      "bounds": [
-        74.49450173465115,
-        18.15252644078841,
-        74.51695961675414,
-        18.168516452845736
-      ],
+      "cmap": "DarkerAgro",
+      "min": 5.8,
+      "max": 10.5,
+      "mean": 7.9797,
+      "std": 1.2581,
+      "validPixels": 201717,
       "image": "layers/uncertainty.png",
+      "grid": {
+        "file": "grids/uncertainty.bin",
+        "width": 572,
+        "height": 490,
+        "dtype": "uint16",
+        "scale": 0.00011033415485134922,
+        "offset": 5.24311637878418,
+        "nodata": 65535
+      },
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(0, 0, 3)",
-          "value": 5.0
+          "color": "rgb(50, 123, 0)",
+          "value": 5.8
         },
         {
-          "pct": 10,
-          "color": "rgb(43, 17, 94)",
-          "value": 6.5
+          "pct": 14,
+          "color": "rgb(107, 161, 1)",
+          "value": 6.458
         },
         {
-          "pct": 20,
-          "color": "rgb(113, 31, 129)",
-          "value": 8.0
+          "pct": 28,
+          "color": "rgb(164, 196, 0)",
+          "value": 7.116
         },
         {
-          "pct": 33,
-          "color": "rgb(181, 54, 121)",
-          "value": 10.0
+          "pct": 42,
+          "color": "rgb(222, 234, 1)",
+          "value": 7.774
         },
         {
-          "pct": 50,
-          "color": "rgb(240, 96, 93)",
-          "value": 12.5
+          "pct": 57,
+          "color": "rgb(253, 233, 0)",
+          "value": 8.479
         },
         {
-          "pct": 67,
-          "color": "rgb(254, 174, 118)",
-          "value": 15.0
+          "pct": 71,
+          "color": "rgb(254, 187, 0)",
+          "value": 9.137
         },
         {
-          "pct": 83,
-          "color": "rgb(251, 252, 191)",
-          "value": 17.5
+          "pct": 85,
+          "color": "rgb(253, 136, 0)",
+          "value": 9.795
         },
         {
           "pct": 100,
-          "color": "rgb(251, 252, 191)",
-          "value": 20.0
+          "color": "rgb(253, 35, 0)",
+          "value": 10.5
         }
-      ],
-      "grid": {
-        "file": "grids/uncertainty.bin",
-        "rows": 178,
-        "cols": 250,
-        "scale": 1000.0,
-        "nodata": 65535,
-        "min": 5.0,
-        "max": 20.0
-      }
+      ]
     }
   ]
 }

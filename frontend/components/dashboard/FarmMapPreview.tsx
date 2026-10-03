@@ -5,13 +5,15 @@ import Link from "next/link";
 import { useI18n } from "@/i18n/useI18n";
 import { FarmMap } from "@/components/map/FarmMap";
 import { Map, ArrowRight } from "lucide-react";
+import { formatGatLabel } from "@/i18n/marathiHelper";
 
 interface FarmMapPreviewProps {
   gatNo: string;
 }
 
 export const FarmMapPreview: React.FC<FarmMapPreviewProps> = ({ gatNo }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isMr = locale === "mr";
 
   return (
     <section className="bg-white rounded-2xl border border-surface-border p-6 shadow-card flex flex-col justify-between space-y-4">
@@ -37,7 +39,7 @@ export const FarmMapPreview: React.FC<FarmMapPreviewProps> = ({ gatNo }) => {
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-text-muted pt-1">
-        <span>{t("geo.gatNo")} {gatNo} • Cadastral Boundary</span>
+        <span>{formatGatLabel(gatNo, isMr)} • {t("myFarm.cadastralBoundary") || (isMr ? "भूमापन सीमा" : "Cadastral Boundary")}</span>
         <Link
           href="/my-farm"
           className="text-soil-primary font-semibold hover:underline cursor-pointer"

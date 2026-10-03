@@ -27,60 +27,28 @@ MAX_U16 = 65534
 # -----------------------------------------------------------------------------
 
 # Reference Screenshot: Deep wine red -> Crimson -> Dark orange -> Amber -> Golden cream -> Rich green -> Darkest pine green
-DARK_AGRONOMIC_PALETTE = [
-    (0.00, (127, 29, 29)),    # #7f1d1d - Deepest dark wine/burgundy
-    (0.12, (168, 20, 36)),    # #a81424 - Rich dark red
-    (0.24, (220, 38, 38)),    # #dc2626 - Bold scarlet red
-    (0.36, (234, 88, 12)),    # #ea580c - Fiery dark orange
-    (0.48, (245, 158, 11)),   # #f59e0b - Warm amber gold
-    (0.58, (254, 240, 138)),  # #fef08a - Golden sand / light cream
-    (0.68, (132, 204, 22)),   # #84cc16 - Fresh lime green
-    (0.80, (22, 163, 74)),    # #16a34a - Vibrant green
-    (0.90, (21, 128, 61)),    # #15803d - Rich forest green
-    (1.00, (5, 46, 22)),      # #052e16 - Deepest dark pine green
+# Precision Agriculture Fertility Contour Palettes matching user reference screenshot
+# 8 discrete contour levels: Red (Deficient) -> Orange -> Amber -> Yellow -> Lime -> Olive -> Mid Green -> Deep Forest Green
+CONTOUR_AGRONOMIC_PALETTE = [
+    (0.00, (253, 35, 0)),     # #fd2300 - Bold Crimson Red (Critical Deficient)
+    (0.14, (253, 136, 0)),    # #fd8800 - Vibrant Orange (Low)
+    (0.28, (254, 187, 0)),    # #febb00 - Warm Golden Amber (Moderately Low)
+    (0.42, (253, 233, 0)),    # #fde900 - Lemon Yellow (Average / Marginal)
+    (0.57, (222, 234, 1)),    # #deea01 - Chartreuse / Lime (Good)
+    (0.71, (164, 196, 0)),    # #a4c400 - Light Olive Green (Sufficient / High)
+    (0.85, (107, 161, 1)),    # #6ba101 - Medium Green (Optimal)
+    (1.00, (50, 123, 0)),     # #327b00 - Deep Forest Green (Very High / Prime)
 ]
 
-DARK_PH_PALETTE = [
-    (0.00, (185, 28, 28)),    # #b91c1c - Dark red (acidic)
-    (0.25, (234, 88, 12)),    # #ea580c - Fiery orange (slightly acidic)
-    (0.50, (16, 149, 106)),   # #10956a - Deep emerald green (neutral / optimal vertisol)
-    (0.75, (30, 64, 175)),    # #1e40af - Deep royal indigo (moderately alkaline)
-    (1.00, (88, 28, 135)),    # #581c87 - Deep dark violet (strongly alkaline)
-]
-
-DARK_SOC_PALETTE = [
-    (0.00, (153, 27, 27)),    # #991b1b - Dark rust (very low organic matter)
-    (0.25, (217, 119, 6)),    # #d97706 - Dark amber (moderate)
-    (0.50, (161, 98, 7)),     # #a16207 - Deep ochre (good organic carbon)
-    (0.75, (69, 26, 3)),      # #451a03 - Rich dark humus (high organic carbon)
-    (1.00, (24, 9, 2)),       # #180902 - Deep dark earth brown (very high)
-]
-
-DARK_NITROGEN_PALETTE = [
-    (0.00, (185, 28, 28)),    # #b91c1c - Dark red (deficient)
-    (0.25, (234, 88, 12)),    # #ea580c - Dark orange (low)
-    (0.50, (13, 148, 136)),   # #0d9488 - Deep teal (medium)
-    (0.75, (29, 78, 216)),    # #1d4ed8 - Royal blue (sufficient)
-    (1.00, (15, 23, 42)),     # #0f172a - Deepest dark navy (rich)
-]
-
-DARK_BD_PALETTE = [
-    (0.00, (21, 128, 61)),    # #15803d - Dark forest green (low bulk density / well aerated)
-    (0.50, (217, 119, 6)),    # #d97706 - Dark amber (moderate)
-    (1.00, (127, 29, 29)),    # #7f1d1d - Deep wine red (high bulk density / compacted)
-]
-
-DARK_ELEVATION_PALETTE = [
-    (0.00, (22, 101, 52)),    # #166534 - Dark valley green
-    (0.35, (202, 138, 4)),    # #ca8a04 - Dark golden slope
-    (0.70, (161, 98, 7)),     # #a16207 - Deep ochre ridge
-    (1.00, (68, 64, 60)),     # #44403c - Dark stone crest
-]
-
-DARK_UNCERTAINTY_PALETTE = [
-    (0.00, (21, 128, 61)),    # #15803d - Dark green (high model confidence)
-    (0.50, (217, 119, 6)),    # #d97706 - Dark amber (medium uncertainty)
-    (1.00, (153, 27, 27)),    # #991b1b - Dark crimson (higher uncertainty)
+CONTOUR_INVERTED_PALETTE = [
+    (0.00, (50, 123, 0)),     # #327b00 - Deep Forest Green (Optimal / Well-Aerated / High Confidence)
+    (0.14, (107, 161, 1)),    # #6ba101
+    (0.28, (164, 196, 0)),    # #a4c400
+    (0.42, (222, 234, 1)),    # #deea01
+    (0.57, (253, 233, 0)),    # #fde900
+    (0.71, (254, 187, 0)),    # #febb00
+    (0.85, (253, 136, 0)),    # #fd8800
+    (1.00, (253, 35, 0)),     # #fd2300 - Deep Crimson Red (Compacted / Severe Uncertainty)
 ]
 
 LAYERS_CONFIG = [
@@ -90,10 +58,9 @@ LAYERS_CONFIG = [
         name="NDVI Vegetation Index",
         marathi="वनस्पती निर्देशांक (NDVI)",
         unit="index",
-        palette=DARK_AGRONOMIC_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Organisms (O)",
         desc="Normalized Difference Vegetation Index from Sentinel-2 (10m). Measures crop vigor & canopy density.",
-        # Agricultural contrast limits: stretch 0.08 to 0.72 so farm parcels display the full dark red -> green range
         clip_pmin=0.08,
         clip_pmax=0.72,
     ),
@@ -103,7 +70,7 @@ LAYERS_CONFIG = [
         name="EVI Vegetation Index",
         marathi="वर्धित वनस्पती निर्देशांक (EVI)",
         unit="index",
-        palette=DARK_AGRONOMIC_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Organisms (O)",
         desc="Enhanced Vegetation Index. Reduced atmospheric and soil background interference for high biomass.",
         clip_pmin=0.05,
@@ -115,7 +82,7 @@ LAYERS_CONFIG = [
         name="Soil pH (Reaction)",
         marathi="जमिनीचा सामू (pH)",
         unit="pH",
-        palette=DARK_PH_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Soil Chemical (S)",
         desc="Acidity / Alkalinity level (0-14 scale). Optimal range for Deccan vertisols is 6.5 - 7.8.",
         clip_pmin=7.02,
@@ -127,7 +94,7 @@ LAYERS_CONFIG = [
         name="Soil Organic Carbon (SOC)",
         marathi="सेंद्रिय कर्ब (SOC)",
         unit="%",
-        palette=DARK_SOC_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Soil Chemical (S)",
         desc="Organic Carbon percentage in topsoil (0-15 cm). Key driver of microbial health and nutrient buffering.",
         clip_pmin=1.22,
@@ -139,7 +106,7 @@ LAYERS_CONFIG = [
         name="Available Nitrogen (N)",
         marathi="उपलब्ध नत्र (N)",
         unit="mg/kg",
-        palette=DARK_NITROGEN_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Primary Nutrient (S)",
         desc="Alkaline permanganate extractable Nitrogen (mg/kg). Equivalent to kg/ha (x2 factor).",
         clip_pmin=12.1,
@@ -151,7 +118,7 @@ LAYERS_CONFIG = [
         name="Bulk Density",
         marathi="घनता (Bulk Density)",
         unit="g/cm³",
-        palette=DARK_BD_PALETTE,
+        palette=CONTOUR_INVERTED_PALETTE,
         category="Soil Physical (S)",
         desc="Dry mass of soil per unit volume (g/cm³). Indicator of compaction, root penetration and aeration.",
         clip_pmin=1.51,
@@ -163,7 +130,7 @@ LAYERS_CONFIG = [
         name="Elevation (DEM)",
         marathi="उंची (Elevation)",
         unit="m",
-        palette=DARK_ELEVATION_PALETTE,
+        palette=CONTOUR_AGRONOMIC_PALETTE,
         category="Relief (R)",
         desc="Height above Mean Sea Level (m) derived from DEM. Controls hydrologic runoff & accumulation.",
         clip_pmin=542.0,
@@ -175,7 +142,7 @@ LAYERS_CONFIG = [
         name="DSM Prediction Uncertainty",
         marathi="मॉडेल अनिश्चितता (Uncertainty)",
         unit="% error",
-        palette=DARK_UNCERTAINTY_PALETTE,
+        palette=CONTOUR_INVERTED_PALETTE,
         category="Model Quality (QRF)",
         desc="Quantile Regression Forest 90% prediction interval error. Lower values represent higher confidence.",
         clip_pmin=5.8,
@@ -206,28 +173,40 @@ def read_geotiff(path: Path):
 
 
 def colorize_array(arr: np.ndarray, vmin: float, vmax: float, palette: list[tuple[float, tuple[int, int, int]]]) -> np.ndarray:
-    """Map 2D float array to darker RGBA image using piecewise linear interpolation."""
+    """Map 2D float array to precision agronomic contour bands matching user reference image."""
+    from scipy.ndimage import gaussian_filter
     valid = np.isfinite(arr)
+    filled = arr.copy()
+    filled[~valid] = np.nanmean(arr) if np.any(valid) else 0.0
+
+    # Smooth slightly to create natural rounded organic contour zones
+    smoothed = gaussian_filter(filled, sigma=2.8)
+
     span = vmax - vmin if vmax > vmin else 1.0
-    norm = np.clip((arr - vmin) / span, 0.0, 1.0)
+    norm = np.clip((smoothed - vmin) / span, 0.0, 1.0)
 
-    h, w = arr.shape
-    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    pal_rgb = np.array([p[1] for p in palette], dtype=np.float32)
+    N = len(pal_rgb)
+    t = norm * (N - 1)
+    idx_floor = np.clip(np.floor(t).astype(int), 0, N - 2)
+    idx_ceil = idx_floor + 1
+    frac = t - idx_floor
 
-    pcts = [p[0] for p in palette]
-    r_vals = [p[1][0] for p in palette]
-    g_vals = [p[1][1] for p in palette]
-    b_vals = [p[1][2] for p in palette]
+    # Anti-aliased transition at band edges (w = 0.08)
+    w = 0.08
+    trans = np.zeros_like(frac)
+    in_trans = frac > (1.0 - w)
+    trans[in_trans] = (frac[in_trans] - (1.0 - w)) / w
+    trans = trans * trans * (3.0 - 2.0 * trans)
 
-    norm_valid = norm[valid]
-    r = np.interp(norm_valid, pcts, r_vals).astype(np.uint8)
-    g = np.interp(norm_valid, pcts, g_vals).astype(np.uint8)
-    b = np.interp(norm_valid, pcts, b_vals).astype(np.uint8)
+    c0 = pal_rgb[idx_floor]
+    c1 = pal_rgb[idx_ceil]
+    rgb = (c0 * (1.0 - trans[:, :, None]) + c1 * trans[:, :, None]).astype(np.uint8)
 
-    rgba[valid, 0] = r
-    rgba[valid, 1] = g
-    rgba[valid, 2] = b
-    rgba[valid, 3] = 255  # Fully opaque, crisp color overlay
+    h, w_img = arr.shape
+    rgba = np.zeros((h, w_img, 4), dtype=np.uint8)
+    rgba[valid, :3] = rgb[valid]
+    rgba[valid, 3] = 255  # Fully opaque contour bands
 
     return rgba
 

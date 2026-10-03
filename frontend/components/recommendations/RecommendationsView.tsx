@@ -20,7 +20,9 @@ import {
   Map as MapIcon,
   ShieldCheck,
   Filter,
+  BookOpen,
 } from "lucide-react";
+import { SoilReferenceStandardsTable } from "@/components/soil/SoilReferenceStandardsTable";
 import { getConciseParameterRecommendation, getRankedKeyRecommendations } from "@/lib/soilRecommendations";
 
 interface RecommendationsViewProps {
@@ -177,7 +179,7 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
   const [data, setData] = useState<RecommendationsResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"all" | "high" | "attention" | "info">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "high" | "attention" | "info" | "standards">("all");
 
   const activeFieldId =
     fieldIdOverride ||
@@ -408,14 +410,31 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({ fieldI
         >
           {t("recommendations.filterInfo")} ({data.summary.info_count})
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("standards")}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === "standards"
+              ? "bg-soil-primary text-white shadow-xs"
+              : "bg-surface-subtle text-soil-primary hover:bg-soil-primaryLight/40 border border-soil-secondary/40"
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>{locale === "mr" ? "शिफारस व संदर्भ मानके" : "Reference Standards & Norms"}</span>
+        </button>
       </div>
 
-      {/* 5. Recommendation Cards List */}
-      <div className="space-y-4">
-        {filteredRecs.map((rec: RecommendationItem) => (
-          <RecommendationCard key={rec.parameter_key} item={rec} />
-        ))}
-      </div>
+      {/* 5. Recommendation Cards List or Standards Table */}
+      {activeTab === "standards" ? (
+        <SoilReferenceStandardsTable />
+      ) : (
+        <div className="space-y-4">
+          {filteredRecs.map((rec: RecommendationItem) => (
+            <RecommendationCard key={rec.parameter_key} item={rec} />
+          ))}
+        </div>
+      )}
 
       {/* 6. Scientific Safety & Advisory Notice */}
       <div className="p-4 rounded-xl bg-surface-subtle border border-surface-border flex items-start gap-3 text-xs text-text-muted leading-relaxed">

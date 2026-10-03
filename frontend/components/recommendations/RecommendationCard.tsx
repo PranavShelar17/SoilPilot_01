@@ -53,7 +53,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ item }) 
     }
   };
 
-  // Priority badge styling
+  // Priority badge styling — only display action-requiring priorities; remove "more info" tag
   const renderPriorityBadge = () => {
     if (item.priority_key === "high") {
       return (
@@ -71,12 +71,8 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ item }) 
         </span>
       );
     }
-    return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-        <Info className="w-3.5 h-3.5" />
-        {t("recommendations.priorityInfo")}
-      </span>
-    );
+    // "more info" tag removed as requested
+    return null;
   };
 
   // Source badge
@@ -146,9 +142,11 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ item }) 
         </div>
 
         {/* Priority Badge */}
-        <div className="shrink-0 flex items-center gap-2">
-          {renderPriorityBadge()}
-        </div>
+        {renderPriorityBadge() && (
+          <div className="shrink-0 flex items-center gap-2">
+            {renderPriorityBadge()}
+          </div>
+        )}
       </div>
 
       {/* Observation & Meaning */}

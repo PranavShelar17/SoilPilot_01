@@ -9,6 +9,7 @@ import { PARAM_ORDER } from "@/lib/gis/gatStats";
 import { formatValue } from "@/lib/gis/format";
 import { RadarChart, RadarAxis } from "@/components/gat/RadarChart";
 import { classifyParameter } from "@/lib/gis/soilClassification";
+import { translateGeoName, translateStatus } from "@/i18n/marathiHelper";
 
 interface GatSoilHealthPanelProps {
   gat?: GatFeature | null;
@@ -61,7 +62,7 @@ export const GatSoilHealthPanel: React.FC<GatSoilHealthPanelProps> = ({
   loading,
   className = "",
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [tab, setTab] = useState<Tab>("matrix");
 
   const effectiveGat: GatFeature | null =
@@ -157,8 +158,8 @@ export const GatSoilHealthPanel: React.FC<GatSoilHealthPanelProps> = ({
             <div className="flex items-center gap-1 text-[11px] text-text-muted mt-0.5">
               <MapPin className="w-3 h-3 shrink-0" />
               <span className="truncate">
-                {effectiveGat.properties.attributes?.village || "Malegaon Kh"} &middot;{" "}
-                {effectiveGat.properties.attributes?.taluka || "Baramati"} &middot; Maharashtra
+                {locale === "mr" ? translateGeoName(effectiveGat.properties.attributes?.village || "Malegaon Kh") : (effectiveGat.properties.attributes?.village || "Malegaon Kh")} &middot;{" "}
+                {locale === "mr" ? translateGeoName(effectiveGat.properties.attributes?.taluka || "Baramati") : (effectiveGat.properties.attributes?.taluka || "Baramati")} &middot; {locale === "mr" ? "महाराष्ट्र" : "Maharashtra"}
               </span>
             </div>
           </div>
@@ -171,9 +172,9 @@ export const GatSoilHealthPanel: React.FC<GatSoilHealthPanelProps> = ({
         </div>
 
         <div className="grid grid-cols-3 gap-2 mt-3">
-          <StatPill label={`${t("gat.card.area")} (Ac)`} value={String(effectiveGat.properties.area_acres)} />
-          <StatPill label={`${t("gat.card.area")} (Ha)`} value={String(effectiveGat.properties.area_ha)} />
-          <StatPill label={`${t("gat.card.area")} (m²)`} value={effectiveGat.properties.area_sqm.toLocaleString()} />
+          <StatPill label={`${t("gat.card.area")} (${locale === "mr" ? "एकर" : "Ac"})`} value={String(effectiveGat.properties.area_acres)} />
+          <StatPill label={`${t("gat.card.area")} (${locale === "mr" ? "हेक्टर" : "Ha"})`} value={String(effectiveGat.properties.area_ha)} />
+          <StatPill label={`${t("gat.card.area")} (${locale === "mr" ? "चौ.मी." : "m²"})`} value={effectiveGat.properties.area_sqm.toLocaleString()} />
         </div>
       </div>
 
@@ -208,7 +209,7 @@ export const GatSoilHealthPanel: React.FC<GatSoilHealthPanelProps> = ({
                       className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0"
                       style={{ backgroundColor: cls.color, color: isDark ? "#052e16" : "#ffffff" }}
                     >
-                      {cls.status}
+                      {locale === "mr" ? (cls.statusMr || translateStatus(cls.status, true)) : cls.status}
                     </span>
                   </div>
                   <div className="flex items-baseline justify-between mt-1">
@@ -221,7 +222,7 @@ export const GatSoilHealthPanel: React.FC<GatSoilHealthPanelProps> = ({
                   </div>
                   <p className="flex items-start gap-1 text-[10.5px] text-text-muted mt-1.5 leading-snug">
                     <Lightbulb className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                    <span>{cls.advice}</span>
+                    <span>{locale === "mr" ? (cls.adviceMr || cls.advice) : cls.advice}</span>
                   </p>
                   <p className="text-[9px] text-text-light mt-1">{t("gat.card.pixelCount", { count: p.count })}</p>
                 </div>

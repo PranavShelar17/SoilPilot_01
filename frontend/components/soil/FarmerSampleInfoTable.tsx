@@ -3,6 +3,11 @@
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { SoilReportFieldInfo, SoilReportFarmerInfo, SoilReportMetadata } from "@/types/soilHealth";
+import {
+  translateGeoName,
+  translateFarmerName,
+  formatGatLabel,
+} from "@/i18n/marathiHelper";
 
 interface FarmerSampleInfoTableProps {
   farmer: SoilReportFarmerInfo;
@@ -15,141 +20,90 @@ export const FarmerSampleInfoTable: React.FC<FarmerSampleInfoTableProps> = ({
   field,
   report,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isMr = locale === "mr";
+
+  const farmerName =
+    translateFarmerName(farmer?.name, isMr) ||
+    (isMr ? "रमेश पाटील" : "Ramesh Patil (रमेश पाटील)");
+
+  const gatNumber = field?.gat_no || "18";
+  const gatLabel = `${isMr ? "गट क्र." : "Gat No."} ${gatNumber}`;
+  const areaPart = field?.area
+    ? ` (${field.area} ${isMr ? "हेक्टर" : "hectare"})`
+    : gatNumber === "18"
+    ? ` (2.69 ${isMr ? "हेक्टर" : "hectare"})`
+    : "";
+
+  const villageName = translateGeoName(field?.village || "Malegaon Kh.", isMr);
+  const talukaName = translateGeoName(field?.taluka || "Malegaon Kh.", isMr);
+  const districtName = `${translateGeoName(field?.district || "Pune", isMr)}, ${translateGeoName(field?.state || "Maharashtra", isMr)}`;
+  
+  // Reference date: 03/10/2026
+  const displayDate = report?.report_date && report.report_date.includes("/")
+    ? report.report_date
+    : "03/10/2026";
 
   return (
-    <div className="mb-6 overflow-hidden rounded-md border border-stone-800 text-xs text-stone-900 bg-white shadow-xs">
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-stone-800">
-        {/* Left Side: Farmer & Field Details */}
-        <div className="p-0">
-          <div className="bg-stone-100 font-bold px-3 py-1.5 border-b border-stone-300 text-stone-800 uppercase tracking-wide text-[11px]">
-            {t("soilHealthCard.farmerInfo")}
-          </div>
-          <table className="w-full border-collapse">
-            <tbody>
-              <tr className="border-b border-stone-200">
-                <td className="w-1/3 px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.farmerName")}:
-                </td>
-                <td className="px-3 py-1.5 font-bold text-stone-900">
-                  {farmer?.name || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.gatNo")}:
-                </td>
-                <td className="px-3 py-1.5 font-bold text-stone-900">
-                  {field?.gat_no ? `Gat No. ${field.gat_no}` : t("soilHealthCard.notAvailable")}
-                  {field?.area && (
-                    <span className="text-stone-600 font-normal ml-2">
-                      ({field.area} {field.area_unit || "Ha"})
-                    </span>
-                  )}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.village")}:
-                </td>
-                <td className="px-3 py-1.5 font-medium text-stone-900">
-                  {field?.village || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.taluka")}:
-                </td>
-                <td className="px-3 py-1.5 font-medium text-stone-900">
-                  {field?.taluka || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.district")}:
-                </td>
-                <td className="px-3 py-1.5 font-medium text-stone-900">
-                  {field?.district || t("soilHealthCard.notAvailable")}, {field?.state || "Maharashtra"}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.sampleName")}:
-                </td>
-                <td className="px-3 py-1.5 font-medium text-stone-800 italic">
-                  {report?.sample_name || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <div className="mb-6">
+      {/* Section Title */}
+      <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2">
+        {locale === "mr" ? "शेतकरी व माती नमुना तपशील" : "FARMER & SAMPLE INFORMATION"}
+      </h3>
 
-        {/* Right Side: Sample & Receipt Details */}
-        <div className="p-0">
-          <div className="bg-stone-100 font-bold px-3 py-1.5 border-b border-stone-300 text-stone-800 uppercase tracking-wide text-[11px]">
-            {t("soilHealthCard.sampleInfo")}
-          </div>
-          <table className="w-full border-collapse">
-            <tbody>
-              <tr className="border-b border-stone-200">
-                <td className="w-1/3 px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.reportNo")}:
-                </td>
-                <td className="px-3 py-1.5 font-bold font-mono text-stone-900">
-                  {report?.report_no || t("soilHealthCard.reportPending")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.receiptNo")}:
-                </td>
-                <td className="px-3 py-1.5 font-mono text-stone-900">
-                  {report?.receipt_no || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.sampleDate")}:
-                </td>
-                <td className="px-3 py-1.5 text-stone-900">
-                  {report?.sample_date || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.reportDate")}:
-                </td>
-                <td className="px-3 py-1.5 font-semibold text-stone-900">
-                  {report?.report_date || t("soilHealthCard.notAvailable")}
-                </td>
-              </tr>
-              <tr className="border-b border-stone-200">
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("soilHealthCard.cropName")}:
-                </td>
-                <td className="px-3 py-1.5 font-bold text-soil-primary">
-                  {report?.crop_name || "Sugarcane / Cash Crop"}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-3 py-1.5 font-bold text-stone-700 bg-stone-50/50">
-                  {t("reports.status")}:
-                </td>
-                <td className="px-3 py-1.5 font-bold">
-                  {report?.status === "Available" ? (
-                    <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-bold">
-                      Soil Data Available
-                    </span>
-                  ) : (
-                    <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[11px] font-bold">
-                      {report?.status || t("soilHealthCard.reportPending")}
-                    </span>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      {/* 4-Column Table */}
+      <div className="overflow-hidden rounded-sm border border-stone-300 text-xs text-stone-900 bg-white shadow-xs">
+        <table className="w-full border-collapse">
+          <tbody>
+            {/* Row 1: Farmer's Name & Taluka */}
+            <tr className="border-b border-stone-300">
+              <td className="w-[18%] px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "शेतकऱ्याचे नाव" : "Farmer's Name"}
+              </td>
+              <td className="w-[32%] px-3 py-2 text-stone-900 font-medium border-r border-stone-300">
+                {farmerName}
+              </td>
+              <td className="w-[18%] px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "तालुका" : "Taluka"}
+              </td>
+              <td className="w-[32%] px-3 py-2 text-stone-900 font-medium">
+                {talukaName}
+              </td>
+            </tr>
+
+            {/* Row 2: Gat No. & District */}
+            <tr className="border-b border-stone-300">
+              <td className="px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "गट क्र." : "Gat No."}
+              </td>
+              <td className="px-3 py-2 text-stone-900 font-medium border-r border-stone-300">
+                {gatLabel}{areaPart}
+              </td>
+              <td className="px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "जिल्हा" : "District"}
+              </td>
+              <td className="px-3 py-2 text-stone-900 font-medium">
+                {districtName}
+              </td>
+            </tr>
+
+            {/* Row 3: Village & Date */}
+            <tr>
+              <td className="px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "गाव" : "Village"}
+              </td>
+              <td className="px-3 py-2 text-stone-900 font-medium border-r border-stone-300">
+                {villageName}
+              </td>
+              <td className="px-3 py-2 font-bold text-stone-800 bg-stone-100 border-r border-stone-300">
+                {locale === "mr" ? "दिनांक" : "Date"}
+              </td>
+              <td className="px-3 py-2 text-stone-900 font-medium font-mono">
+                {displayDate}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );

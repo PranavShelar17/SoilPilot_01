@@ -188,10 +188,13 @@ def parse_kml_to_geojson(kml_path: Path):
 def main():
     root_dir = Path(__file__).resolve().parent.parent.parent
     kml_path = root_dir / "data" / "gis" / "raw" / "trial.kml"
-
     if not kml_path.exists():
-        print(f"Error: KML file not found at {kml_path}")
-        sys.exit(1)
+        kml_fallback = root_dir / "kml" / "trial.kml"
+        if kml_fallback.exists():
+            kml_path = kml_fallback
+        else:
+            print(f"Error: KML file not found at {kml_path} or {kml_fallback}")
+            sys.exit(1)
 
     print(f"[GIS PIPELINE] Processing raw KML: {kml_path}")
     geojson = parse_kml_to_geojson(kml_path)

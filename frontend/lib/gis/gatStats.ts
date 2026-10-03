@@ -6,27 +6,55 @@ import { classifyParameter } from "./soilClassification";
 export type GridMap = Partial<Record<DSMRasterLayerId, RasterGrid>>;
 
 export const PARAM_ORDER: DSMRasterLayerId[] = [
-  "ph",
+  "bdod",
+  "cec",
+  "cfvo",
+  "clay",
+  "sand",
+  "silt",
   "soc",
   "nitrogen",
-  "bd",
+  "ph",
+  "soil_texture",
+  "elevation",
+  "slope",
+  "lulc",
   "ndvi",
   "evi",
-  "elevation",
-  "uncertainty",
+  "savi",
+  "ndmi",
+  "ndre",
+  "bsi",
+  "ndwi",
 ];
 
 // Baseline defaults for Baramati Deccan black cotton vertisols
-const FALLBACK_PARAMS: Record<DSMRasterLayerId, { mean: number; min: number; max: number; std: number }> = {
-  ph: { mean: 7.35, min: 7.1, max: 7.6, std: 0.12 },
-  soc: { mean: 0.68, min: 0.52, max: 0.82, std: 0.07 },
-  nitrogen: { mean: 14.8, min: 13.1, max: 16.5, std: 0.8 },
-  bd: { mean: 1.48, min: 1.42, max: 1.54, std: 0.03 },
+const FALLBACK_PARAMS: Partial<Record<DSMRasterLayerId, { mean: number; min: number; max: number; std: number }>> = {
+  bdod: { mean: 1.54, min: 1.25, max: 1.60, std: 0.04 },
+  cec: { mean: 33.4, min: 20.0, max: 42.0, std: 3.5 },
+  cfvo: { mean: 11.3, min: 5.0, max: 16.0, std: 1.8 },
+  clay: { mean: 42.6, min: 28.0, max: 48.0, std: 2.8 },
+  sand: { mean: 29.5, min: 18.0, max: 34.0, std: 2.1 },
+  silt: { mean: 27.3, min: 18.0, max: 31.0, std: 1.5 },
+  soc: { mean: 1.0, min: 0.6, max: 1.4, std: 0.12 },
+  nitrogen: { mean: 1.04, min: 0.65, max: 1.25, std: 0.08 },
+  ph: { mean: 7.15, min: 6.8, max: 7.4, std: 0.07 },
+  soil_texture: { mean: 1.0, min: 1.0, max: 1.0, std: 0.0 },
+  elevation: { mean: 561.4, min: 541.0, max: 582.0, std: 7.8 },
+  slope: { mean: 2.8, min: 0.0, max: 15.0, std: 2.1 },
+  lulc: { mean: 4.0, min: 0.0, max: 7.0, std: 1.0 },
   ndvi: { mean: 0.41, min: 0.18, max: 0.65, std: 0.09 },
   evi: { mean: 0.22, min: 0.09, max: 0.41, std: 0.06 },
-  elevation: { mean: 565, min: 560, max: 570, std: 2.5 },
+  savi: { mean: 0.22, min: 0.09, max: 0.40, std: 0.06 },
+  ndmi: { mean: 0.05, min: -0.30, max: 0.40, std: 0.15 },
+  ndre: { mean: 0.28, min: 0.05, max: 0.55, std: 0.12 },
+  bsi: { mean: 0.05, min: -0.20, max: 0.30, std: 0.12 },
+  ndwi: { mean: -0.25, min: -0.60, max: 0.20, std: 0.15 },
+  bd: { mean: 1.54, min: 1.25, max: 1.60, std: 0.04 },
   uncertainty: { mean: 6.8, min: 5.5, max: 8.2, std: 0.6 },
 };
+
+const DEFAULT_FALLBACK = { mean: 1.0, min: 0.0, max: 2.0, std: 0.1 };
 
 /**
  * Computes zonal diagnostic statistics for all Gats across available raster grids.
@@ -86,7 +114,7 @@ export function computeAllGatStats(
         std = Math.sqrt(variance);
       } else {
         // Fallback to regional realistic defaults
-        const fb = FALLBACK_PARAMS[layerId];
+        const fb = FALLBACK_PARAMS[layerId] || DEFAULT_FALLBACK;
         mean = fb.mean;
         min = fb.min;
         max = fb.max;

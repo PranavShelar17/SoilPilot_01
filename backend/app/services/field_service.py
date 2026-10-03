@@ -246,8 +246,13 @@ class FieldService:
                 t_obj = geography_repository.get_taluka_by_name(db, taluka_name)
                 if t_obj:
                     village = geography_repository.get_village_by_name_and_taluka(db, village_name, t_obj.id)
+                    if not village:
+                        village = db.query(Village).filter(
+                            Village.taluka_id == t_obj.id,
+                            Village.name.ilike(f"%{village_name.strip()}%")
+                        ).first()
             if not village:
-                village = db.query(Village).filter(Village.name.ilike(village_name.strip())).first()
+                village = db.query(Village).filter(Village.name.ilike(f"%{village_name.strip()}%")).first()
 
         clean_gat = normalize_gat_number(gat_no) if gat_no else None
 

@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
-import { ShieldAlert } from "lucide-react";
 
 interface SoilReportFooterProps {
   isDemo?: boolean;
@@ -12,52 +11,49 @@ interface SoilReportFooterProps {
 }
 
 export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
-  isDemo = false,
   reportDate,
   reportNo,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isMr = locale === "mr";
+
+  const displayRef = reportNo || "SPL/2026/SL-0104";
+  const displayDate = reportDate || "20-09-2026";
 
   return (
-    <div className="space-y-6 pt-2">
-      {/* Laboratory Signatures & Certification Block (Matches standard laboratory dossier) */}
-      <div className="border border-stone-800 rounded-md p-4 bg-white grid grid-cols-1 sm:grid-cols-2 gap-6 items-end">
-        <div>
-          <h5 className="font-bold text-stone-900 text-xs uppercase tracking-wide mb-1">
-            {t("soilHealthCard.reportInfo")}
-          </h5>
-          <p className="text-[11px] text-stone-600">
-            {t("soilHealthCard.labAddress")}
-          </p>
-          <div className="mt-2 text-[11px] text-stone-500 font-mono">
-            <span>Report Ref: {reportNo || "SPL-2026-0104"}</span>
-            <span className="mx-2">•</span>
-            <span>Date: {reportDate || "20-09-2026"}</span>
-          </div>
-        </div>
+    <div className="pt-4">
+      {/* 1. Solid Green Divider Line */}
+      <div className="w-full border-t-2 border-[#1e5622] mb-3" />
 
-        <div className="flex flex-col items-start sm:items-end">
-          <div className="w-48 border-b border-stone-800 pb-1 text-center">
-            <span className="font-serif italic text-stone-800 font-bold text-xs block">
-              Dr. S. K. Joshi (Chief Chemist)
-            </span>
-          </div>
-          <span className="text-[10px] uppercase font-bold text-stone-600 mt-1">
-            {t("soilHealthCard.certifiedBy")}
-          </span>
-          <span className="text-[10px] text-soil-primary font-semibold">
-            Soil Diagnostics & Analytical Chemistry Division
-          </span>
+      {/* 2. Section Header */}
+      <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2">
+        {isMr ? "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" : "REPORT INFORMATION & LABORATORY CERTIFICATION"}
+      </h3>
+
+      {/* 3. Report Info & Chemist Sign-Off */}
+      <div className="space-y-1 text-xs text-stone-800">
+        <p className="font-medium text-stone-800">
+          {isMr
+            ? "कृषी निदान व डिजिटल मृदा परीक्षण केंद्र, बारामती / पुणे, महाराष्ट्र"
+            : "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra"}
+        </p>
+
+        <p className="text-stone-700 font-mono text-[11.5px]">
+          {isMr ? "अहवाल संदर्भ" : "Report Ref"}: {displayRef} &bull; {isMr ? "दिनांक" : "Date"}: {displayDate}
+        </p>
+
+        <div className="pt-2">
+          <p className="font-bold text-stone-900 text-xs">
+            {isMr ? "डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" : "Dr. S. K. Joshi (Chief Chemist)"}
+          </p>
+          <p className="font-bold uppercase text-[11px] text-stone-900 tracking-wider">
+            {isMr ? "अधिकृत मृदा परीक्षण रसायनशास्त्रज्ञ" : "AUTHORIZED SOIL TESTING CHEMIST"}
+          </p>
+          <p className="text-[11px] text-stone-600">
+            {isMr ? "मृदा निदान व विश्लेषणात्मक रसायनशास्त्र विभाग" : "Soil Diagnostics & Analytical Chemistry Division"}
+          </p>
         </div>
       </div>
-
-      {/* Demo Advisory Disclaimer */}
-      {isDemo && (
-        <div className="p-3 bg-amber-50 rounded-md border border-amber-200 flex items-start gap-2 text-amber-900 text-[11px] leading-relaxed">
-          <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-          <p>{t("soilHealthCard.demoWarning")}</p>
-        </div>
-      )}
     </div>
   );
 };

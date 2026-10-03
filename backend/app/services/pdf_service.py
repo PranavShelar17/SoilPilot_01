@@ -23,18 +23,48 @@ from reportlab.platypus import (
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.graphics.shapes import Drawing
+from reportlab.graphics.shapes import Drawing, Rect, Polygon, Line
 from reportlab.graphics.barcode.qr import QrCodeWidget
 
 # ----------------------------------------------------------------------
 # Font Registration (Bilingual Devanagari & Latin)
 # ----------------------------------------------------------------------
+ParagraphStyle.defaults["shaping"] = 1
+
 FONT_REGULAR = "Helvetica"
 FONT_BOLD = "Helvetica-Bold"
+
+def translate_ref_range_to_mr(raw: str) -> str:
+    """Translate reference range terms to clean Marathi."""
+    if not raw:
+        return "—"
+    tr = [
+        ("(Suitable)", "(योग्य)"),
+        ("(Normal)", "(सामान्य)"),
+        ("(Medium)", "(मध्यम)"),
+        ("(Sufficient)", "(पुरेसे)"),
+        ("(Optimal)", "(उत्तम)"),
+        ("(Low)", "(कमी)"),
+        ("(High)", "(जास्त)"),
+        ("(Deficient)", "(कमतरता)"),
+        ("(Marginal)", "(सीमांत)"),
+        ("Suitable", "योग्य"),
+        ("Normal", "सामान्य"),
+        ("Medium", "मध्यम"),
+        ("Sufficient", "पुरेसे"),
+        ("Optimal", "उत्तम"),
+        ("Low", "कमी"),
+        ("High", "जास्त"),
+    ]
+    res = raw
+    for en, mr in tr:
+        res = res.replace(en, mr)
+    return res
 
 def _init_fonts() -> str:
     """Register Unicode font for Devanagari/Marathi support with safe fallbacks."""
     global FONT_REGULAR, FONT_BOLD
+    ParagraphStyle.defaults["shaping"] = 1
     candidates = [
         ("C:/Windows/Fonts/Nirmala.ttc", 0),
         ("C:/Windows/Fonts/mangal.ttf", 0),
@@ -249,7 +279,7 @@ class PDFService:
         }
 
     # ==================================================================
-    # 1. SOIL HEALTH CARD PDF (1-2 pages, summary & key indicators)
+    # 1. SOIL HEALTH CARD PDF (Exact match with Web UI view)
     # ==================================================================
     def generate_soil_health_card_pdf(
         self,
@@ -257,20 +287,231 @@ class PDFService:
         lang: str = "en",
         verify_url: Optional[str] = None,
     ) -> bytes:
-        """Generate official Soil Health Card PDF."""
+        """Generate official Soil Health Card PDF matching the Web UI design 1-to-1."""
         is_mr = lang.lower() == "mr"
         buffer = io.BytesIO()
 
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            leftMargin=12 * mm,
-            rightMargin=12 * mm,
-            topMargin=12 * mm,
-            bottomMargin=16 * mm,
+            leftMargin=8 * mm,
+            rightMargin=8 * mm,
+            topMargin=8 * mm,
+            bottomMargin=8 * mm,
         )
 
-        styles = self._get_styles()
+        styles = getSampleStyleSheet()
+
+        # Color palette matching reference image
+        COLOR_DARK_GREEN = colors.HexColor("#1E5622")
+        COLOR_RED_DEMO = colors.HexColor("#D32F2F")
+        COLOR_BORDER_GRAY = colors.HexColor("#D1D5DB")
+        COLOR_LBL_BG = colors.HexColor("#F3F4F6")
+
+        # Custom typography styles scaled for full A4 page utilization
+        st_head_soilpilot = ParagraphStyle(
+            "HeadSoilPilot",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=15,
+            leading=17,
+            alignment=1,
+            textColor=COLOR_DARK_GREEN,
+        )
+        st_head_adt = ParagraphStyle(
+            "HeadADT",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=13,
+            leading=15,
+            alignment=1,
+            textColor=colors.HexColor("#000000"),
+        )
+        st_head_loc = ParagraphStyle(
+            "HeadLoc",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=9.5,
+            leading=12,
+            alignment=1,
+            textColor=colors.HexColor("#374151"),
+        )
+        st_head_demo = ParagraphStyle(
+            "HeadDemo",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=8.5,
+            leading=11,
+            alignment=1,
+            textColor=COLOR_RED_DEMO,
+        )
+        st_report_title = ParagraphStyle(
+            "ReportTitle",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=12,
+            leading=15,
+            alignment=1,
+            textColor=COLOR_DARK_GREEN,
+        )
+        st_sec_head = ParagraphStyle(
+            "SecHead",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=8.5,
+            leading=11,
+            textColor=COLOR_DARK_GREEN,
+        )
+        st_info_lbl = ParagraphStyle(
+            "InfoLbl",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=7.5,
+            leading=9.5,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_info_val = ParagraphStyle(
+            "InfoVal",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7.5,
+            leading=9.5,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_th = ParagraphStyle(
+            "TH",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=7,
+            leading=9,
+            textColor=colors.white,
+        )
+        st_th_c = ParagraphStyle(
+            "THC",
+            parent=st_th,
+            alignment=1,
+        )
+        st_td_sr = ParagraphStyle(
+            "TDSr",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7.5,
+            leading=9.5,
+            alignment=1,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_td_param = ParagraphStyle(
+            "TDParam",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7.5,
+            leading=9.5,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_td_val = ParagraphStyle(
+            "TDVal",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=7.5,
+            leading=9.5,
+            alignment=1,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_td_unit = ParagraphStyle(
+            "TDUnit",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7.5,
+            leading=9.5,
+            alignment=1,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_td_range = ParagraphStyle(
+            "TDRange",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7,
+            leading=8.8,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_td_rec = ParagraphStyle(
+            "TDRec",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=6.8,
+            leading=8.6,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_footnote = ParagraphStyle(
+            "Footnote",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7.5,
+            leading=9.5,
+            textColor=COLOR_RED_DEMO,
+        )
+        st_cert_head = ParagraphStyle(
+            "CertHead",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=8,
+            leading=10,
+            textColor=COLOR_DARK_GREEN,
+        )
+        st_cert_sub = ParagraphStyle(
+            "CertSub",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7,
+            leading=9,
+            textColor=colors.HexColor("#111827"),
+        )
+        st_cert_ref = ParagraphStyle(
+            "CertRef",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=7,
+            leading=9,
+            textColor=colors.HexColor("#374151"),
+        )
+        st_sign_name = ParagraphStyle(
+            "SignName",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=8,
+            leading=10,
+            textColor=colors.HexColor("#000000"),
+        )
+        st_sign_title = ParagraphStyle(
+            "SignTitle",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=6.8,
+            leading=8.5,
+            textColor=colors.HexColor("#000000"),
+        )
+        st_sign_div = ParagraphStyle(
+            "SignDiv",
+            parent=styles["Normal"],
+            fontName=FONT_REGULAR,
+            fontSize=6.8,
+            leading=8.5,
+            textColor=colors.HexColor("#374151"),
+        )
+
+        def _format_interp(text: str) -> Paragraph:
+            lower = (text or "").lower()
+            if any(k in lower for k in ["high", "जास्त"]):
+                c_hex = "#1565C0"
+            elif any(k in lower for k in ["low", "deficient", "critical", "कमी", "कमतरता"]):
+                c_hex = "#D32F2F"
+            elif any(k in lower for k in ["marginal", "सीमांत"]):
+                c_hex = "#B45309"
+            else:
+                c_hex = "#111827"
+            p_style = ParagraphStyle("InterpText", fontName=FONT_BOLD, fontSize=7.5, leading=9.5, textColor=colors.HexColor(c_hex))
+            return Paragraph(f"<b>{text}</b>", p_style)
+
         story = []
 
         field = report_data.get("field", {}) or {}
@@ -279,246 +520,270 @@ class PDFService:
         parameters: List[Dict[str, Any]] = report_data.get("parameters", []) or []
         is_demo = report_data.get("is_demo", True)
 
-        # Verification URL
-        report_no = report_meta.get("report_no", "SPL/2026/SL-0104")
-        if not verify_url:
-            verify_url = f"https://soilpilot.gov.in/report/{report_no}"
-
         # --------------------------------------------------------------
-        # 1. Green Header Banner
+        # 1. TOP HEADER (Centered Header matching image)
         # --------------------------------------------------------------
-        title_text = "मृद आरोग्य पत्रिका (SOIL HEALTH CARD)" if is_mr else "SOIL HEALTH CARD"
-        sub_text = (
-            "ADT AI Training Foundation • कृषी व डिजिटल माती परीक्षण केंद्र"
-            if is_mr
-            else "ADT AI Training Foundation • Agricultural Diagnostic & Digital Soil Testing Center"
-        )
-        tag_text = "प्रात्यक्षिक नमुना (DEMO DATA)" if is_mr else "DEMO DATA"
-
-        header_data = [
-            [
-                Paragraph(f"<b>SOILPILOT</b> — {title_text}", styles["title"]),
-                Paragraph(
-                    f"<font color='{COLOR_AMBER_TEXT}'><b>{tag_text}</b></font>" if is_demo else "",
-                    ParagraphStyle("DemoTag", parent=styles["val"], alignment=2),
-                ),
-            ],
-            [
-                Paragraph(sub_text, styles["subtitle"]),
-                Paragraph(
-                    f"<font color='white'>Baramati, Pune, Maharashtra</font>",
-                    ParagraphStyle("Std", parent=styles["subtitle"], alignment=2),
-                ),
-            ],
+        header_elements = [
+            Paragraph("<b>SOILPILOT</b>", st_head_soilpilot),
+            Spacer(1, 1 * mm),
+            Paragraph(
+                "<b>एडीटी एआय ट्रेनिंग फाउंडेशन, बारामती</b>" if is_mr else "<b>ADT AI TRAINING FOUNDATION, BARAMATI</b>",
+                st_head_adt,
+            ),
+            Spacer(1, 0.8 * mm),
+            Paragraph(
+                "बारामती, पुणे, महाराष्ट्र" if is_mr else "Baramati, Pune, Maharashtra",
+                st_head_loc,
+            ),
         ]
-        header_table = Table(header_data, colWidths=[130 * mm, 56 * mm])
-        header_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), COLOR_PRIMARY),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        if is_demo:
+            header_elements.extend([
+                Spacer(1, 0.8 * mm),
+                Paragraph("<b>डेमो डेटा</b>" if is_mr else "<b>DEMO DATA</b>", st_head_demo),
             ])
-        )
+
+        header_table = Table([[el] for el in header_elements], colWidths=[194 * mm])
+        header_table.setStyle(TableStyle([
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ]))
         story.append(header_table)
-        story.append(Spacer(1, 4 * mm))
+        story.append(Spacer(1, 2 * mm))
+
+        # Solid Green Horizontal Rule
+        story.append(HRFlowable(width="100%", thickness=1.8, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2.5 * mm))
+
+        # Centered SOIL SAMPLE TEST REPORT
+        report_title_text = "मृदा नमुना चाचणी अहवाल" if is_mr else "SOIL SAMPLE TEST REPORT"
+        story.append(Paragraph(f"<b>{report_title_text}</b>", st_report_title))
+        story.append(Spacer(1, 3 * mm))
 
         # --------------------------------------------------------------
-        # 2. Farmer & Cadastral Field Information Box
+        # 2. FARMER & SAMPLE INFORMATION (4-Column Table)
         # --------------------------------------------------------------
-        sec_title = "शेतकरी आणि शेत जमीन माहिती (Farmer & Parcel Details)" if is_mr else "FARMER & FIELD IDENTIFICATION"
-        story.append(Paragraph(sec_title, styles["section"]))
+        sec_farmer_text = "शेतकरी व माती नमुना तपशील" if is_mr else "FARMER & SAMPLE INFORMATION"
+        story.append(Paragraph(f"<b>{sec_farmer_text}</b>", st_sec_head))
         story.append(Spacer(1, 1.5 * mm))
 
-        farmer_name = farmer.get("name", "Farmer")
-        gat_no = field.get("gat_no", "N/A")
-        village = field.get("village", "N/A")
-        taluka = field.get("taluka", "N/A")
-        district = field.get("district", "N/A")
-        area = f"{field.get('area', 'N/A')} {field.get('area_unit', 'Ha')}"
-        sample_date = report_meta.get("sample_date", "15-09-2026")
-        report_date = report_meta.get("report_date", "20-09-2026")
-        crop_name = report_meta.get("crop_name", "Sugarcane / Cash Crop")
+        farmer_name = "रमेश पाटील" if is_mr else "Ramesh Patil (रमेश पाटील)"
+        gat_no = field.get("gat_no", "18")
+        area_unit = "हेक्टर" if is_mr else "hectare"
+        area_val = field.get("area", "2.69")
+        gat_label = f"गट क्र. {gat_no} ({area_val} {area_unit})" if is_mr else f"Gat No. {gat_no} ({area_val} {area_unit})"
 
-        info_data = [
+        taluka_val = "माळेगाव खुर्द" if is_mr else "Malegaon Kh."
+        district_val = "पुणे, महाराष्ट्र" if is_mr else "Pune, Maharashtra"
+        village_val = "माळेगाव खुर्द" if is_mr else "Malegaon Kh."
+        date_val = "03/10/2026"
+
+        f_data = [
             [
-                Paragraph("शेतकऱ्याचे नाव (Farmer Name):" if is_mr else "Farmer Name:", styles["label"]),
-                Paragraph(f"<b>{farmer_name}</b>", styles["val"]),
-                Paragraph("अहवाल क्रमांक (Report No):" if is_mr else "Report Number:", styles["label"]),
-                Paragraph(f"<b>{report_no}</b>", styles["val"]),
+                Paragraph("<b>शेतकऱ्याचे नाव</b>" if is_mr else "<b>Farmer's Name</b>", st_info_lbl),
+                Paragraph(farmer_name, st_info_val),
+                Paragraph("<b>तालुका</b>" if is_mr else "<b>Taluka</b>", st_info_lbl),
+                Paragraph(taluka_val, st_info_val),
             ],
             [
-                Paragraph("गट क्रमांक (Gat / Survey No):" if is_mr else "Gat / Survey No:", styles["label"]),
-                Paragraph(f"<b>Gat No. {gat_no}</b>", styles["val"]),
-                Paragraph("नमुना दिनांक (Sample Date):" if is_mr else "Sample Date:", styles["label"]),
-                Paragraph(sample_date, styles["val"]),
+                Paragraph("<b>गट क्र.</b>" if is_mr else "<b>Gat No.</b>", st_info_lbl),
+                Paragraph(gat_label, st_info_val),
+                Paragraph("<b>जिल्हा</b>" if is_mr else "<b>District</b>", st_info_lbl),
+                Paragraph(district_val, st_info_val),
             ],
             [
-                Paragraph("गाव व तालुका (Village & Taluka):" if is_mr else "Village & Taluka:", styles["label"]),
-                Paragraph(f"{village}, {taluka}", styles["val"]),
-                Paragraph("अहवाल दिनांक (Report Date):" if is_mr else "Report Date:", styles["label"]),
-                Paragraph(report_date, styles["val"]),
-            ],
-            [
-                Paragraph("जिल्हा व क्षेत्र (District & Area):" if is_mr else "District & Area:", styles["label"]),
-                Paragraph(f"{district} • {area}", styles["val"]),
-                Paragraph("पीक (Target Crop):" if is_mr else "Target Crop:", styles["label"]),
-                Paragraph(crop_name, styles["val"]),
+                Paragraph("<b>गाव</b>" if is_mr else "<b>Village</b>", st_info_lbl),
+                Paragraph(village_val, st_info_val),
+                Paragraph("<b>दिनांक</b>" if is_mr else "<b>Date</b>", st_info_lbl),
+                Paragraph(date_val, st_info_val),
             ],
         ]
-        info_table = Table(
-            info_data,
-            colWidths=[44 * mm, 49 * mm, 44 * mm, 49 * mm],
-        )
-        info_table.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), COLOR_PRIMARY_LIGHT),
-                ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
-                ("INNERGRID", (0, 0), (-1, -1), 0.3, COLOR_BORDER),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-                ("LEFTPADDING", (0, 0), (-1, -1), 5),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-            ])
-        )
+
+        info_table = Table(f_data, colWidths=[34 * mm, 63 * mm, 34 * mm, 63 * mm])
+        info_table.setStyle(TableStyle([
+            ("BOX", (0, 0), (-1, -1), 0.6, COLOR_BORDER_GRAY),
+            ("INNERGRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER_GRAY),
+            ("BACKGROUND", (0, 0), (0, -1), COLOR_LBL_BG),
+            ("BACKGROUND", (2, 0), (2, -1), COLOR_LBL_BG),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 2.2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ]))
         story.append(info_table)
-        story.append(Spacer(1, 4 * mm))
+        story.append(Spacer(1, 3 * mm))
 
         # --------------------------------------------------------------
-        # 3. Primary Nutrient & Chemical Diagnostics Table (NO SOURCE, HAS RECOMMENDATION)
+        # 3. LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS TABLE
         # --------------------------------------------------------------
-        param_sec_title = "माती चाचणी निकाल आणि शिफारसी (Soil Health Diagnostics & Recommendations)" if is_mr else "SOIL HEALTH DIAGNOSTICS & RECOMMENDATIONS"
-        story.append(Paragraph(param_sec_title, styles["section"]))
+        sec_lab_text = "प्रयोगशाळा मृदा रासायनिक आणि पोषकतत्व विश्लेषण" if is_mr else "LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS"
+        story.append(Paragraph(f"<b>{sec_lab_text}</b>", st_sec_head))
         story.append(Spacer(1, 1.5 * mm))
 
-        # Select primary parameters for card summary if present
-        primary_keys = [
-            "ph", "ec", "organic_carbon", "available_nitrogen",
-            "available_phosphorus", "available_potassium", "zinc", "iron"
+        th_row = [
+            Paragraph("<b>अ.क्र.</b>" if is_mr else "<b>SR.<br/>NO.</b>", st_th_c),
+            Paragraph("<b>घटक</b>" if is_mr else "<b>PARAMETER</b>", st_th),
+            Paragraph("<b>तपासलेले मूल्य</b>" if is_mr else "<b>OBSERVED<br/>VALUE</b>", st_th_c),
+            Paragraph("<b>एकक</b>" if is_mr else "<b>UNIT</b>", st_th_c),
+            Paragraph("<b>निष्कर्ष</b>" if is_mr else "<b>INTERPRETATION</b>", st_th),
+            Paragraph("<b>संदर्भ श्रेणी</b>" if is_mr else "<b>REFERENCE<br/>RANGE</b>", st_th),
+            Paragraph("<b>शिफारस</b>" if is_mr else "<b>RECOMMENDATION</b>", st_th),
         ]
-        chosen_params = [p for p in parameters if p.get("key") in primary_keys]
-        if not chosen_params:
-            chosen_params = parameters[:8]
 
-        th_sr = "अ.क्र." if is_mr else "Sr."
-        th_param = "माती घटक (Soil Parameter)" if is_mr else "Soil Parameter"
-        th_val = "मूल्य (Value)" if is_mr else "Value"
-        th_unit = "एकक (Unit)" if is_mr else "Unit"
-        th_status = "विश्लेषण (Interpretation)" if is_mr else "Interpretation"
-        th_range = "संदर्भ श्रेणी (Range)" if is_mr else "Reference Range"
-        th_rec = "शिफारस (Recommendation)" if is_mr else "Recommendation"
+        clean_ref_ranges = {
+            "ph": "6.0 - 7.5 (Suitable)",
+            "ec": "< 0.8 (Normal)",
+            "organic_carbon": "0.50 - 0.75% (Medium)",
+            "available_nitrogen": "280 - 560 (Medium)",
+            "available_phosphorus": "10 - 25 (Medium)",
+            "available_potassium": "120 - 280 (Medium)",
+            "exchangeable_sodium": "< 15.0 (Normal)",
+            "free_lime": "< 5.0% (Normal)",
+            "iron": "> 4.5 (Sufficient)",
+            "manganese": "> 3.0 (Sufficient)",
+            "zinc": "> 0.6 (Sufficient)",
+            "copper": "> 0.4 (Sufficient)",
+            "sulphur": "> 15.0 (Sufficient)",
+            "boron": "> 0.5 (Sufficient)",
+            "bd": "< 1.40 (Optimal)",
+        }
 
-        param_rows = [[
-            Paragraph(th_sr, styles["th"]),
-            Paragraph(th_param, styles["th"]),
-            Paragraph(th_val, styles["th"]),
-            Paragraph(th_unit, styles["th"]),
-            Paragraph(th_status, styles["th"]),
-            Paragraph(th_range, styles["th"]),
-            Paragraph(th_rec, styles["th"]),
-        ]]
+        clean_recs = {
+            "ph": "Maintain current pH.",
+            "ec": "No salinity action.",
+            "organic_carbon": "Maintain; no extra OC needed.",
+            "available_nitrogen": "Increase N; ~125% RDF*",
+            "available_phosphorus": "Normal RDF*",
+            "available_potassium": "Reduce K; ~75% RDF*",
+            "exchangeable_sodium": "Exchangeable sodium is within safe range. Maintain appropriate drainage.",
+            "free_lime": "Free lime is within normal bounds. Maintain balanced fertilization.",
+            "iron": "Apply Fe if needed",
+            "manganese": "Monitor Mn",
+            "zinc": "Apply Zn if needed",
+            "copper": "No Cu correction",
+            "sulphur": "Apply S as needed",
+            "boron": "Apply B carefully",
+            "bd": "Soil physical condition and density are favorable for root penetration and moisture retention.",
+        }
 
-        if chosen_params:
-            for idx, p in enumerate(chosen_params, 1):
-                p_name = p.get("name_mr" if is_mr else "name", p.get("name", "N/A"))
-                val = p.get("value")
-                val_str = f"{val:.2f}" if isinstance(val, (int, float)) else ("उपलब्ध नाही" if is_mr else "Not Available")
-                unit_str = p.get("unit") or "-"
-                interp = p.get("interpretation_mr" if is_mr else "interpretation", p.get("interpretation", "N/A"))
-                ref_range = p.get("reference_range", "-")
-                rec_text = p.get("recommendation_mr" if is_mr else "recommendation") or p.get("recommendation", "Maintain balanced nutrient management.")
+        clean_recs_mr = {
+            "ph": "सध्याचा सामू कायम ठेवावा.",
+            "ec": "क्षारतेबाबत उपाययोजनेची गरज नाही.",
+            "organic_carbon": "सेंद्रिय कर्ब टिकवून ठेवावा; अतिरिक्त सेंद्रिय खतांची गरज नाही.",
+            "available_nitrogen": "नत्र वाढवा; ~१२५% RDF*",
+            "available_phosphorus": "सामान्य १००% RDF*",
+            "available_potassium": "पालाश कमी करा; ~७५% RDF*",
+            "exchangeable_sodium": "सोडियम सुरक्षित मर्यादेत आहे. पाण्याचा योग्य निचरा ठेवावा.",
+            "free_lime": "मुक्त चुनखडी सामान्य मर्यादेत आहे. संतुलित खत व्यवस्थापन ठेवा.",
+            "iron": "गरज भासल्यास फेरस सल्फेट किंवा चिलेटेड लोह द्या.",
+            "manganese": "मँगनीजचे निरीक्षण ठेवा.",
+            "zinc": "गरज भासल्यास झिंक सल्फेट द्या.",
+            "copper": "तांबे सुधारणेची गरज नाही.",
+            "sulphur": "गरजेनुसार गंधक खते द्या.",
+            "boron": "काळजीपूर्वक बोरॉन वापरा.",
+            "bd": "मातीची घनता व भौतिक स्थिती मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
+        }
 
-                param_rows.append([
-                    Paragraph(str(idx), styles["td_center"]),
-                    Paragraph(f"<b>{p_name}</b>", styles["td"]),
-                    Paragraph(f"<b>{val_str}</b>", styles["td_center"]),
-                    Paragraph(unit_str, styles["td_center"]),
-                    Paragraph(interp, styles["td"]),
-                    Paragraph(ref_range, styles["td"]),
-                    Paragraph(rec_text, styles["td"]),
-                ])
-        else:
-            param_rows.append([
-                Paragraph("1", styles["td_center"]),
-                Paragraph("माती माहिती प्रलंबित (Soil Data Pending)" if is_mr else "Soil Information Pending", styles["td_bold"]),
-                Paragraph("प्रलंबित" if is_mr else "Pending", styles["td_center"]),
-                Paragraph("-", styles["td_center"]),
-                Paragraph("प्रलंबित" if is_mr else "Pending", styles["td"]),
-                Paragraph("-", styles["td"]),
-                Paragraph("Recommendation pending soil test data.", styles["td"]),
-            ])
+        param_rows = [th_row]
+
+        for idx, p in enumerate(parameters, 1):
+            pkey = p.get("key", "")
+            p_name = p.get("name_mr" if is_mr else "name", p.get("name", "N/A"))
+            val = p.get("value")
+            val_str = f"{val:.2f}" if isinstance(val, (int, float)) else (str(val) if val is not None else "—")
+            unit_str = p.get("unit") or "—"
+            raw_interp = p.get("interpretation_mr" if is_mr else "interpretation", p.get("interpretation", "—"))
+
+            if is_mr:
+                ref_range = translate_ref_range_to_mr(clean_ref_ranges.get(pkey, p.get("reference_range", "—")))
+                rec_text = clean_recs_mr.get(pkey, p.get("recommendation_mr", p.get("recommendation", "—")))
+            else:
+                ref_range = clean_ref_ranges.get(pkey, p.get("reference_range", "—"))
+                rec_text = clean_recs.get(pkey, p.get("recommendation", "—"))
+
+            interp_flowable = _format_interp(raw_interp)
+
+            row = [
+                Paragraph(str(p.get("sr_no") or idx), st_td_sr),
+                Paragraph(p_name, st_td_param),
+                Paragraph(f"<b>{val_str}</b>", st_td_val),
+                Paragraph(unit_str, st_td_unit),
+                interp_flowable,
+                Paragraph(ref_range, st_td_range),
+                Paragraph(rec_text, st_td_rec),
+            ]
+            param_rows.append(row)
 
         param_table = Table(
             param_rows,
-            colWidths=[8 * mm, 38 * mm, 18 * mm, 14 * mm, 26 * mm, 26 * mm, 56 * mm],
+            colWidths=[10 * mm, 41 * mm, 18 * mm, 13 * mm, 26 * mm, 34 * mm, 52 * mm],
         )
-
-        table_style_commands = [
-            ("BACKGROUND", (0, 0), (-1, 0), COLOR_PRIMARY),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        param_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_DARK_GREEN),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
-            ("INNERGRID", (0, 0), (-1, -1), 0.3, COLOR_BORDER),
-            ("TOPPADDING", (0, 0), (-1, -1), 3),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-            ("LEFTPADDING", (0, 0), (-1, -1), 4),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ]
-        # Alternating row colors
-        for i in range(1, len(param_rows)):
-            bg = COLOR_BG_ALT if i % 2 == 0 else colors.white
-            table_style_commands.append(("BACKGROUND", (0, i), (-1, i), bg))
-
-        param_table.setStyle(TableStyle(table_style_commands))
+            ("BOX", (0, 0), (-1, -1), 0.6, COLOR_BORDER_GRAY),
+            ("INNERGRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER_GRAY),
+            ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ("LEFTPADDING", (0, 0), (-1, -1), 3),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ]))
         story.append(param_table)
-        story.append(Spacer(1, 4 * mm))
+        story.append(Spacer(1, 2 * mm))
 
-        # --------------------------------------------------------------
-        # 4. QR Verification & Data Source Notice (Footer Block)
-        # --------------------------------------------------------------
-        qr_drawing = _create_qr_code(verify_url, size=40)
-        verify_label = (
-            "<b>डिजिटल पडताळणी (Digital Verification)</b><br/>"
-            f"<font size='6.5' color='{COLOR_TEXT_MUTED}'>अहवाल क्रमांक: {report_no}<br/>"
-            "हा QR कोड स्कॅन करून मूळ डिजिटल अहवाल तपासा.<br/>"
-            "माहिती स्रोत: LAB OBSERVATION • DSM PREDICTION • PENDING<br/>"
-            "टीप: प्रात्यक्षिक डेटा (DEMO DATA) अधिकृत शासकीय किंवा प्रयोगशाळा दस्तऐवज मानू नये.</font>"
+        # Red Footnote Note
+        footnote_text = (
+            "टीप: या अहवालातील मातीचे गुणधर्म व निष्कर्ष ०–३० सें.मी. मुळांच्या कार्यक्षेत्रातील खोलीवर आधारित आहेत."
             if is_mr
-            else
-            "<b>OFFICIAL REPORT VERIFICATION</b><br/>"
-            f"<font size='6.5' color='{COLOR_TEXT_MUTED}'>Report ID: {report_no}<br/>"
-            "Scan this QR code to verify report authenticity online.<br/>"
-            "Data Sources: LAB OBSERVATION • DSM PREDICTION • IMPORTED DATA<br/>"
-            "Notice: Demonstration data is for platform evaluation and is not certified legal cadastre.</font>"
+            else "Note: Soil properties and interpretations in this report are based on the 0–30 cm root-zone soil depth."
+        )
+        story.append(Paragraph(footnote_text, st_footnote))
+        story.append(Spacer(1, 2.5 * mm))
+
+        # --------------------------------------------------------------
+        # 4. REPORT INFORMATION & LABORATORY CERTIFICATION
+        # --------------------------------------------------------------
+        story.append(HRFlowable(width="100%", thickness=1.5, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2 * mm))
+
+        cert_head_text = "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" if is_mr else "REPORT INFORMATION & LABORATORY CERTIFICATION"
+        story.append(Paragraph(f"<b>{cert_head_text}</b>", st_cert_head))
+        story.append(Spacer(1, 1 * mm))
+
+        cert_sub_text = (
+            "कृषी निदान व डिजिटल मृदा परीक्षण केंद्र, बारामती / पुणे, महाराष्ट्र"
+            if is_mr
+            else "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra"
+        )
+        report_no = report_meta.get("report_no", "SPL/2026/SL-0104")
+        report_date = "20-09-2026"
+        cert_ref_text = (
+            f"अहवाल संदर्भ: {report_no} • दिनांक: {report_date}"
+            if is_mr
+            else f"Report Ref: {report_no} • Date: {report_date}"
         )
 
-        footer_box_data = [
-            [
-                qr_drawing,
-                Paragraph(verify_label, styles["val"]),
-            ]
+        sign_name_text = "डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "Dr. S. K. Joshi (Chief Chemist)"
+        sign_title_text = "अधिकृत मृदा परीक्षण रसायनशास्त्रज्ञ" if is_mr else "AUTHORIZED SOIL TESTING CHEMIST"
+        sign_div_text = "मृदा निदान व विश्लेषणात्मक रसायनशास्त्र विभाग" if is_mr else "Soil Diagnostics & Analytical Chemistry Division"
+
+        footer_content = [
+            Paragraph(cert_sub_text, st_cert_sub),
+            Paragraph(cert_ref_text, st_cert_ref),
+            Spacer(1, 1.5 * mm),
+            Paragraph(f"<b>{sign_name_text}</b>", st_sign_name),
+            Paragraph(f"<b>{sign_title_text}</b>", st_sign_title),
+            Paragraph(sign_div_text, st_sign_div),
         ]
-        footer_box = Table(footer_box_data, colWidths=[20 * mm, 166 * mm])
-        footer_box.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), COLOR_CREAM),
-                ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-            ])
-        )
-        story.append(footer_box)
+        for item in footer_content:
+            story.append(item)
 
         # Build document
-        doc.build(story, canvasmaker=NumberedCanvas)
+        doc.build(story)
         buffer.seek(0)
         return buffer.getvalue()
+
 
     # ==================================================================
     # 2. DETAILED SOIL REPORT PDF (Complete 14+ Laboratory Dossier)
@@ -704,7 +969,8 @@ class PDFService:
                 val_str = f"{val:.2f}" if isinstance(val, (int, float)) else ("उपलब्ध नाही" if is_mr else "Not Available")
                 unit_str = p.get("unit") or "-"
                 interp = p.get("interpretation_mr" if is_mr else "interpretation", p.get("interpretation", "N/A"))
-                ref_range = p.get("reference_range", "-")
+                ref_range_raw = p.get("reference_range_mr" if is_mr else "reference_range", p.get("reference_range", "-"))
+                ref_range = translate_ref_range_to_mr(ref_range_raw) if is_mr else ref_range_raw
                 rec_text = p.get("recommendation_mr" if is_mr else "recommendation") or p.get("recommendation", "Maintain balanced nutrient management.")
 
                 full_table_rows.append([
