@@ -9,6 +9,7 @@ export interface SoilParameter {
   interpretation: string;
   interpretation_mr?: string;
   reference_range: string;
+  reference_range_mr?: string;
   recommendation?: string;
   recommendation_mr?: string;
   recommendation_detail?: string;
@@ -21,16 +22,21 @@ export interface SoilParameter {
 }
 
 export interface KeyRecommendation {
-  key: string;
-  name: string;
+  key?: string;
+  name?: string;
   name_mr?: string;
-  value: number | null;
+  parameter?: string;
+  parameter_key?: string;
+  value?: number | null;
   unit?: string;
+  status?: string;
   status_category: string;
+  severity?: string;
   priority_rank: number;
   priority_key: string;
   recommendation: string;
   recommendation_mr?: string;
+  action_guidance?: string;
 }
 
 export interface SoilReportFieldInfo {

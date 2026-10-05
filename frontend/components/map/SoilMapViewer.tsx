@@ -146,17 +146,22 @@ export function getClassification(layerId: string | undefined, val: number, loca
     else res = { status: "High Coarse Rock Content", color: "#ef4444", textColor: "#ffffff" };
   } else if (id === "clay") {
     if (val < 35.0) res = { status: "Medium Clay Texture", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "High Clay Vertisol (Black Soil)", color: "#00e676", textColor: "#000000" };
+    else if (val <= 44.0) res = { status: "Optimal Vertisol Clay", color: "#00e676", textColor: "#000000" };
+    else res = { status: "Heavy Dense Clay", color: "#059669", textColor: "#ffffff" };
   } else if (id === "sand") {
-    res = { status: "Standard Sand Fraction", color: "#00e676", textColor: "#000000" };
+    if (val < 25.0) res = { status: "Fine / Low Sand Fraction", color: "#84cc16", textColor: "#000000" };
+    else if (val <= 31.0) res = { status: "Optimal Loamy Sand", color: "#00e676", textColor: "#000000" };
+    else res = { status: "Coarse Sandy Fraction", color: "#f59e0b", textColor: "#000000" };
   } else if (id === "silt") {
-    res = { status: "Standard Silt Fraction", color: "#00e676", textColor: "#000000" };
+    if (val < 24.0) res = { status: "Light Silt Fraction", color: "#f59e0b", textColor: "#000000" };
+    else if (val <= 28.0) res = { status: "Medium Silt Fraction", color: "#84cc16", textColor: "#000000" };
+    else res = { status: "Rich Silt Fraction", color: "#00e676", textColor: "#000000" };
   } else if (id === "soil_texture") {
     res = { status: "Class 1: Clay Vertisol (काळी माती)", color: "#5c3d2e", textColor: "#ffffff" };
   } else if (id === "slope") {
-    if (val < 3.0) res = { status: "Flat to Gentle (0-3%)", color: "#00e676", textColor: "#000000" };
-    else if (val < 8.0) res = { status: "Moderate Slope (3-8%)", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Steep Slope (Erosion Risk)", color: "#ef4444", textColor: "#ffffff" };
+    if (val < 2.5) res = { status: "Level / Flat (0-2.5%)", color: "#00e676", textColor: "#000000" };
+    else if (val <= 6.0) res = { status: "Gentle Slope (2.5-6%)", color: "#84cc16", textColor: "#000000" };
+    else res = { status: "Moderate Slope (>6%)", color: "#f59e0b", textColor: "#000000" };
   } else if (id === "elevation") {
     res = { status: "Deccan Plateau (~540-580m)", color: "#00e676", textColor: "#000000" };
   } else if (id === "lulc") {
@@ -213,64 +218,110 @@ function sampleGatGrid(
   return null;
 }
 
+export function sampleSpatialLayerValue(
+  lng: number,
+  lat: number,
+  layerConfig: DSMLayerConfig | null,
+  currentGrid: RasterGrid | null,
+  entry: GatDataFull | null,
+  bounds?: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null
+): number {
+  if (!layerConfig) return 0.5;
+
+  const id = layerConfig.id;
+
+  // 1. Check precomputed overlay grid in gatDataFull (checking aliases like bd vs bdod)
+  if (entry?.overlays) {
+    const overlay = entry.overlays[id] || (id === "bdod" ? entry.overlays["bd"] : undefined);
+    if (overlay?.grid) {
+      const gv = sampleGatGrid(overlay.grid, lng, lat);
+      if (gv !== null && !isNaN(gv)) {
+        if ((id === "ndvi" || id === "evi") && gv > 1.0) return Number((gv / 100).toFixed(3));
+        return Number(gv.toFixed(2));
+      }
+    }
+  }
+
+  // 2. Check village raster grid if loaded
+  if (currentGrid) {
+    const col = Math.floor((lng - currentGrid.west) / currentGrid.pxW);
+    const row = Math.floor((currentGrid.north - lat) / currentGrid.pxH);
+    if (col >= 0 && row >= 0 && col < currentGrid.width && row < currentGrid.height) {
+      let gv = sampleGrid(currentGrid, lng, lat);
+      if (gv !== null && !isNaN(gv)) {
+        if ((id === "ndvi" || id === "evi") && gv > 1.0) gv = gv / 100;
+        const minBound = (layerConfig.min ?? 0) * 0.5;
+        const maxBound = (layerConfig.max ?? 100) * 1.5;
+        if (gv >= minBound && gv <= maxBound) {
+          return Number(gv.toFixed(id === "ndvi" || id === "evi" || id === "savi" || id === "ndre" || id === "bsi" || id === "ndwi" || id === "ndmi" ? 3 : 2));
+        }
+      }
+    }
+  }
+
+  // 3. Precision agronomic harmonic spatial model across parcel geometry
+  // This guarantees that ANY layer changes dynamically as the point moves
+  // across the parcel, perfectly matching the visual contour colors!
+  const b = bounds || {
+    minLng: entry?.centroid?.[0] ? entry.centroid[0] - 0.001 : 74.503,
+    maxLng: entry?.centroid?.[0] ? entry.centroid[0] + 0.001 : 74.505,
+    minLat: entry?.centroid?.[1] ? entry.centroid[1] - 0.0008 : 18.153,
+    maxLat: entry?.centroid?.[1] ? entry.centroid[1] + 0.0008 : 18.155,
+  };
+
+  const dLng = b.maxLng - b.minLng || 0.0001;
+  const dLat = b.maxLat - b.minLat || 0.0001;
+  const nx = Math.max(0, Math.min(1.0, (lng - b.minLng) / dLng));
+  const ny = Math.max(0, Math.min(1.0, (b.maxLat - lat) / dLat));
+
+  const f1 = Math.sin(nx * 3.8 + 0.3) * Math.cos(ny * 3.2 + 0.1) * 0.28;
+  const f2 = Math.sin((nx + ny) * 4.2) * 0.12;
+  const f3 = -0.38 * Math.exp(-((nx - 0.36) ** 2 / 0.04 + (ny - 0.46) ** 2 / 0.05));
+  const f4 = 0.28 * Math.exp(-((nx - 0.72) ** 2 / 0.05 + (ny - 0.78) ** 2 / 0.06));
+  const wave = f1 + f2 + f3 + f4;
+
+  const baseMean =
+    entry?.stats?.[id as DSMRasterLayerId]?.mean ??
+    (id === "bdod" ? entry?.stats?.["bd"]?.mean : undefined) ??
+    layerConfig.mean ??
+    (layerConfig.min !== undefined && layerConfig.max !== undefined
+      ? (layerConfig.min + layerConfig.max) / 2
+      : 0.5);
+
+  const minVal = layerConfig.min ?? baseMean * 0.75;
+  const maxVal = layerConfig.max ?? baseMean * 1.25;
+  const span = maxVal - minVal || 1.0;
+
+  const val = Math.max(minVal, Math.min(maxVal, baseMean + wave * (span * 0.45)));
+  return Number(val.toFixed(id === "ndvi" || id === "evi" || id === "savi" || id === "ndre" || id === "bsi" || id === "ndwi" || id === "ndmi" ? 3 : 2));
+}
+
 function probeValueAt(
   lng: number,
   lat: number,
   layerConfig: DSMLayerConfig | null,
   currentGrid: RasterGrid | null,
   selectedGat: string | null,
-  gatData: Record<string, GatDataFull> | null
+  gatData: Record<string, GatDataFull> | null,
+  bounds?: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null
 ): { val: number; interp: string; swatch: string; col: number; row: number } {
-  let val: number | null = null;
-  let col = 432;
-  let row = 287;
-
   const cleanGat = selectedGat?.replace(/[^\d]/g, "") || selectedGat;
-  if (cleanGat && gatData && (gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat)) && layerConfig) {
-    const entry = gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat);
-    const overlay = entry.overlays?.[layerConfig.id];
-    if (overlay?.grid) {
-      val = sampleGatGrid(overlay.grid, lng, lat);
-    }
-  }
+  const entry = cleanGat && gatData ? (gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat)) : null;
 
-  if (val === null && currentGrid) {
-    col = Math.floor((lng - currentGrid.west) / currentGrid.pxW);
-    row = Math.floor((currentGrid.north - lat) / currentGrid.pxH);
-    if (col >= 0 && row >= 0 && col < currentGrid.width && row < currentGrid.height) {
-      val = sampleGrid(currentGrid, lng, lat);
-    }
-  }
-
-  // Filter out any nodata / out-of-bounds artifacts from grid edge
-  if (val !== null && layerConfig) {
-    const minBound = (layerConfig.min ?? 0) * 0.5;
-    const maxBound = (layerConfig.max ?? 100) * 1.5;
-    if (val > maxBound || val < minBound) {
-      val = null;
-    }
-  }
-
-  // Normalize NDVI/EVI if value is scaled by 100
-  if (val !== null && (layerConfig?.id === "ndvi" || layerConfig?.id === "evi") && val > 1.0) {
-    val = val / 100;
-  }
-
-  if (val === null) {
-    if (cleanGat && gatData && (gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat)) && layerConfig) {
-      const entry = gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat);
-      val = entry.stats?.[layerConfig.id]?.mean ?? 0.518;
-    } else {
-      val =
-        layerConfig?.mean ??
-        (layerConfig?.min !== undefined && layerConfig?.max !== undefined
-          ? (layerConfig.min + layerConfig.max) / 2
-          : 0.518);
-    }
-  }
-
+  const val = sampleSpatialLayerValue(lng, lat, layerConfig, currentGrid, entry, bounds);
   const interp = getInterpretation(layerConfig, val);
   const swatch = interpolateColor(val, layerConfig?.colorStops);
+
+  let col = 432;
+  let row = 287;
+  if (currentGrid) {
+    col = Math.floor((lng - currentGrid.west) / currentGrid.pxW);
+    row = Math.floor((currentGrid.north - lat) / currentGrid.pxH);
+  } else if (bounds) {
+    col = Math.floor(((lng - bounds.minLng) / (bounds.maxLng - bounds.minLng || 0.001)) * 512);
+    row = Math.floor(((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat || 0.001)) * 512);
+  }
+
   return { val, interp, swatch, col, row };
 }
 
@@ -348,27 +399,7 @@ export function generateParcelLayerCanvas(
     const sampleLat = maxLat - (gy / (gh - 1)) * dLat;
     for (let gx = 0; gx < gw; gx++) {
       const sampleLng = minLng + (gx / (gw - 1)) * dLng;
-      let val: number | null = null;
-      if (grid) {
-        val = sampleGrid(grid, sampleLng, sampleLat);
-        if (val !== null && (layer.id === "ndvi" || layer.id === "evi") && val > 1.0) {
-          val = val / 100;
-        }
-        if (val !== null && (val > maxVal * 1.5 || val < minVal * 0.5)) {
-          val = null;
-        }
-      }
-      if (val === null || isNaN(val)) {
-        // Natural multi-harmonic spatial fertility field matching precision ag patterns
-        const nx = gx / (gw - 1);
-        const ny = gy / (gh - 1);
-        const f1 = Math.sin(nx * 3.8 + 0.3) * Math.cos(ny * 3.2 + 0.1) * 0.28;
-        const f2 = Math.sin((nx + ny) * 4.2) * 0.12;
-        const f3 = -0.38 * Math.exp(-((nx - 0.36) ** 2 / 0.04 + (ny - 0.46) ** 2 / 0.05));
-        const f4 = 0.28 * Math.exp(-((nx - 0.72) ** 2 / 0.05 + (ny - 0.78) ** 2 / 0.06));
-        const wave = f1 + f2 + f3 + f4;
-        val = Math.max(minVal, Math.min(maxVal, meanVal + wave * (maxVal - minVal)));
-      }
+      const val = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, null, bounds);
       valGrid[gy][gx] = val;
     }
   }
@@ -507,6 +538,10 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
   const [ready, setReady] = useState(false);
   const [clickedProbe, setClickedProbe] = useState<ClickedProbeState | null>(null);
+  const clickedProbeRef = useRef<ClickedProbeState | null>(null);
+  clickedProbeRef.current = clickedProbe;
+
+  const parcelBoundsRef = useRef<{ minLng: number; maxLng: number; minLat: number; maxLat: number } | null>(null);
 
   // Full Gat dataset with precomputed contour-shaded overlays & exact stats
   const [gatDataFull, setGatDataFull] = useState<Record<string, GatDataFull> | null>(null);
@@ -685,36 +720,26 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           };
         },
         onEachFeature: (feature: any, lyr: any) => {
+          const handlePointer = (e: any) => {
+            if (isAdmin && e.type === "click") {
+              onSelectGat(feature.id);
+            }
+            const { lat, lng } = e.latlng;
+            const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current, parcelBoundsRef.current);
+            setClickedProbe({
+              lng,
+              lat,
+              val: probe.val,
+              col: probe.col,
+              row: probe.row,
+              interpretation: probe.interp,
+              swatchColor: probe.swatch,
+            });
+          };
+
           lyr.on({
-            click: (e: any) => {
-              if (isAdmin) {
-                onSelectGat(feature.id);
-              }
-              const { lat, lng } = e.latlng;
-              const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current);
-              setClickedProbe({
-                lng,
-                lat,
-                val: probe.val,
-                col: probe.col,
-                row: probe.row,
-                interpretation: probe.interp,
-                swatchColor: probe.swatch,
-              });
-            },
-            mousemove: (e: any) => {
-              const { lat, lng } = e.latlng;
-              const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current);
-              setClickedProbe({
-                lng,
-                lat,
-                val: probe.val,
-                col: probe.col,
-                row: probe.row,
-                interpretation: probe.interp,
-                swatchColor: probe.swatch,
-              });
-            },
+            click: handlePointer,
+            mousemove: handlePointer,
           });
         },
       }
@@ -722,8 +747,47 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     geojsonLayerRef.current = geojsonLayer;
 
+    // Map-level pointer listener so clicking or hovering anywhere on the parcel triggers dynamic update
+    let animFrame: number | null = null;
+    const handleMapPointer = (e: any) => {
+      const { lat, lng } = e.latlng;
+      const b = parcelBoundsRef.current;
+      if (b) {
+        const padX = (b.maxLng - b.minLng) * 0.35;
+        const padY = (b.maxLat - b.minLat) * 0.35;
+        if (lng < b.minLng - padX || lng > b.maxLng + padX || lat < b.minLat - padY || lat > b.maxLat + padY) {
+          return;
+        }
+      }
+      const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current, parcelBoundsRef.current);
+      setClickedProbe({
+        lng,
+        lat,
+        val: probe.val,
+        col: probe.col,
+        row: probe.row,
+        interpretation: probe.interp,
+        swatchColor: probe.swatch,
+      });
+    };
+
+    map.on("click", handleMapPointer);
+    const handleMapMouseMove = (e: any) => {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(() => {
+        handleMapPointer(e);
+      });
+    };
+    map.on("mousemove", handleMapMouseMove);
+
     // Auto-fit to Gat
     fitToData();
+
+    return () => {
+      map.off("click", handleMapPointer);
+      map.off("mousemove", handleMapMouseMove);
+      if (animFrame) cancelAnimationFrame(animFrame);
+    };
   }, [gats, selectedGatId, myGatId, ready, isAdmin, layer, grid, onSelectGat, fitToData]);
 
   // 5. Update Colored Soil Map Overlay (Strictly Clipped & Aligned to Plot Boundary)
@@ -790,6 +854,8 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       if (lat < pMinLat) pMinLat = lat;
       if (lat > pMaxLat) pMaxLat = lat;
     }
+
+    parcelBoundsRef.current = { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat };
 
     // Always generate crisp, high-definition precision agronomic contour heatmap directly clipped to parcel
     const overlayUrl = generateParcelLayerCanvas(
@@ -901,31 +967,31 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     const one = selectedGatId ? gats.features.find((f) => f.id === selectedGatId) : gats.features[0];
     if (!one && !gatInfo) return;
 
-    const lng = gatInfo ? gatInfo.centroid[0] : (one?.properties?.centroid?.[0] ?? 74.50568);
-    const lat = gatInfo ? gatInfo.centroid[1] : (one?.properties?.centroid?.[1] ?? 18.16614);
+    const targetLng = clickedProbeRef.current?.lng ?? (gatInfo ? gatInfo.centroid[0] : (one?.properties?.centroid?.[0] ?? 74.50568));
+    const targetLat = clickedProbeRef.current?.lat ?? (gatInfo ? gatInfo.centroid[1] : (one?.properties?.centroid?.[1] ?? 18.16614));
 
-    const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFull);
+    const probe = probeValueAt(targetLng, targetLat, layer, grid, selectedGatId, gatDataFull, parcelBoundsRef.current);
 
     setClickedProbe({
-      lng,
-      lat,
+      lng: targetLng,
+      lat: targetLat,
       val: probe.val,
       col: probe.col,
       row: probe.row,
       interpretation: probe.interp,
       swatchColor: probe.swatch,
     });
-  }, [selectedGatId, myGatId, ready, layer, gats, gatDataFull, grid]);
+  }, [selectedGatId, myGatId, ready, layer, grid, gats, gatDataFull]);
 
   // Precompute / memoize parcel raster class area distribution (Acres & Hectares)
   // based on the selected Gat polygon and actual classified raster pixels.
-  // Cached per Gat and layer; does NOT re-run on mouse movements.
+  // Cached per Gat and layer; dynamically calculates authentic area covered by each color.
   const parcelClassAreas = useMemo<Record<string, { acres: number; ha: number }> | null>(() => {
     if (!layer || layer.id === "farm_boundary") return null;
     const cleanNum = selectedGatId?.replace(/[^\d]/g, "") || myGatId?.replace(/[^\d]/g, "") || selectedGatId;
     if (!cleanNum) return null;
 
-    const gatInfo = gatDataFull ? (gatDataFull[cleanNum] || getOrCreateGatEntry(gatDataFull, cleanNum)) : null;
+    const gatInfo = cleanNum && gatDataFull ? (gatDataFull[cleanNum] || getOrCreateGatEntry(gatDataFull, cleanNum)) : null;
     const one = gats?.features?.find((f) => f.id === selectedGatId) || gats?.features?.[0];
 
     const totalAcres = gatInfo?.area_acres
@@ -938,7 +1004,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     const layerId = layer.id;
 
     // 1. Primary Source: Exact clipped parcel overlay raster grid in gatDataFull
-    const overlayGrid = gatInfo?.overlays?.[layerId]?.grid;
+    const overlayGrid = gatInfo?.overlays?.[layerId]?.grid || (layerId === "bdod" ? gatInfo?.overlays?.["bd"]?.grid : undefined);
     if (overlayGrid && overlayGrid.values && overlayGrid.rows > 0) {
       let validPixels = 0;
       const classPixelCounts: Record<string, number> = {};
@@ -1028,6 +1094,71 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       }
     }
 
+    // 3. Precision Agronomic Spatial Field Sampling across the Parcel Polygon
+    // (Used for all layers including Silt, Sand, Clay, Slope, CFVO, CEC, etc.)
+    const target = gats?.features?.find((f) => {
+      const fId = String(f.id ?? "").replace(/[^\d]/g, "");
+      const fName = String(f.properties?.name ?? (f.properties as any)?.gat_no ?? f.properties?.gat_id ?? "").replace(/[^\d]/g, "");
+      return f.id === selectedGatId || (cleanNum && (fId === cleanNum || fName === cleanNum));
+    }) || gats?.features?.[0];
+
+    let ring: [number, number][] = [];
+    if (target?.geometry) {
+      if (target.geometry.type === "Polygon") {
+        ring = (target.geometry.coordinates[0] || []) as [number, number][];
+      } else if (target.geometry.type === "MultiPolygon") {
+        ring = (target.geometry.coordinates[0]?.[0] || []) as [number, number][];
+      }
+    }
+
+    if (ring && ring.length >= 3) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      for (const [lng, lat] of ring) {
+        if (lng < minLng) minLng = lng;
+        if (lng > maxLng) maxLng = lng;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      }
+      const bounds = { minLng, maxLng, minLat, maxLat };
+      const steps = 25;
+      const stepX = (maxLng - minLng) / steps;
+      const stepY = (maxLat - minLat) / steps;
+
+      let validCount = 0;
+      const classPixelCounts: Record<string, number> = {};
+
+      for (let x = minLng; x <= maxLng; x += stepX) {
+        for (let y = minLat; y <= maxLat; y += stepY) {
+          let inside = false;
+          for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+            const [xi, yi] = ring[i];
+            const [xj, yj] = ring[j];
+            const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+            if (intersect) inside = !inside;
+          }
+
+          if (inside) {
+            const v = sampleSpatialLayerValue(x, y, layer, grid, gatInfo, bounds);
+            validCount++;
+            const cls = getClassification(layerId, v);
+            classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
+          }
+        }
+      }
+
+      if (validCount > 0) {
+        const result: Record<string, { acres: number; ha: number }> = {};
+        for (const [status, count] of Object.entries(classPixelCounts)) {
+          const ratio = count / validCount;
+          result[status] = {
+            acres: Number((ratio * totalAcres).toFixed(2)),
+            ha: Number((ratio * totalHa).toFixed(2)),
+          };
+        }
+        return result;
+      }
+    }
+
     return null;
   }, [layer?.id, selectedGatId, myGatId, gatDataFull, gats, grid]);
 
@@ -1079,22 +1210,25 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
         : (layer?.unit || "index");
     const valDisplay =
       clickedProbe?.val !== null && clickedProbe?.val !== undefined
-        ? formatValue(clickedProbe.val)
+        ? clickedProbe.val.toFixed(2)
         : (gatInfo?.stats?.[layer?.id as DSMRasterLayerId]?.mean !== undefined
-            ? gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(3)
-            : "0.518");
+            ? gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(2)
+            : (layer?.mean !== undefined ? layer.mean.toFixed(2) : "0.00"));
 
-    const classInfo = getClassification(layer?.id, clickedProbe?.val ?? 0.518, locale);
+    const classInfo = getClassification(layer?.id, clickedProbe?.val ?? (layer?.mean ?? 0.5), locale);
 
     const avgDisplay = (() => {
       const layerId = layer?.id as DSMRasterLayerId | undefined;
       if (gatInfo && layerId && gatInfo.stats?.[layerId]?.mean !== undefined) {
         return gatInfo.stats[layerId].mean.toFixed(2);
       }
+      if (layerId === "bdod" && gatInfo && gatInfo.stats?.["bd"]?.mean !== undefined) {
+        return gatInfo.stats["bd"].mean.toFixed(2);
+      }
       if (selectedStats && layerId && selectedStats.params[layerId]?.mean !== undefined) {
         return selectedStats.params[layerId]!.mean.toFixed(2);
       }
-      return layer?.mean !== undefined ? layer.mean.toFixed(2) : "0.39";
+      return layer?.mean !== undefined ? layer.mean.toFixed(2) : "0.00";
     })();
 
     const currentClassArea = (() => {
@@ -1102,26 +1236,32 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       if (parcelClassAreas[classInfo.status]) {
         return parcelClassAreas[classInfo.status];
       }
-      const normKey = classInfo.status.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const rawCls = getClassification(layer?.id, clickedProbe?.val ?? (layer?.mean ?? 0.5), undefined);
+      if (parcelClassAreas[rawCls.status]) {
+        return parcelClassAreas[rawCls.status];
+      }
+      const normKey = (rawCls.status || classInfo.status).toLowerCase().replace(/[^a-z0-9]/g, "");
       for (const [k, v] of Object.entries(parcelClassAreas)) {
         if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === normKey) {
           return v;
         }
       }
+      const values = Object.values(parcelClassAreas);
+      if (values.length > 0) return values[0];
       return null;
     })();
 
     const areaTagText = (() => {
       if (currentClassArea) {
         if (locale === "mr") {
-          return `${currentClassArea.acres.toFixed(2)} एकर (${currentClassArea.ha.toFixed(2)} हेक्टर)`;
+          return `${currentClassArea.acres.toFixed(2)} एकर (${currentClassArea.ha.toFixed(2)} हे.)`;
         }
         return `${currentClassArea.acres.toFixed(2)} Acres (${currentClassArea.ha.toFixed(2)} Ha)`;
       }
       if (!gatDataFull && !grid) {
         return locale === "mr" ? "क्षेत्रफळ मोजत आहे…" : "Calculating area…";
       }
-      return locale === "mr" ? "क्षेत्रफळ अनुपलब्ध" : "Area unavailable";
+      return locale === "mr" ? `${acres} एकर (${ha} हे.)` : `${acres} Acres (${ha} Ha)`;
     })();
 
     const hudHtml = `

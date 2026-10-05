@@ -65,12 +65,21 @@ export const MARATHI_STATUS_MAP: Record<string, string> = {
   "high coarse rock content": "जास्त दगड-गोटे (खडकाळ)",
   "medium clay texture": "मध्यम चिकण पोत",
   "high clay vertisol (black soil)": "भारी काळी चिकण माती (Vertisol)",
+  "optimal vertisol clay": "उत्तम काळी चिकण माती (Vertisol)",
+  "heavy dense clay": "भारी जड चिकण माती",
   "standard sand fraction": "प्रमाणित वाळू प्रमाण",
+  "fine / low sand fraction": "कमी वाळू (बारीक पोत)",
+  "optimal loamy sand": "मध्यम वाळू पोयटा",
+  "coarse sandy fraction": "जास्त वाळू निचरा",
   "standard silt fraction": "प्रमाणित गाळ प्रमाण",
+  "light silt fraction": "हलका गाळ पोत",
+  "medium silt fraction": "मध्यम गाळ पोत",
+  "rich silt fraction": "उत्तम गाळ पोत",
   "class 1: clay vertisol (काळी माती)": "वर्ग १: काळी चिकण माती (Vertisol)",
 
   // Soil Chemical & Fertility
   "moderate cation exchange": "मध्यम धनायन विनिमय क्षमता",
+  "high nutrient buffer": "उत्कृष्ट पोषक साठा (सुपीक)",
   "high nutrient buffer (fertile)": "उत्कृष्ट अन्नद्रव्य धारण क्षमता (सुपीक)",
 
   // Topography & Elevation
