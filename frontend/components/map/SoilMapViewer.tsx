@@ -630,7 +630,11 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           [s, w],
           [n, e],
         ],
-        { padding: [60, 60], maxZoom: 18 }
+        {
+          paddingTopLeft: [120, 140],
+          paddingBottomRight: [100, 100],
+          maxZoom: 18,
+        }
       );
     }
   }, [gats, selectedGatId, myGatId]);
@@ -1121,27 +1125,30 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     })();
 
     const hudHtml = `
-      <div style="display: flex; align-items: center; gap: 0; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45)); font-family: system-ui, -apple-system, sans-serif; pointer-events: none; user-select: none;">
-        <!-- 1. White Gat Badge (Left side) -->
-        <div style="background: #ffffff; border-radius: 10px; padding: 10px 14px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2); border: 1.5px solid rgba(229, 231, 235, 0.95); min-width: 155px; white-space: nowrap;">
-          <div style="font-weight: 800; font-size: 14px; color: #00c853; line-height: 1.25; letter-spacing: -0.01em;">
-            ${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}
+      <div style="display: flex; align-items: stretch; gap: 8px; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.5)); font-family: system-ui, -apple-system, sans-serif; pointer-events: none; user-select: none;">
+        <!-- 1. White Gat Badge (Left side) - Aligned to match HUD height -->
+        <div style="background: #ffffff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2); border: 2px solid rgba(226, 232, 240, 0.95); display: flex; flex-direction: column; justify-content: space-between; min-width: 165px; white-space: nowrap;">
+          <div>
+            <div style="font-weight: 800; font-size: 14.5px; color: #00c853; line-height: 1.2; letter-spacing: -0.01em; display: flex; align-items: center; gap: 5px;">
+              <span style="font-size: 13px;">📌</span>
+              <span>${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}</span>
+            </div>
+            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px;">
+              ${locale === "mr" ? "एकूण क्षेत्रफळ" : "Total Parcel Area"}
+            </div>
           </div>
-          <div style="font-size: 11.5px; color: #64748b; font-weight: 600; margin-top: 3px; white-space: nowrap;">
-            ${locale === "mr" ? `क्षेत्रफळ: ${acres} एकर (${ha} हेक्टर)` : `Area: ${acres} Acres (${ha} Ha)`}
+          <div style="font-size: 11.5px; color: #1e293b; font-weight: 700; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; white-space: nowrap; margin-top: 6px;">
+            ${locale === "mr" ? `${acres} एकर (${ha} हे.)` : `${acres} Acres (${ha} Ha)`}
           </div>
         </div>
 
-        <!-- 2. White Connecting Pointer Arrow pointing to Dark Card -->
-        <div style="width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 8px solid #ffffff; margin-left: -1px; margin-right: 6px; filter: drop-shadow(2px 0 1px rgba(0,0,0,0.08));"></div>
-
-        <!-- 3. Dark HUD Card with Vibrant Neon Green Border (Right side - exactly matching reference screenshot) -->
-        <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7); padding: 11px 16px; min-width: 320px; max-width: 440px; color: #ffffff;">
-          <!-- Top Row: Location Icon + Gat Number + Lat/Lng Coordinates -->
+        <!-- 2. Dark HUD Card with Vibrant Neon Green Border (Right side) -->
+        <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7); padding: 11px 16px; min-width: 320px; max-width: 440px; color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;">
+          <!-- Top Row: Location Icon + Subtitle + Lat/Lng Coordinates -->
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12px; font-weight: 700;">
             <div style="display: flex; align-items: center; gap: 6px; color: #ffffff;">
               <span style="color: #00e676; font-size: 13px;">📍</span>
-              <span>${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}</span>
+              <span style="color: #94a3b8; font-weight: 600; font-size: 11.5px;">${locale === "mr" ? "कर्सर स्थान" : "Cursor Probe"}</span>
             </div>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #94a3b8; font-weight: 600; letter-spacing: -0.01em;">
               ${probeLat.toFixed(5)}° N, ${probeLng.toFixed(5)}° E
@@ -1149,12 +1156,12 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           </div>
 
           <!-- Divider -->
-          <div style="width: 100%; height: 1px; background: rgba(51, 65, 85, 0.85); margin: 8px 0;"></div>
+          <div style="width: 100%; height: 1px; background: rgba(51, 65, 85, 0.85); margin: 7px 0;"></div>
 
-          <!-- Metric Row: Clicked / Cursor Layer: [Large Neon Green Value] [unit] -->
+          <!-- Metric Row: Cursor Layer: [Large Neon Green Value] [unit] -->
           <div style="display: flex; align-items: baseline; gap: 7px; margin: 2px 0;">
             <span style="font-weight: 700; font-size: 13.5px; color: #ffffff; letter-spacing: -0.01em;">
-              ${locale === "mr" ? `निवडलेला / कर्सर ${layerName}:` : `Clicked / Cursor ${layerName}:`}
+              ${locale === "mr" ? `कर्सर ${layerName}:` : `Cursor ${layerName}:`}
             </span>
             <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 24px; color: #00e676; line-height: 1; letter-spacing: -0.02em;">
               ${valDisplay}
@@ -1165,8 +1172,8 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           </div>
 
           <!-- Bottom Row: Status Pill Badge + Canopy Class Area Tag + Plot Average -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; flex-wrap: nowrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
               <span style="display: inline-flex; align-items: center; padding: 2.5px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
                 ${classInfo.status}
               </span>
@@ -1186,11 +1193,59 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       className: "soilpilot-hud-marker",
       html: hudHtml,
       iconSize: [520, 110],
-      iconAnchor: [80, 55],
+      iconAnchor: [260, 55],
     });
 
     const marker = L.marker([probeLat, probeLng], { icon: customIcon, interactive: false }).addTo(map);
     hudMarkerRef.current = marker;
+
+    // Auto-align HUD to be completely visible and properly positioned inside the map viewport
+    const ensureVisibleTimer = setTimeout(() => {
+      if (!mapRef.current) return;
+      const m = mapRef.current;
+      const pt = m.latLngToContainerPoint([probeLat, probeLng]);
+      const size = m.getSize();
+      if (!size.x || !size.y) return;
+
+      const hudWidth = 520;
+      const hudHeight = 110;
+      const anchorX = 260;
+      const anchorY = 55;
+
+      const left = pt.x - anchorX;
+      const right = left + hudWidth;
+      const top = pt.y - anchorY;
+      const bottom = top + hudHeight;
+
+      let panX = 0;
+      let panY = 0;
+
+      // Provide generous clearance so it never gets clipped by map borders or widgets
+      const padTop = 90;
+      const padBottom = 40;
+      const padLeft = 40;
+      const padRight = 40;
+
+      if (top < padTop) {
+        panY = top - padTop;
+      } else if (bottom > size.y - padBottom) {
+        panY = bottom - (size.y - padBottom);
+      }
+
+      if (left < padLeft) {
+        panX = left - padLeft;
+      } else if (right > size.x - padRight) {
+        panX = right - (size.x - padRight);
+      }
+
+      if (panX !== 0 || panY !== 0) {
+        m.panBy([panX, panY], { animate: true, duration: 0.35 });
+      }
+    }, 60);
+
+    return () => {
+      clearTimeout(ensureVisibleTimer);
+    };
   }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull, parcelClassAreas, locale]);
 
   return (

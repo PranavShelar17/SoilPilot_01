@@ -22,13 +22,13 @@ export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
 
   return (
     <div className="pt-4">
-      {/* 1. Solid Green Divider Line */}
-      <div className="w-full border-t-2 border-[#1e5622] mb-3" />
-
-      {/* 2. Section Header */}
+      {/* 1. Section Header */}
       <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2">
         {isMr ? "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" : "REPORT INFORMATION & LABORATORY CERTIFICATION"}
       </h3>
+
+      {/* 2. Solid Green Divider Line */}
+      <div className="w-full border-t-2 border-[#1e5622] mb-3" />
 
       {/* 3. Report Info & Chemist Sign-Off */}
       <div className="space-y-1 text-xs text-stone-800">

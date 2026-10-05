@@ -524,8 +524,6 @@ class PDFService:
         # 1. TOP HEADER (Centered Header matching image)
         # --------------------------------------------------------------
         header_elements = [
-            Paragraph("<b>SOILPILOT</b>", st_head_soilpilot),
-            Spacer(1, 1 * mm),
             Paragraph(
                 "<b>एडीटी एआय ट्रेनिंग फाउंडेशन, बारामती</b>" if is_mr else "<b>ADT AI TRAINING FOUNDATION, BARAMATI</b>",
                 st_head_adt,
@@ -744,12 +742,10 @@ class PDFService:
 
         # --------------------------------------------------------------
         # 4. REPORT INFORMATION & LABORATORY CERTIFICATION
-        # --------------------------------------------------------------
-        story.append(HRFlowable(width="100%", thickness=1.5, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2 * mm))
-
         cert_head_text = "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" if is_mr else "REPORT INFORMATION & LABORATORY CERTIFICATION"
         story.append(Paragraph(f"<b>{cert_head_text}</b>", st_cert_head))
         story.append(Spacer(1, 1 * mm))
+        story.append(HRFlowable(width="100%", thickness=1.5, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2 * mm))
 
         cert_sub_text = (
             "कृषी निदान व डिजिटल मृदा परीक्षण केंद्र, बारामती / पुणे, महाराष्ट्र"

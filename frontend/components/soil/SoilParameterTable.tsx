@@ -30,25 +30,28 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
       );
     }
 
-    // Low / Deficient -> Red / Crimson
+    // Deficient / Critical -> Red / Crimson
     if (
-      lower.includes("low") ||
       lower.includes("deficient") ||
       lower.includes("critical") ||
-      lower.includes("कमी") ||
       lower.includes("कमतरता")
     ) {
       return (
-        <span className="font-bold text-[#d32f2f]">
+        <span className="font-bold text-[#dc2626]">
           {interpretation}
         </span>
       );
     }
 
-    // Marginal -> Amber / Brown
-    if (lower.includes("marginal") || lower.includes("सीमांत")) {
+    // Low / Marginal -> Amber / Orange
+    if (
+      lower.includes("low") ||
+      lower.includes("marginal") ||
+      lower.includes("कमी") ||
+      lower.includes("सीमांत")
+    ) {
       return (
-        <span className="font-bold text-[#b45309]">
+        <span className="font-bold text-[#c2410c]">
           {interpretation}
         </span>
       );

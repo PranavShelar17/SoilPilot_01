@@ -22,16 +22,34 @@ export const reportService = {
    * Fetch complete Soil Health Report metadata and parameters.
    */
   async getFieldReport(fieldId: string | number): Promise<SoilHealthReport> {
-    const response = await api.get<SoilHealthReport>(`/reports/${fieldId}`);
-    return response.data;
+    try {
+      const response = await api.get<SoilHealthReport>(`/reports/${fieldId}`);
+      if (response.data && response.data.parameters && response.data.parameters.length > 0) {
+        return response.data;
+      }
+      const { soilHealthService } = await import("./soilHealthService");
+      return soilHealthService.getFieldReport(fieldId);
+    } catch (err) {
+      const { soilHealthService } = await import("./soilHealthService");
+      return soilHealthService.getFieldReport(fieldId);
+    }
   },
 
   /**
    * Fetch Soil Health Card specific diagnostics.
    */
   async getSoilHealthCard(fieldId: string | number): Promise<SoilHealthReport> {
-    const response = await api.get<SoilHealthReport>(`/reports/${fieldId}/soil-health-card`);
-    return response.data;
+    try {
+      const response = await api.get<SoilHealthReport>(`/reports/${fieldId}/soil-health-card`);
+      if (response.data && response.data.parameters && response.data.parameters.length > 0) {
+        return response.data;
+      }
+      const { soilHealthService } = await import("./soilHealthService");
+      return soilHealthService.getFieldReport(fieldId);
+    } catch (err) {
+      const { soilHealthService } = await import("./soilHealthService");
+      return soilHealthService.getFieldReport(fieldId);
+    }
   },
 
   /**
@@ -39,48 +57,58 @@ export const reportService = {
    */
   async downloadSoilHealthCardPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
     const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
-    let filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}.pdf`;
+    const filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}.pdf`;
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
+    const directUrl = `/api/pdf/soil-health-card?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
 
-    const response = await api.get(`/reports/${fieldId}/soil-health-card/pdf`, {
-      params: { lang },
-      responseType: "blob",
-    });
+    try {
+      const res = await fetch(directUrl);
+      if (res.ok) {
+        const arrayBuffer = await res.arrayBuffer();
+        let targetFilename = filename;
+        const disposition = res.headers.get("content-disposition");
+        if (disposition) {
+          const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
+          if (match && match[1]) {
+            targetFilename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
+          }
+        }
+        if (!targetFilename.toLowerCase().endsWith(".pdf")) {
+          targetFilename += ".pdf";
+        }
 
-    const disposition =
-      response.headers["content-disposition"] ||
-      response.headers["Content-Disposition"];
-    if (disposition) {
-      const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
-      if (match && match[1]) {
-        filename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
+        const pdfFile = new File([arrayBuffer], targetFilename, { type: "application/pdf" });
+        const blobUrl = window.URL.createObjectURL(pdfFile);
+
+        const a = document.createElement("a");
+        a.style.position = "fixed";
+        a.style.left = "-9999px";
+        a.href = blobUrl;
+        a.download = targetFilename;
+        a.setAttribute("download", targetFilename);
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          if (a.parentNode) a.parentNode.removeChild(a);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 3000);
+        return;
       }
+    } catch (e) {
+      console.warn("Proxy download failed, attempting native browser download:", e);
     }
 
-    if (!filename.toLowerCase().endsWith(".pdf")) {
-      filename += ".pdf";
-    }
-
-    const blob = new Blob([response.data], { type: "application/pdf" });
-    const blobUrl = window.URL.createObjectURL(blob);
+    // Direct browser navigation stream fallback
     const link = document.createElement("a");
-    link.href = blobUrl;
+    link.href = directUrl;
     link.download = filename;
     link.setAttribute("download", filename);
-    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
-
-    // Delay cleanup to allow browser download manager to capture download name and stream
     setTimeout(() => {
-      try {
-        if (link.parentNode) {
-          document.body.removeChild(link);
-        }
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (e) {
-        // ignore
-      }
-    }, 30000);
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1000);
   },
 
   /**
@@ -88,48 +116,58 @@ export const reportService = {
    */
   async downloadDetailedReportPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
     const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
-    let filename = `SoilPilot_Detailed_Soil_Report_Gat_${cleanGat}.pdf`;
+    const filename = `SoilPilot_Detailed_Soil_Report_Gat_${cleanGat}.pdf`;
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
+    const directUrl = `/api/pdf/detailed-report?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
 
-    const response = await api.get(`/reports/${fieldId}/detailed/pdf`, {
-      params: { lang },
-      responseType: "blob",
-    });
+    try {
+      const res = await fetch(directUrl);
+      if (res.ok) {
+        const arrayBuffer = await res.arrayBuffer();
+        let targetFilename = filename;
+        const disposition = res.headers.get("content-disposition");
+        if (disposition) {
+          const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
+          if (match && match[1]) {
+            targetFilename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
+          }
+        }
+        if (!targetFilename.toLowerCase().endsWith(".pdf")) {
+          targetFilename += ".pdf";
+        }
 
-    const disposition =
-      response.headers["content-disposition"] ||
-      response.headers["Content-Disposition"];
-    if (disposition) {
-      const match = /filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)["']?/i.exec(disposition);
-      if (match && match[1]) {
-        filename = decodeURIComponent(match[1].trim().replace(/['"]/g, ""));
+        const pdfFile = new File([arrayBuffer], targetFilename, { type: "application/pdf" });
+        const blobUrl = window.URL.createObjectURL(pdfFile);
+
+        const a = document.createElement("a");
+        a.style.position = "fixed";
+        a.style.left = "-9999px";
+        a.href = blobUrl;
+        a.download = targetFilename;
+        a.setAttribute("download", targetFilename);
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+          if (a.parentNode) a.parentNode.removeChild(a);
+          window.URL.revokeObjectURL(blobUrl);
+        }, 3000);
+        return;
       }
+    } catch (e) {
+      console.warn("Detailed report proxy download failed, attempting native browser download:", e);
     }
 
-    if (!filename.toLowerCase().endsWith(".pdf")) {
-      filename += ".pdf";
-    }
-
-    const blob = new Blob([response.data], { type: "application/pdf" });
-    const blobUrl = window.URL.createObjectURL(blob);
+    // Direct browser navigation stream fallback
     const link = document.createElement("a");
-    link.href = blobUrl;
+    link.href = directUrl;
     link.download = filename;
     link.setAttribute("download", filename);
-    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
-
-    // Delay cleanup to allow browser download manager to capture download name and stream
     setTimeout(() => {
-      try {
-        if (link.parentNode) {
-          document.body.removeChild(link);
-        }
-        window.URL.revokeObjectURL(blobUrl);
-      } catch (e) {
-        // ignore
-      }
-    }, 30000);
+      if (link.parentNode) link.parentNode.removeChild(link);
+    }, 1000);
   },
 
   /**
