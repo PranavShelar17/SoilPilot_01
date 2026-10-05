@@ -1208,12 +1208,13 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       locale === "mr"
         ? (layer?.unit === "index" ? "इंडेक्स" : layer?.unit || "इंडेक्स")
         : (layer?.unit || "index");
+    const isMultiSpectralIndex = ["ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(layer?.id || "");
     const valDisplay =
       clickedProbe?.val !== null && clickedProbe?.val !== undefined
-        ? clickedProbe.val.toFixed(2)
+        ? (isMultiSpectralIndex ? clickedProbe.val.toFixed(3) : clickedProbe.val.toFixed(2))
         : (gatInfo?.stats?.[layer?.id as DSMRasterLayerId]?.mean !== undefined
-            ? gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(2)
-            : (layer?.mean !== undefined ? layer.mean.toFixed(2) : "0.00"));
+            ? (isMultiSpectralIndex ? gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(3) : gatInfo.stats[layer?.id as DSMRasterLayerId]!.mean.toFixed(2))
+            : (layer?.mean !== undefined ? (isMultiSpectralIndex ? layer.mean.toFixed(3) : layer.mean.toFixed(2)) : "0.00"));
 
     const classInfo = getClassification(layer?.id, clickedProbe?.val ?? (layer?.mean ?? 0.5), locale);
 
@@ -1265,66 +1266,55 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     })();
 
     const hudHtml = `
-      <div style="display: flex; align-items: stretch; gap: 8px; filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.5)); font-family: system-ui, -apple-system, sans-serif; pointer-events: none; user-select: none;">
-        <!-- 1. White Gat Badge (Left side) - Aligned to match HUD height -->
-        <div style="background: #ffffff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.2); border: 2px solid rgba(226, 232, 240, 0.95); display: flex; flex-direction: column; justify-content: space-between; min-width: 165px; white-space: nowrap;">
-          <div>
-            <div style="font-weight: 800; font-size: 14.5px; color: #00c853; line-height: 1.2; letter-spacing: -0.01em; display: flex; align-items: center; gap: 5px;">
-              <span style="font-size: 13px;">📌</span>
-              <span>${locale === "mr" ? `गट क्र. ${cleanNum}` : `Gat / गट क्र. ${cleanNum}`}</span>
+      <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.28), 0 12px 28px rgba(0, 0, 0, 0.75); padding: 11px 14px; width: 310px; color: #ffffff; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; pointer-events: none; user-select: none;">
+        <!-- Top Row: Pin + Gat Number + Acreage + Lat/Lng Coordinates -->
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <span style="font-size: 16px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));">📌</span>
+            <div style="display: flex; flex-direction: column; line-height: 1.15;">
+              <span style="color: #00e676; font-weight: 800; font-size: 13.5px; letter-spacing: -0.01em;">${locale === "mr" ? "गट" : "Gat"}</span>
+              <span style="color: #00e676; font-weight: 900; font-size: 14px; letter-spacing: -0.01em;">${cleanNum}</span>
             </div>
-            <div style="font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 3px;">
-              ${locale === "mr" ? "एकूण क्षेत्रफळ" : "Total Parcel Area"}
-            </div>
+            <span style="color: #94a3b8; font-size: 12px; font-weight: 600; margin-left: 2px;">
+              (${acres} Ac)
+            </span>
           </div>
-          <div style="font-size: 11.5px; color: #1e293b; font-weight: 700; background: #f8fafc; border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; white-space: nowrap; margin-top: 6px;">
-            ${locale === "mr" ? `${acres} एकर (${ha} हे.)` : `${acres} Acres (${ha} Ha)`}
+
+          <div style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 10.5px; color: #94a3b8; font-weight: 500; text-align: right; line-height: 1.25;">
+            <div>${probeLat.toFixed(5)}° N, ${probeLng.toFixed(5)}°</div>
+            <div>E</div>
           </div>
         </div>
 
-        <!-- 2. Dark HUD Card with Vibrant Neon Green Border (Right side) -->
-        <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 12px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.35), 0 10px 30px rgba(0, 0, 0, 0.7); padding: 11px 16px; min-width: 320px; max-width: 440px; color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;">
-          <!-- Top Row: Location Icon + Subtitle + Lat/Lng Coordinates -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; font-size: 12px; font-weight: 700;">
-            <div style="display: flex; align-items: center; gap: 6px; color: #ffffff;">
-              <span style="color: #00e676; font-size: 13px;">📍</span>
-              <span style="color: #94a3b8; font-weight: 600; font-size: 11.5px;">${locale === "mr" ? "कर्सर स्थान" : "Cursor Probe"}</span>
-            </div>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; color: #94a3b8; font-weight: 600; letter-spacing: -0.01em;">
-              ${probeLat.toFixed(5)}° N, ${probeLng.toFixed(5)}° E
-            </span>
-          </div>
+        <!-- Subtle Divider Line -->
+        <div style="width: 100%; height: 1px; background: rgba(51, 65, 85, 0.75); margin: 7px 0 6px 0;"></div>
 
-          <!-- Divider -->
-          <div style="width: 100%; height: 1px; background: rgba(51, 65, 85, 0.85); margin: 7px 0;"></div>
+        <!-- Metric Row: Cursor [Layer]: [Value] [unit] -->
+        <div style="display: flex; align-items: baseline; gap: 6px;">
+          <span style="font-weight: 800; font-size: 14.5px; color: #ffffff; letter-spacing: -0.01em;">
+            ${locale === "mr" ? `कर्सर ${layerName}:` : `Cursor ${layerName}:`}
+          </span>
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 23px; color: #00e676; line-height: 1; letter-spacing: -0.02em;">
+            ${valDisplay}
+          </span>
+          <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">
+            ${layerUnit}
+          </span>
+        </div>
 
-          <!-- Metric Row: Cursor Layer: [Large Neon Green Value] [unit] -->
-          <div style="display: flex; align-items: baseline; gap: 7px; margin: 2px 0;">
-            <span style="font-weight: 700; font-size: 13.5px; color: #ffffff; letter-spacing: -0.01em;">
-              ${locale === "mr" ? `कर्सर ${layerName}:` : `Cursor ${layerName}:`}
-            </span>
-            <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 24px; color: #00e676; line-height: 1; letter-spacing: -0.02em;">
-              ${valDisplay}
-            </span>
-            <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">
-              ${layerUnit}
-            </span>
-          </div>
+        <!-- Plot Average Row -->
+        <div style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin: 4px 0 8px 0;">
+          ${locale === "mr" ? `प्लॉट सरासरी: ${avgDisplay} ${layerUnit}` : `Plot Avg: ${avgDisplay} ${layerUnit}`}
+        </div>
 
-          <!-- Bottom Row: Status Pill Badge + Canopy Class Area Tag + Plot Average -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; flex-wrap: nowrap;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span style="display: inline-flex; align-items: center; padding: 2.5px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
-                ${classInfo.status}
-              </span>
-              <span style="display: inline-flex; align-items: center; padding: 2.5px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; background: rgba(30, 41, 59, 0.9); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.3); white-space: nowrap; letter-spacing: -0.01em;" title="${locale === "mr" ? `गट ${cleanNum} मधील क्षेत्रफळ` : `Class area inside Gat ${cleanNum}`}">
-                ${areaTagText}
-              </span>
-            </div>
-            <span style="font-size: 11.5px; color: #cbd5e1; font-weight: 600; white-space: nowrap;">
-              ${locale === "mr" ? `प्लॉट सरासरी: ${avgDisplay} ${layerUnit}` : `Plot Avg: ${avgDisplay} ${layerUnit}`}
-            </span>
-          </div>
+        <!-- Bottom Badges Row: Classification Badge + Land Area Pill -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
+            ${classInfo.status}
+          </span>
+          <span style="display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; background: rgba(30, 41, 59, 0.9); color: #f1f5f9; border: 1px solid rgba(148, 163, 184, 0.35); white-space: nowrap; letter-spacing: -0.01em;" title="${locale === "mr" ? `गट ${cleanNum} मधील क्षेत्रफळ` : `Class area inside Gat ${cleanNum}`}">
+            ${areaTagText}
+          </span>
         </div>
       </div>
     `;
@@ -1332,8 +1322,8 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     const customIcon = L.divIcon({
       className: "soilpilot-hud-marker",
       html: hudHtml,
-      iconSize: [520, 110],
-      iconAnchor: [260, 55],
+      iconSize: [310, 138],
+      iconAnchor: [155, 69],
     });
 
     const marker = L.marker([probeLat, probeLng], { icon: customIcon, interactive: false }).addTo(map);
@@ -1347,10 +1337,10 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       const size = m.getSize();
       if (!size.x || !size.y) return;
 
-      const hudWidth = 520;
-      const hudHeight = 110;
-      const anchorX = 260;
-      const anchorY = 55;
+      const hudWidth = 310;
+      const hudHeight = 138;
+      const anchorX = 155;
+      const anchorY = 69;
 
       const left = pt.x - anchorX;
       const right = left + hudWidth;
