@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { DSMLayerConfig, ColorStop } from "@/types/gis";
 import { Sliders } from "lucide-react";
+import { getVegetationIndexStyle, isVegetationIndex as checkIsVegIndex } from "@/lib/gis/vegetationIndexStyles";
 
 interface MapLegendProps {
   layer: DSMLayerConfig;
@@ -89,6 +90,18 @@ function getSteppedColors(colorStops?: ColorStop[], steps = 18): string[] {
   return result;
 }
 
+const QGIS_LULC_CLASSES = [
+  { val: 0, name: "Water", mr: "पाणी", color: "#0066ff", role: "Masked" },
+  { val: 1, name: "Trees", mr: "झाडे", color: "#006400", role: "Masked" },
+  { val: 2, name: "Grass", mr: "गवत", color: "#7cfc00", role: "Retained" },
+  { val: 3, name: "Flooded Veg", mr: "जलमय", color: "#00e6e6", role: "Masked" },
+  { val: 4, name: "Crops", mr: "पिके / शेती", color: "#e91e63", role: "Soil Mask" },
+  { val: 5, name: "Shrub", mr: "झुडपे", color: "#808000", role: "Masked" },
+  { val: 6, name: "Built Area", mr: "वस्ती", color: "#3f51b5", role: "Masked" },
+  { val: 7, name: "Bare Ground", mr: "उघडी जमीन", color: "#d2b48c", role: "Fallow" },
+  { val: 8, name: "Snow & Ice", mr: "बर्फ", color: "#ffffff", role: "N/A" },
+];
+
 export const MapLegend: React.FC<MapLegendProps> = ({
   layer,
   opacity,
@@ -98,28 +111,24 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   const { t, locale } = useI18n();
   const [showOpacity, setShowOpacity] = useState<boolean>(false);
   const isBoundaryOnly = layer.id === "farm_boundary";
-
-  const isVegetationIndex =
-    layer.id === "ndvi" ||
-    layer.id === "ndre" ||
-    layer.id === "evi" ||
-    layer.unit === "index";
+  const isRgbComposite = layer.id === "kharif_rgb" || layer.id === "rabi_rgb";
+  const isLulc = layer.id === "lulc";
+  const vegStyle = getVegetationIndexStyle(layer.id);
+  const isVegetationIndex = Boolean(vegStyle);
 
   // Stepped colors for the segmented pill bar
-  const segments = isVegetationIndex
-    ? VEGETATION_INDEX_SEGMENTS
+  const segments = isLulc
+    ? QGIS_LULC_CLASSES.map((c) => c.color)
+    : vegStyle
+    ? vegStyle.classes.map((c) => c.color)
     : getSteppedColors(layer.colorStops, 18);
 
-  // Exact 3 reference labels (-1.0, 0.0, 1.0 or layer bounds)
-  let minDisplay = "-1.0";
-  let midDisplay = "0.0";
-  let maxDisplay = "1.0";
+  // Dynamic scale bounds
+  let minDisplay = vegStyle ? vegStyle.classes[0].min.toFixed(2) : "-1.0";
+  let midDisplay = vegStyle ? ((vegStyle.classes[0].min + vegStyle.classes[vegStyle.classes.length - 1].max) / 2).toFixed(2) : "0.0";
+  let maxDisplay = vegStyle ? vegStyle.classes[vegStyle.classes.length - 1].max.toFixed(2) : "1.0";
 
-  if (isVegetationIndex) {
-    minDisplay = "-1.0";
-    midDisplay = "0.0";
-    maxDisplay = "1.0";
-  } else if (layer.min !== undefined && layer.max !== undefined) {
+  if (!vegStyle && layer.min !== undefined && layer.max !== undefined) {
     const min = layer.min;
     const max = layer.max;
     const mid = (min + max) / 2;
@@ -132,21 +141,16 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   // Format header title (e.g., "NDRE INDEX", "NDVI INDEX")
   const getHeaderTitle = (): string => {
     if (locale === "mr") {
-      if (layer.id === "ndre") return "NDRE निर्देशांक";
-      if (layer.id === "ndvi") return "NDVI निर्देशांक";
-      if (layer.id === "evi") return "EVI निर्देशांक";
-      if (layer.id === "ph") return "मातीचा pH (सामू)";
-      if (layer.id === "soc") return "सेंद्रिय कर्ब (SOC)";
-      if (layer.id === "nitrogen") return "उपलब्ध नत्र (N)";
-      if (layer.id === "bd") return "मृदा घनता (BD)";
-      if (layer.id === "elevation") return "उंची (Elevation)";
-      if (layer.id === "uncertainty") return "अनिश्चितता (Uncertainty)";
-      if (layer.id === "farm_boundary") return "तपशीलवार हद्द (सीमा)";
+      if (layer.id === "lulc") return "जमीन वापर (QGIS LULC)";
+      if (vegStyle) return vegStyle.marathiName;
+      if (layer.id === "kharif_rgb") return "खरीप हंगाम उपग्रह प्रतिमा";
+      if (layer.id === "rabi_rgb") return "रब्बी हंगाम उपग्रह प्रतिमा";
       if (layer.marathiName) return layer.marathiName;
     }
-    if (layer.id === "ndre") return "NDRE INDEX";
-    if (layer.id === "ndvi") return "NDVI INDEX";
-    if (layer.id === "evi") return "EVI INDEX";
+    if (layer.id === "lulc") return "QGIS LULC CLASSES";
+    if (vegStyle) return vegStyle.name;
+    if (layer.id === "kharif_rgb") return "KHARIF RGB COMPOSITE";
+    if (layer.id === "rabi_rgb") return "RABI RGB COMPOSITE";
     if (layer.shortName) {
       const upper = layer.shortName.toUpperCase();
       return upper.includes("INDEX") ? upper : `${upper} INDEX`;
@@ -156,11 +160,11 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
   return (
     <div
-      className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-100/90 p-3.5 sm:p-4 text-xs w-[210px] sm:w-[230px] transition-all select-none ${className}`}
+      className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-100/90 p-3.5 sm:p-4 text-xs w-[220px] sm:w-[245px] transition-all select-none ${className}`}
     >
-      {/* Top Header: Dark Forest Green Bold Title */}
+      {/* Top Header */}
       <div className="flex items-center justify-between">
-        <h4 className="font-bold text-[#14532d] text-xs sm:text-[13px] tracking-wide uppercase">
+        <h4 className="font-bold text-[#14532d] text-xs sm:text-[13px] tracking-wide uppercase truncate" title={getHeaderTitle()}>
           {getHeaderTitle()}
         </h4>
 
@@ -170,13 +174,26 @@ export const MapLegend: React.FC<MapLegendProps> = ({
             type="button"
             onClick={() => setShowOpacity(!showOpacity)}
             title="Adjust layer opacity"
-            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-colors cursor-pointer"
+            className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-colors cursor-pointer shrink-0 ml-1"
             aria-label="Toggle opacity slider"
           >
             <Sliders className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
+
+      {/* Satellite Metadata Chip */}
+      {vegStyle && (
+        <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-slate-500 font-medium">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-slate-700">Copernicus Sentinel-2</span>
+            <span className="bg-slate-100 text-slate-600 px-1 rounded text-[9px] font-mono">10m grid</span>
+          </div>
+          <div className="font-mono text-[9px] text-slate-400 truncate" title={vegStyle.formula}>
+            {vegStyle.formula}
+          </div>
+        </div>
+      )}
 
       {/* Cadastral Boundary vs Stepped Color Bar */}
       {isBoundaryOnly ? (
@@ -188,6 +205,70 @@ export const MapLegend: React.FC<MapLegendProps> = ({
           <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
             <span className="w-4 h-2.5 rounded bg-cyan-400/30 border border-cyan-600 shrink-0" />
             <span>{locale === "mr" ? "भूमापन सीमा रचना" : (t("soilMap.cadastralFabric") || "Cadastral Boundary Fabric")}</span>
+          </div>
+        </div>
+      ) : isRgbComposite ? (
+        <div className="mt-2 space-y-1 text-[11px] text-slate-600">
+          <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/80 leading-snug">
+            <span className="font-bold text-slate-800">Sentinel-2 True Color</span>: Red (B4), Green (B3), Blue (B2) natural surface reflectance.
+          </div>
+        </div>
+      ) : isLulc ? (
+        <div className="mt-2 space-y-1.5">
+          {/* Segmented Color Pill Bar */}
+          <div className="h-3 w-full rounded-full overflow-hidden flex shadow-inner border border-slate-200/60">
+            {segments.map((color, idx) => (
+              <div
+                key={idx}
+                className="flex-1 h-full"
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+
+          {/* QGIS Class Swatches Grid */}
+          <div className="grid grid-cols-2 gap-x-2 gap-y-1 pt-1 text-[10px] text-slate-700 font-medium">
+            {QGIS_LULC_CLASSES.slice(0, 8).map((item) => (
+              <div key={item.val} className="flex items-center gap-1.5 truncate" title={`${item.val}: ${item.name} (${item.role})`}>
+                <span
+                  className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/20"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="truncate">{locale === "mr" ? item.mr : item.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : vegStyle ? (
+        <div className="mt-2 space-y-2">
+          {/* Segmented Color Pill Bar */}
+          <div className="h-3.5 w-full rounded-full overflow-hidden flex shadow-inner border border-slate-200/60">
+            {vegStyle.classes.map((cls) => (
+              <div
+                key={cls.id}
+                className="flex-1 h-full"
+                style={{ backgroundColor: cls.color }}
+                title={`${cls.label} (${cls.min} to ${cls.max})`}
+              />
+            ))}
+          </div>
+
+          {/* Fixed Index Discrete Class Swatches */}
+          <div className="space-y-1 pt-0.5 text-[10.5px]">
+            {vegStyle.classes.map((cls) => (
+              <div key={cls.id} className="flex items-center justify-between gap-1 text-slate-700">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span
+                    className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/15"
+                    style={{ backgroundColor: cls.color }}
+                  />
+                  <span className="truncate font-medium">{locale === "mr" ? cls.marathiLabel : cls.label}</span>
+                </div>
+                <span className="font-mono text-[9.5px] text-slate-500 shrink-0">
+                  {cls.min <= -0.9 ? `< ${cls.max}` : cls.max >= 0.9 ? `> ${cls.min}` : `${cls.min}–${cls.max}`}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
@@ -203,7 +284,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
             ))}
           </div>
 
-          {/* Clean 3-point value scale (-1.0, 0.0, 1.0) */}
+          {/* Clean 3-point value scale */}
           <div className="flex justify-between items-center text-xs font-semibold text-slate-600 mt-1.5 px-0.5">
             <span>{minDisplay}</span>
             <span className="text-center">{midDisplay}</span>

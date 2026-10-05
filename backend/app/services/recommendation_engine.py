@@ -49,8 +49,8 @@ def evaluate_parameter_recommendation(
         "action_guidance_mr": concise.get("action_mr", concise["recommendation_mr"]),
         "why_it_matters": "",
         "why_it_matters_mr": "",
-        "what_observed": f"{name} is {value:.2f} {unit}".strip() + f", classified as {concise.get('classification', interpretation_en)}.",
-        "what_observed_mr": f"{name_mr} पातळी {value:.2f} {unit} आहे ({concise.get('classification_mr', interpretation_mr)}).".strip(),
+        "what_observed": f"{name} is {f'{value:.2f}' if isinstance(value, (int, float)) else str(value)} {unit}".strip() + f", classified as {concise.get('classification', interpretation_en)}.",
+        "what_observed_mr": f"{name_mr} पातळी {f'{value:.2f}' if isinstance(value, (int, float)) else str(value)} {unit} आहे ({concise.get('classification_mr', interpretation_mr)}).".strip(),
         "what_it_means": concise.get("what_it_means", ""),
         "what_it_means_mr": concise.get("what_it_means_mr", ""),
 
@@ -1096,6 +1096,163 @@ def get_concise_parameter_recommendation(
                 "reference_id": "SHC-BD-RULE-2",
                 "reference_type": "Physical Soil Science",
             }
+
+    # =========================================================================
+    # 16. Total Nitrogen (%)
+    # =========================================================================
+    elif k in ["total_nitrogen", "total_n"]:
+        val_f = float(value) if isinstance(value, (int, float)) else 0.12
+        return {
+            "classification": "Medium" if val_f <= 0.18 else "High",
+            "classification_mr": "मध्यम" if val_f <= 0.18 else "जास्त",
+            "status_category": "MEDIUM",
+            "priority_rank": 4,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 0.05,
+            "upper_limit": 0.18,
+            "recommendation": "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
+            "recommendation_mr": "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
+            "action": "Maintain soil organic matter through crop residue recycling and compost.",
+            "action_mr": "पीक अवशेष व शेणखताचा वापर करून सेंद्रिय नत्र पातळी टिकवून ठेवावी.",
+            "fertilizer_rule": "Maintain soil organic matter",
+            "reference_id": "DSM-AOI-TN",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 17. Cation Exchange Capacity — CEC (cmol(c)/kg)
+    # =========================================================================
+    elif k == "cec":
+        val_f = float(value) if isinstance(value, (int, float)) else 31.20
+        return {
+            "classification": "High" if val_f >= 25.0 else "Moderate",
+            "classification_mr": "जास्त (उत्कृष्ट)" if val_f >= 25.0 else "मध्यम",
+            "status_category": "HIGH" if val_f >= 25.0 else "MEDIUM",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 18.5,
+            "upper_limit": 35.0,
+            "recommendation": "High nutrient retention capacity; excellent buffer against nutrient leaching.",
+            "recommendation_mr": "धनायन विनिमय क्षमता उच्च आहे; खते धरून ठेवण्याची क्षमता उत्कृष्ट आहे.",
+            "action": "Soil has high nutrient buffering capacity. Balanced NPK application is highly effective without rapid leaching.",
+            "action_mr": "जमिनीची अन्नद्रव्ये धरून ठेवण्याची क्षमता उत्तम असल्याने खतांचा योग्य वापर प्रभावी ठरतो.",
+            "fertilizer_rule": "Standard balanced nutrient management",
+            "reference_id": "DSM-AOI-CEC",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 18. Coarse Fragments (%)
+    # =========================================================================
+    elif k in ["cfvo", "coarse_fragments"]:
+        val_f = float(value) if isinstance(value, (int, float)) else 2.80
+        return {
+            "classification": "Normal" if val_f <= 6.5 else "Moderate",
+            "classification_mr": "कमी (चांगले)" if val_f <= 6.5 else "मध्यम",
+            "status_category": "OPTIMAL",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 1.2,
+            "upper_limit": 6.5,
+            "recommendation": "Minimal gravel content; favorable tillage and root elongation zone.",
+            "recommendation_mr": "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
+            "action": "Soil texture offers unobstructed root development. Standard tillage practices recommended.",
+            "action_mr": "जमीन मशागतीसाठी अत्यंत सुलभ असून मुळांची वाढ मुक्तपणे होते.",
+            "fertilizer_rule": "Standard tillage management",
+            "reference_id": "DSM-AOI-CFVO",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 19. Sand (%)
+    # =========================================================================
+    elif k == "sand":
+        return {
+            "classification": "Moderate",
+            "classification_mr": "मध्यम",
+            "status_category": "MEDIUM",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 28.0,
+            "upper_limit": 45.0,
+            "recommendation": "Adequate sand fraction ensuring baseline aeration and internal drainage.",
+            "recommendation_mr": "वाळूचे प्रमाण संतुलित असून जमिनीत हवा खेळती राहण्यास व निचरा होण्यास मदत होते.",
+            "action": "Maintain soil physical structure with regular organic amendments.",
+            "action_mr": "सेंद्रिय खतांच्या नियमित वापरामुळे जमिनीची घडण उत्तम राहते.",
+            "fertilizer_rule": "Maintain soil physical structure",
+            "reference_id": "DSM-AOI-SAND",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 20. Silt (%)
+    # =========================================================================
+    elif k == "silt":
+        return {
+            "classification": "Moderate",
+            "classification_mr": "मध्यम",
+            "status_category": "OPTIMAL",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 25.0,
+            "upper_limit": 35.0,
+            "recommendation": "Optimum silt content supporting available water capacity and nutrient retention.",
+            "recommendation_mr": "गाळाचे प्रमाण योग्य असून ओलावा व अन्नद्रव्ये टिकवून ठेवण्यास मदत करते.",
+            "action": "Favorable silt fraction contributes to balanced moisture holding capacity.",
+            "action_mr": "गाळाच्या योग्य प्रमाणामुळे जमिनीची जलधारण क्षमता चांगली राहते.",
+            "fertilizer_rule": "Maintain soil structure",
+            "reference_id": "DSM-AOI-SILT",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 21. Clay (%)
+    # =========================================================================
+    elif k == "clay":
+        return {
+            "classification": "Heavy Clay",
+            "classification_mr": "काळी चिकण माती",
+            "status_category": "HIGH",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": 22.0,
+            "upper_limit": 38.5,
+            "recommendation": "High smectite clay vertisol; maintain proper drainage to prevent waterlogging.",
+            "recommendation_mr": "काळी कसदार चिकणमाती; अति पावसात पाणी साचू नये म्हणून योग्य निचरा व्यवस्था ठेवावी.",
+            "action": "Deep black vertisol with high shrink-swell properties. Ensure broad-bed furrows for drainage.",
+            "action_mr": "भारी काळी चिकण जमीन असल्याने जास्त पावसात पाण्याचा योग्य निचरा होण्यासाठी सऱ्या-वरंबे पद्धत वापरावी.",
+            "fertilizer_rule": "Drainage & conservation tillage",
+            "reference_id": "DSM-AOI-CLAY",
+            "reference_type": "DSM Root-Zone Standardized",
+        }
+
+    # =========================================================================
+    # 22. Soil Texture Class
+    # =========================================================================
+    elif k in ["soil_texture", "soil_texture_class", "texture_class"]:
+        return {
+            "classification": "Clay Vertisol",
+            "classification_mr": "काळी चिकण माती (Vertisols)",
+            "status_category": "OPTIMAL",
+            "priority_rank": 5,
+            "priority_key": "info",
+            "severity": "Normal",
+            "lower_limit": None,
+            "upper_limit": None,
+            "recommendation": "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
+            "recommendation_mr": "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
+            "action": "Optimal Vertisol agricultural soil. Perform tillage operations at right soil moisture condition (वाफसा).",
+            "action_mr": "उत्कृष्ट काळी जमीन; मशागतीची कामे योग्य वाफशावरच करावीत.",
+            "fertilizer_rule": "Vertisol soil management practices",
+            "reference_id": "DSM-AOI-TEXTURE",
+            "reference_type": "USDA Soil Taxonomy",
+        }
 
     # Generic Fallback
     return {

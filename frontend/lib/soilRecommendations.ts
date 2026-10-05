@@ -541,6 +541,97 @@ export function getConciseParameterRecommendation(
     };
   }
 
+  // ── 16. Total Nitrogen (%) ───────────────────────────────────────────────
+  if (k === 'total_nitrogen' || k === 'total_n') {
+    return {
+      status_category: 'MEDIUM',
+      priority_rank: 4,
+      priority_key: 'info',
+      recommendation:
+        'Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.',
+      recommendation_mr:
+        'जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.',
+    };
+  }
+
+  // ── 17. Cation Exchange Capacity (CEC) ───────────────────────────────────
+  if (k === 'cec') {
+    return {
+      status_category: 'HIGH',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'High nutrient retention capacity; excellent buffer against nutrient leaching.',
+      recommendation_mr:
+        'धनायन विनिमय क्षमता उच्च आहे; खते धरून ठेवण्याची क्षमता उत्कृष्ट आहे.',
+    };
+  }
+
+  // ── 18. Coarse Fragments (%) ─────────────────────────────────────────────
+  if (k === 'cfvo' || k === 'coarse_fragments') {
+    return {
+      status_category: 'OPTIMAL',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'Minimal gravel content; favorable tillage and root elongation zone.',
+      recommendation_mr:
+        'दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.',
+    };
+  }
+
+  // ── 19. Sand (%) ─────────────────────────────────────────────────────────
+  if (k === 'sand') {
+    return {
+      status_category: 'MEDIUM',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'Adequate sand fraction ensuring baseline aeration and internal drainage.',
+      recommendation_mr:
+        'वाळूचे प्रमाण संतुलित असून जमिनीत हवा खेळती राहण्यास व निचरा होण्यास मदत होते.',
+    };
+  }
+
+  // ── 20. Silt (%) ─────────────────────────────────────────────────────────
+  if (k === 'silt') {
+    return {
+      status_category: 'OPTIMAL',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'Optimum silt content supporting available water capacity and nutrient retention.',
+      recommendation_mr:
+        'गाळाचे प्रमाण योग्य असून ओलावा व अन्नद्रव्ये टिकवून ठेवण्यास मदत करते.',
+    };
+  }
+
+  // ── 21. Clay (%) ─────────────────────────────────────────────────────────
+  if (k === 'clay') {
+    return {
+      status_category: 'HIGH',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'High smectite clay vertisol; maintain proper drainage to prevent waterlogging.',
+      recommendation_mr:
+        'काळी कसदार चिकणमाती; अति पावसात पाणी साचू नये म्हणून योग्य निचरा व्यवस्था ठेवावी.',
+    };
+  }
+
+  // ── 22. Soil Texture Class ───────────────────────────────────────────────
+  if (k === 'soil_texture' || k === 'soil_texture_class' || k === 'texture_class') {
+    return {
+      status_category: 'OPTIMAL',
+      priority_rank: 5,
+      priority_key: 'info',
+      recommendation:
+        'Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.',
+      recommendation_mr:
+        'खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.',
+    };
+  }
+
   // ── Fallback ────────────────────────────────────────────────────────────
   // Use interpretation string to detect low/high/optimal status
   if (lowerInterp.includes('low') || lowerInterp.includes('deficient') || lowerInterp.includes('critical')) {
@@ -729,6 +820,17 @@ export function getCleanReferenceRange(key?: string, rawRange?: string): string 
     b: "> 0.5 (Sufficient)",
     bd: "< 1.40 (Optimal)",
     bulk_density: "< 1.40 (Optimal)",
+    total_nitrogen: "AOI range: 0.05 - 0.18",
+    total_n: "AOI range: 0.05 - 0.18",
+    cec: "AOI range: 18.5 - 35.0",
+    cfvo: "AOI range: 1.2 - 6.5",
+    coarse_fragments: "AOI range: 1.2 - 6.5",
+    sand: "AOI range: 28.0 - 45.0",
+    silt: "AOI range: 25.0 - 35.0",
+    clay: "AOI range: 22.0 - 38.5",
+    soil_texture: "USDA Class: Clay / Vertisols",
+    soil_texture_class: "USDA Class: Clay / Vertisols",
+    texture_class: "USDA Class: Clay / Vertisols",
   };
 
   const k = (key || "").toLowerCase().replace(/[- ]/g, "_");
@@ -782,6 +884,17 @@ export function getCleanReferenceRangeMr(key?: string, rawRange?: string): strin
     b: "> ०.५ ppm (पुरेसे)",
     bd: "< १.४० g/cm³ (उत्तम)",
     bulk_density: "< १.४० g/cm³ (उत्तम)",
+    total_nitrogen: "कार्यक्षेत्र श्रेणी: ०.०५ - ०.१८%",
+    total_n: "कार्यक्षेत्र श्रेणी: ०.०५ - ०.१८%",
+    cec: "कार्यक्षेत्र श्रेणी: १८.५ - ३५.०",
+    cfvo: "कार्यक्षेत्र श्रेणी: १.२ - ६.५%",
+    coarse_fragments: "कार्यक्षेत्र श्रेणी: १.२ - ६.५%",
+    sand: "कार्यक्षेत्र श्रेणी: २८.० - ४५.०%",
+    silt: "कार्यक्षेत्र श्रेणी: २५.० - ३५.०%",
+    clay: "कार्यक्षेत्र श्रेणी: २२.० - ३८.५%",
+    soil_texture: "USDA वर्ग: काळी चिकण माती",
+    soil_texture_class: "USDA वर्ग: काळी चिकण माती",
+    texture_class: "USDA वर्ग: काळी चिकण माती",
   };
 
   const k = (key || "").toLowerCase().replace(/[- ]/g, "_");

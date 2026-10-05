@@ -334,7 +334,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           />
         </div>
       ) : (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6">
+        <div className="soil-report-card-container bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6 print:space-y-2.5 print:max-w-none">
           {/* 1. Header Section */}
           <SoilReportHeader isDemo={report.is_demo} />
 

@@ -90,28 +90,28 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
       </h3>
 
       <div className="overflow-x-auto rounded-sm border border-stone-300 bg-white shadow-xs">
-        <table className="w-full text-left text-xs border-collapse min-w-[760px] print:min-w-0">
-          <thead className="bg-[#1e5622] text-white uppercase text-[11px] tracking-wider font-sans">
+        <table className="w-full text-left text-xs border-collapse min-w-[760px] print:min-w-0 print:text-[10px]">
+          <thead className="bg-[#1e5622] text-white uppercase text-[11px] print:text-[9.5px] tracking-wider font-sans">
             <tr>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-14 text-center">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] w-14 text-center">
                 {isMr ? "अ.क्र." : "SR. NO."}
               </th>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-48">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] w-48">
                 {isMr ? "घटक / निर्देशांक" : "PARAMETER"}
               </th>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] text-center w-28">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] text-center w-28">
                 {isMr ? "निरीक्षित मूल्य" : "OBSERVED VALUE"}
               </th>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] text-center w-20">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] text-center w-20">
                 {isMr ? "एकक" : "UNIT"}
               </th>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-32">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] w-32">
                 {isMr ? "निष्कर्ष" : "INTERPRETATION"}
               </th>
-              <th className="py-2.5 px-3 border-r border-[#2e7d32] w-40">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5 border-r border-[#2e7d32] w-40">
                 {isMr ? "संदर्भ श्रेणी" : "REFERENCE RANGE"}
               </th>
-              <th className="py-2.5 px-3">
+              <th className="py-2.5 px-3 print:py-1 print:px-1.5">
                 {isMr ? "शिफारस" : "RECOMMENDATION"}
               </th>
             </tr>
@@ -125,9 +125,16 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
               const rawInterp = isMr && param.interpretation_mr ? param.interpretation_mr : param.interpretation;
               const displayInterp = isMr ? translateStatus(rawInterp, true) : rawInterp;
               
+              const numVal =
+                typeof param.value === "number"
+                  ? param.value
+                  : param.value !== null && param.value !== undefined && !isNaN(Number(param.value))
+                  ? Number(param.value)
+                  : null;
+
               const fallbackRec = getConciseParameterRecommendation(
                 param.key,
-                param.value,
+                numVal,
                 param.interpretation,
                 param.interpretation_mr,
               );
@@ -139,31 +146,31 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
               return (
                 <tr
                   key={param.key || index}
-                  className="bg-white hover:bg-stone-50/70"
+                  className="bg-white hover:bg-stone-50/70 print:break-inside-avoid"
                 >
-                  <td className="py-2 px-3 border-r border-stone-200 text-center font-mono font-medium text-stone-700">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 text-center font-mono font-medium text-stone-700">
                     {param.sr_no || index + 1}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-200 text-stone-900 font-medium">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 text-stone-900 font-medium print:text-[10px]">
                     {displayName}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-200 text-center font-mono font-bold text-stone-950 text-xs">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 text-center font-mono font-bold text-stone-950 text-xs print:text-[10px]">
                     {formatObservedValue(param.value)}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-200 text-center text-stone-700 font-medium">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 text-center text-stone-700 font-medium print:text-[10px]">
                     {param.unit || "—"}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-200">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 print:text-[10px]">
                     {param.value !== null && param.value !== undefined
                       ? renderInterpretationText(displayInterp, param.status_category)
                       : <span className="text-stone-400 italic">—</span>}
                   </td>
-                  <td className="py-2 px-3 border-r border-stone-200 text-stone-800 text-xs font-medium whitespace-nowrap">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 border-r border-stone-200 text-stone-800 text-xs font-medium whitespace-nowrap print:text-[9.5px]">
                     {isMr
                       ? getCleanReferenceRangeMr(param.key, param.reference_range)
                       : getCleanReferenceRange(param.key, param.reference_range)}
                   </td>
-                  <td className="py-2 px-3 text-stone-800 leading-snug text-[11.5px]">
+                  <td className="py-2 px-3 print:py-0.5 print:px-1.5 text-stone-800 leading-snug text-[11.5px] print:text-[9.5px] print:leading-tight">
                     <span className="font-normal">{recText}</span>
                   </td>
                 </tr>
@@ -174,7 +181,7 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
       </div>
 
       {/* Note below table */}
-      <p className="text-[#dc2626] font-medium text-xs mt-3">
+      <p className="text-[#dc2626] font-medium text-xs mt-3 print:mt-1.5 print:text-[9.5px]">
         {isMr
           ? "टीप: या अहवालातील मातीचे गुणधर्म व निष्कर्ष ०–३० सें.मी. मुळांच्या कार्यक्षेत्रातील खोलीवर आधारित आहेत."
           : "Note: Soil properties and interpretations in this report are based on the 0–30 cm root-zone soil depth."}

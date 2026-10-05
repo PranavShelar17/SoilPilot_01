@@ -48,6 +48,8 @@ def translate_ref_range_to_mr(raw: str) -> str:
         ("(High)", "(जास्त)"),
         ("(Deficient)", "(कमतरता)"),
         ("(Marginal)", "(सीमांत)"),
+        ("AOI range:", "कार्यक्षेत्र श्रेणी:"),
+        ("USDA Class:", "USDA वर्ग:"),
         ("Suitable", "योग्य"),
         ("Normal", "सामान्य"),
         ("Medium", "मध्यम"),
@@ -287,17 +289,18 @@ class PDFService:
         lang: str = "en",
         verify_url: Optional[str] = None,
     ) -> bytes:
-        """Generate official Soil Health Card PDF matching the Web UI design 1-to-1."""
+        """Generate official Soil Health Card PDF matching the Web UI design perfectly on a single A4 page."""
         is_mr = lang.lower() == "mr"
         buffer = io.BytesIO()
 
+        # 5 mm top/bottom, 7 mm left/right margins to maximize printable height (287 mm usable)
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            leftMargin=8 * mm,
-            rightMargin=8 * mm,
-            topMargin=8 * mm,
-            bottomMargin=8 * mm,
+            leftMargin=7 * mm,
+            rightMargin=7 * mm,
+            topMargin=5 * mm,
+            bottomMargin=5 * mm,
         )
 
         styles = getSampleStyleSheet()
@@ -308,22 +311,13 @@ class PDFService:
         COLOR_BORDER_GRAY = colors.HexColor("#D1D5DB")
         COLOR_LBL_BG = colors.HexColor("#F3F4F6")
 
-        # Custom typography styles scaled for full A4 page utilization
-        st_head_soilpilot = ParagraphStyle(
-            "HeadSoilPilot",
-            parent=styles["Normal"],
-            fontName=FONT_BOLD,
-            fontSize=15,
-            leading=17,
-            alignment=1,
-            textColor=COLOR_DARK_GREEN,
-        )
+        # Custom typography styles scaled for exact single-page A4 perfection
         st_head_adt = ParagraphStyle(
             "HeadADT",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=13,
-            leading=15,
+            fontSize=11,
+            leading=13,
             alignment=1,
             textColor=colors.HexColor("#000000"),
         )
@@ -331,8 +325,8 @@ class PDFService:
             "HeadLoc",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=9.5,
-            leading=12,
+            fontSize=8,
+            leading=10,
             alignment=1,
             textColor=colors.HexColor("#374151"),
         )
@@ -340,8 +334,8 @@ class PDFService:
             "HeadDemo",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=8.5,
-            leading=11,
+            fontSize=7.5,
+            leading=9,
             alignment=1,
             textColor=COLOR_RED_DEMO,
         )
@@ -349,8 +343,8 @@ class PDFService:
             "ReportTitle",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=12,
-            leading=15,
+            fontSize=10.5,
+            leading=12.5,
             alignment=1,
             textColor=COLOR_DARK_GREEN,
         )
@@ -358,32 +352,32 @@ class PDFService:
             "SecHead",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=8.5,
-            leading=11,
+            fontSize=7.8,
+            leading=9.5,
             textColor=COLOR_DARK_GREEN,
         )
         st_info_lbl = ParagraphStyle(
             "InfoLbl",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.8,
+            leading=8.2,
             textColor=colors.HexColor("#111827"),
         )
         st_info_val = ParagraphStyle(
             "InfoVal",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.8,
+            leading=8.2,
             textColor=colors.HexColor("#111827"),
         )
         st_th = ParagraphStyle(
             "TH",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=7,
-            leading=9,
+            fontSize=6.5,
+            leading=8,
             textColor=colors.white,
         )
         st_th_c = ParagraphStyle(
@@ -395,8 +389,8 @@ class PDFService:
             "TDSr",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.5,
+            leading=7.8,
             alignment=1,
             textColor=colors.HexColor("#111827"),
         )
@@ -404,16 +398,16 @@ class PDFService:
             "TDParam",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.5,
+            leading=7.8,
             textColor=colors.HexColor("#111827"),
         )
         st_td_val = ParagraphStyle(
             "TDVal",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.8,
+            leading=7.8,
             alignment=1,
             textColor=colors.HexColor("#111827"),
         )
@@ -421,8 +415,8 @@ class PDFService:
             "TDUnit",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.5,
+            leading=7.8,
             alignment=1,
             textColor=colors.HexColor("#111827"),
         )
@@ -430,73 +424,84 @@ class PDFService:
             "TDRange",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7,
-            leading=8.8,
+            fontSize=6.0,
+            leading=7.2,
             textColor=colors.HexColor("#111827"),
         )
         st_td_rec = ParagraphStyle(
             "TDRec",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=6.8,
-            leading=8.6,
+            fontSize=6.0,
+            leading=7.2,
             textColor=colors.HexColor("#111827"),
         )
         st_footnote = ParagraphStyle(
             "Footnote",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7.5,
-            leading=9.5,
+            fontSize=6.5,
+            leading=8,
             textColor=COLOR_RED_DEMO,
         )
         st_cert_head = ParagraphStyle(
             "CertHead",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=8,
-            leading=10,
+            fontSize=7.5,
+            leading=9,
             textColor=COLOR_DARK_GREEN,
+        )
+        st_cert_org = ParagraphStyle(
+            "CertOrg",
+            parent=styles["Normal"],
+            fontName=FONT_BOLD,
+            fontSize=7.0,
+            leading=8.5,
+            textColor=colors.HexColor("#111827"),
         )
         st_cert_sub = ParagraphStyle(
             "CertSub",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7,
-            leading=9,
-            textColor=colors.HexColor("#111827"),
+            fontSize=6.2,
+            leading=7.5,
+            textColor=colors.HexColor("#374151"),
         )
         st_cert_ref = ParagraphStyle(
             "CertRef",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=7,
-            leading=9,
-            textColor=colors.HexColor("#374151"),
+            fontSize=6.2,
+            leading=7.5,
+            textColor=colors.HexColor("#4B5563"),
         )
         st_sign_name = ParagraphStyle(
             "SignName",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=8,
-            leading=10,
+            fontSize=7.2,
+            leading=8.8,
+            alignment=2,
             textColor=colors.HexColor("#000000"),
         )
         st_sign_title = ParagraphStyle(
             "SignTitle",
             parent=styles["Normal"],
             fontName=FONT_BOLD,
-            fontSize=6.8,
-            leading=8.5,
+            fontSize=6.2,
+            leading=7.5,
+            alignment=2,
             textColor=colors.HexColor("#000000"),
         )
         st_sign_div = ParagraphStyle(
             "SignDiv",
             parent=styles["Normal"],
             fontName=FONT_REGULAR,
-            fontSize=6.8,
-            leading=8.5,
-            textColor=colors.HexColor("#374151"),
+            fontSize=6.0,
+            leading=7.2,
+            alignment=2,
+            textColor=colors.HexColor("#4B5563"),
         )
 
         def _format_interp(text: str) -> Paragraph:
@@ -509,7 +514,7 @@ class PDFService:
                 c_hex = "#B45309"
             else:
                 c_hex = "#111827"
-            p_style = ParagraphStyle("InterpText", fontName=FONT_BOLD, fontSize=7.5, leading=9.5, textColor=colors.HexColor(c_hex))
+            p_style = ParagraphStyle("InterpText", fontName=FONT_BOLD, fontSize=6.5, leading=7.8, textColor=colors.HexColor(c_hex))
             return Paragraph(f"<b>{text}</b>", p_style)
 
         story = []
@@ -528,19 +533,17 @@ class PDFService:
                 "<b>एडीटी एआय ट्रेनिंग फाउंडेशन, बारामती</b>" if is_mr else "<b>ADT AI TRAINING FOUNDATION, BARAMATI</b>",
                 st_head_adt,
             ),
-            Spacer(1, 0.8 * mm),
             Paragraph(
                 "बारामती, पुणे, महाराष्ट्र" if is_mr else "Baramati, Pune, Maharashtra",
                 st_head_loc,
             ),
         ]
         if is_demo:
-            header_elements.extend([
-                Spacer(1, 0.8 * mm),
-                Paragraph("<b>डेमो डेटा</b>" if is_mr else "<b>DEMO DATA</b>", st_head_demo),
-            ])
+            header_elements.append(
+                Paragraph("<b>डेमो डेटा</b>" if is_mr else "<b>DEMO DATA</b>", st_head_demo)
+            )
 
-        header_table = Table([[el] for el in header_elements], colWidths=[194 * mm])
+        header_table = Table([[el] for el in header_elements], colWidths=[196 * mm])
         header_table.setStyle(TableStyle([
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -549,76 +552,76 @@ class PDFService:
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
         story.append(header_table)
-        story.append(Spacer(1, 2 * mm))
+        story.append(Spacer(1, 1.0 * mm))
 
         # Solid Green Horizontal Rule
-        story.append(HRFlowable(width="100%", thickness=1.8, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2.5 * mm))
+        story.append(HRFlowable(width="100%", thickness=1.2, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.2 * mm))
 
         # Centered SOIL SAMPLE TEST REPORT
         report_title_text = "मृदा नमुना चाचणी अहवाल" if is_mr else "SOIL SAMPLE TEST REPORT"
         story.append(Paragraph(f"<b>{report_title_text}</b>", st_report_title))
-        story.append(Spacer(1, 3 * mm))
+        story.append(Spacer(1, 1.2 * mm))
 
         # --------------------------------------------------------------
         # 2. FARMER & SAMPLE INFORMATION (4-Column Table)
         # --------------------------------------------------------------
         sec_farmer_text = "शेतकरी व माती नमुना तपशील" if is_mr else "FARMER & SAMPLE INFORMATION"
         story.append(Paragraph(f"<b>{sec_farmer_text}</b>", st_sec_head))
-        story.append(Spacer(1, 1.5 * mm))
+        story.append(Spacer(1, 0.8 * mm))
 
-        farmer_name = "रमेश पाटील" if is_mr else "Ramesh Patil (रमेश पाटील)"
+        farmer_name = farmer.get("name") or ("रमेश पाटील" if is_mr else "Ramesh Patil (रमेश पाटील)")
         gat_no = field.get("gat_no", "18")
         area_unit = "हेक्टर" if is_mr else "hectare"
         area_val = field.get("area", "2.69")
         gat_label = f"गट क्र. {gat_no} ({area_val} {area_unit})" if is_mr else f"Gat No. {gat_no} ({area_val} {area_unit})"
 
-        taluka_val = "माळेगाव खुर्द" if is_mr else "Malegaon Kh."
-        district_val = "पुणे, महाराष्ट्र" if is_mr else "Pune, Maharashtra"
-        village_val = "माळेगाव खुर्द" if is_mr else "Malegaon Kh."
-        date_val = "03/10/2026"
+        taluka_val = field.get("taluka") or ("माळेगाव खुर्द" if is_mr else "Malegaon Kh.")
+        district_val = field.get("district") or ("पुणे, महाराष्ट्र" if is_mr else "Pune, Maharashtra")
+        village_val = field.get("village") or ("माळेगाव खुर्द" if is_mr else "Malegaon Kh.")
+        date_val = report_meta.get("report_date") or report_meta.get("sample_date") or "03/10/2026"
 
         f_data = [
             [
                 Paragraph("<b>शेतकऱ्याचे नाव</b>" if is_mr else "<b>Farmer's Name</b>", st_info_lbl),
-                Paragraph(farmer_name, st_info_val),
+                Paragraph(str(farmer_name), st_info_val),
                 Paragraph("<b>तालुका</b>" if is_mr else "<b>Taluka</b>", st_info_lbl),
-                Paragraph(taluka_val, st_info_val),
+                Paragraph(str(taluka_val), st_info_val),
             ],
             [
                 Paragraph("<b>गट क्र.</b>" if is_mr else "<b>Gat No.</b>", st_info_lbl),
-                Paragraph(gat_label, st_info_val),
+                Paragraph(str(gat_label), st_info_val),
                 Paragraph("<b>जिल्हा</b>" if is_mr else "<b>District</b>", st_info_lbl),
-                Paragraph(district_val, st_info_val),
+                Paragraph(str(district_val), st_info_val),
             ],
             [
                 Paragraph("<b>गाव</b>" if is_mr else "<b>Village</b>", st_info_lbl),
-                Paragraph(village_val, st_info_val),
+                Paragraph(str(village_val), st_info_val),
                 Paragraph("<b>दिनांक</b>" if is_mr else "<b>Date</b>", st_info_lbl),
-                Paragraph(date_val, st_info_val),
+                Paragraph(str(date_val), st_info_val),
             ],
         ]
 
-        info_table = Table(f_data, colWidths=[34 * mm, 63 * mm, 34 * mm, 63 * mm])
+        info_table = Table(f_data, colWidths=[33 * mm, 65 * mm, 33 * mm, 65 * mm])
         info_table.setStyle(TableStyle([
-            ("BOX", (0, 0), (-1, -1), 0.6, COLOR_BORDER_GRAY),
-            ("INNERGRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER_GRAY),
+            ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+            ("INNERGRID", (0, 0), (-1, -1), 0.35, COLOR_BORDER_GRAY),
             ("BACKGROUND", (0, 0), (0, -1), COLOR_LBL_BG),
             ("BACKGROUND", (2, 0), (2, -1), COLOR_LBL_BG),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 2.2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2.2),
-            ("LEFTPADDING", (0, 0), (-1, -1), 4),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 1.0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 1.0),
+            ("LEFTPADDING", (0, 0), (-1, -1), 3),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
         ]))
         story.append(info_table)
-        story.append(Spacer(1, 3 * mm))
+        story.append(Spacer(1, 1.2 * mm))
 
         # --------------------------------------------------------------
         # 3. LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS TABLE
         # --------------------------------------------------------------
         sec_lab_text = "प्रयोगशाळा मृदा रासायनिक आणि पोषकतत्व विश्लेषण" if is_mr else "LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS"
         story.append(Paragraph(f"<b>{sec_lab_text}</b>", st_sec_head))
-        story.append(Spacer(1, 1.5 * mm))
+        story.append(Spacer(1, 0.8 * mm))
 
         th_row = [
             Paragraph("<b>अ.क्र.</b>" if is_mr else "<b>SR.<br/>NO.</b>", st_th_c),
@@ -632,20 +635,45 @@ class PDFService:
 
         clean_ref_ranges = {
             "ph": "6.0 - 7.5 (Suitable)",
+            "soil_ph": "6.0 - 7.5 (Suitable)",
             "ec": "< 0.8 (Normal)",
+            "electrical_conductivity": "< 0.8 (Normal)",
             "organic_carbon": "0.50 - 0.75% (Medium)",
+            "soc": "0.50 - 0.75% (Medium)",
             "available_nitrogen": "280 - 560 (Medium)",
+            "nitrogen": "280 - 560 (Medium)",
             "available_phosphorus": "10 - 25 (Medium)",
+            "phosphorus": "10 - 25 (Medium)",
             "available_potassium": "120 - 280 (Medium)",
+            "potassium": "120 - 280 (Medium)",
             "exchangeable_sodium": "< 15.0 (Normal)",
+            "esp": "< 15.0 (Normal)",
             "free_lime": "< 5.0% (Normal)",
+            "caco3": "< 5.0% (Normal)",
             "iron": "> 4.5 (Sufficient)",
+            "available_iron": "> 4.5 (Sufficient)",
             "manganese": "> 3.0 (Sufficient)",
+            "available_manganese": "> 3.0 (Sufficient)",
             "zinc": "> 0.6 (Sufficient)",
+            "available_zinc": "> 0.6 (Sufficient)",
             "copper": "> 0.4 (Sufficient)",
+            "available_copper": "> 0.4 (Sufficient)",
             "sulphur": "> 15.0 (Sufficient)",
+            "available_sulphur": "> 15.0 (Sufficient)",
             "boron": "> 0.5 (Sufficient)",
+            "available_boron": "> 0.5 (Sufficient)",
             "bd": "< 1.40 (Optimal)",
+            "bulk_density": "< 1.40 (Optimal)",
+            "total_nitrogen": "AOI range: 0.05 - 0.18",
+            "total_n": "AOI range: 0.05 - 0.18",
+            "cec": "AOI range: 18.5 - 35.0",
+            "cfvo": "AOI range: 1.2 - 6.5",
+            "coarse_fragments": "AOI range: 1.2 - 6.5",
+            "sand": "AOI range: 28.0 - 45.0",
+            "silt": "AOI range: 25.0 - 35.0",
+            "clay": "AOI range: 22.0 - 38.5",
+            "soil_texture": "USDA Class: Clay / Vertisols",
+            "soil_texture_class": "USDA Class: Clay / Vertisols",
         }
 
         clean_recs = {
@@ -656,14 +684,32 @@ class PDFService:
             "available_phosphorus": "Normal RDF*",
             "available_potassium": "Reduce K; ~75% RDF*",
             "exchangeable_sodium": "Exchangeable sodium is within safe range. Maintain appropriate drainage.",
+            "esp": "Exchangeable sodium is within safe range. Maintain appropriate drainage.",
             "free_lime": "Free lime is within normal bounds. Maintain balanced fertilization.",
             "iron": "Apply Fe if needed",
+            "available_iron": "Apply Fe if needed",
             "manganese": "Monitor Mn",
+            "available_manganese": "Monitor Mn",
             "zinc": "Apply Zn if needed",
+            "available_zinc": "Apply Zn if needed",
             "copper": "No Cu correction",
+            "available_copper": "No Cu correction",
             "sulphur": "Apply S as needed",
+            "available_sulphur": "Apply S as needed",
             "boron": "Apply B carefully",
+            "available_boron": "Apply B carefully",
             "bd": "Soil physical condition and density are favorable for root penetration and moisture retention.",
+            "bulk_density": "Soil physical condition and density are favorable for root penetration and moisture retention.",
+            "total_nitrogen": "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
+            "total_n": "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
+            "cec": "High nutrient retention capacity; excellent buffer against nutrient leaching.",
+            "cfvo": "Minimal gravel content; favorable tillage and root elongation zone.",
+            "coarse_fragments": "Minimal gravel content; favorable tillage and root elongation zone.",
+            "sand": "Adequate sand fraction ensuring baseline aeration and internal drainage.",
+            "silt": "Optimum silt content supporting available water capacity and nutrient retention.",
+            "clay": "High smectite clay vertisol; maintain proper drainage to prevent waterlogging.",
+            "soil_texture": "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
+            "soil_texture_class": "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
         }
 
         clean_recs_mr = {
@@ -674,14 +720,32 @@ class PDFService:
             "available_phosphorus": "सामान्य १००% RDF*",
             "available_potassium": "पालाश कमी करा; ~७५% RDF*",
             "exchangeable_sodium": "सोडियम सुरक्षित मर्यादेत आहे. पाण्याचा योग्य निचरा ठेवावा.",
+            "esp": "सोडियम सुरक्षित मर्यादेत आहे. पाण्याचा योग्य निचरा ठेवावा.",
             "free_lime": "मुक्त चुनखडी सामान्य मर्यादेत आहे. संतुलित खत व्यवस्थापन ठेवा.",
             "iron": "गरज भासल्यास फेरस सल्फेट किंवा चिलेटेड लोह द्या.",
+            "available_iron": "गरज भासल्यास फेरस सल्फेट किंवा चिलेटेड लोह द्या.",
             "manganese": "मँगनीजचे निरीक्षण ठेवा.",
+            "available_manganese": "मँगनीजचे निरीक्षण ठेवा.",
             "zinc": "गरज भासल्यास झिंक सल्फेट द्या.",
+            "available_zinc": "गरज भासल्यास झिंक सल्फेट द्या.",
             "copper": "तांबे सुधारणेची गरज नाही.",
+            "available_copper": "तांबे सुधारणेची गरज नाही.",
             "sulphur": "गरजेनुसार गंधक खते द्या.",
+            "available_sulphur": "गरजेनुसार गंधक खते द्या.",
             "boron": "काळजीपूर्वक बोरॉन वापरा.",
+            "available_boron": "काळजीपूर्वक बोरॉन वापरा.",
             "bd": "मातीची घनता व भौतिक स्थिती मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
+            "bulk_density": "मातीची घनता व भौतिक स्थिती मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
+            "total_nitrogen": "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
+            "total_n": "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
+            "cec": "धनायन विनिमय क्षमता उच्च आहे; खते धरून ठेवण्याची क्षमता उत्कृष्ट आहे.",
+            "cfvo": "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
+            "coarse_fragments": "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
+            "sand": "वाळूचे प्रमाण संतुलित असून जमिनीत हवा खेळती राहण्यास व निचरा होण्यास मदत होते.",
+            "silt": "गाळाचे प्रमाण योग्य असून ओलावा व अन्नद्रव्ये टिकवून ठेवण्यास मदत करते.",
+            "clay": "काळी कसदार चिकणमाती; अति पावसात पाणी साचू नये म्हणून योग्य निचरा व्यवस्था ठेवावी.",
+            "soil_texture": "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
+            "soil_texture_class": "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
         }
 
         param_rows = [th_row]
@@ -716,20 +780,20 @@ class PDFService:
 
         param_table = Table(
             param_rows,
-            colWidths=[10 * mm, 41 * mm, 18 * mm, 13 * mm, 26 * mm, 34 * mm, 52 * mm],
+            colWidths=[9 * mm, 41 * mm, 17 * mm, 13 * mm, 25 * mm, 35 * mm, 56 * mm],
         )
         param_table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), COLOR_DARK_GREEN),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("BOX", (0, 0), (-1, -1), 0.6, COLOR_BORDER_GRAY),
-            ("INNERGRID", (0, 0), (-1, -1), 0.4, COLOR_BORDER_GRAY),
-            ("TOPPADDING", (0, 0), (-1, -1), 2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-            ("LEFTPADDING", (0, 0), (-1, -1), 3),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+            ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+            ("INNERGRID", (0, 0), (-1, -1), 0.35, COLOR_BORDER_GRAY),
+            ("TOPPADDING", (0, 0), (-1, -1), 0.7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0.7),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2.0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2.0),
         ]))
         story.append(param_table)
-        story.append(Spacer(1, 2 * mm))
+        story.append(Spacer(1, 1.0 * mm))
 
         # Red Footnote Note
         footnote_text = (
@@ -738,14 +802,15 @@ class PDFService:
             else "Note: Soil properties and interpretations in this report are based on the 0–30 cm root-zone soil depth."
         )
         story.append(Paragraph(footnote_text, st_footnote))
-        story.append(Spacer(1, 2.5 * mm))
+        story.append(Spacer(1, 1.0 * mm))
 
         # --------------------------------------------------------------
         # 4. REPORT INFORMATION & LABORATORY CERTIFICATION
+        # --------------------------------------------------------------
         cert_head_text = "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" if is_mr else "REPORT INFORMATION & LABORATORY CERTIFICATION"
         story.append(Paragraph(f"<b>{cert_head_text}</b>", st_cert_head))
-        story.append(Spacer(1, 1 * mm))
-        story.append(HRFlowable(width="100%", thickness=1.5, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=2 * mm))
+        story.append(Spacer(1, 0.5 * mm))
+        story.append(HRFlowable(width="100%", thickness=1.0, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.0 * mm))
 
         cert_sub_text = (
             "कृषी निदान व डिजिटल मृदा परीक्षण केंद्र, बारामती / पुणे, महाराष्ट्र"
@@ -753,27 +818,40 @@ class PDFService:
             else "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra"
         )
         report_no = report_meta.get("report_no", "SPL/2026/SL-0104")
-        report_date = "20-09-2026"
+        report_date = report_meta.get("report_date") or "20-09-2026"
         cert_ref_text = (
             f"अहवाल संदर्भ: {report_no} • दिनांक: {report_date}"
             if is_mr
             else f"Report Ref: {report_no} • Date: {report_date}"
         )
 
-        sign_name_text = "डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "Dr. S. K. Joshi (Chief Chemist)"
+        sign_name_text = report_meta.get("chemist_name") or ("डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "Dr. S. K. Joshi (Chief Chemist)")
         sign_title_text = "अधिकृत मृदा परीक्षण रसायनशास्त्रज्ञ" if is_mr else "AUTHORIZED SOIL TESTING CHEMIST"
         sign_div_text = "मृदा निदान व विश्लेषणात्मक रसायनशास्त्र विभाग" if is_mr else "Soil Diagnostics & Analytical Chemistry Division"
 
-        footer_content = [
+        footer_left = [
+            Paragraph("<b>एडीटी एआय ट्रेनिंग फाउंडेशन, बारामती</b>" if is_mr else "<b>ADT AI TRAINING FOUNDATION, BARAMATI</b>", st_cert_org),
             Paragraph(cert_sub_text, st_cert_sub),
             Paragraph(cert_ref_text, st_cert_ref),
-            Spacer(1, 1.5 * mm),
+        ]
+        footer_right = [
             Paragraph(f"<b>{sign_name_text}</b>", st_sign_name),
             Paragraph(f"<b>{sign_title_text}</b>", st_sign_title),
             Paragraph(sign_div_text, st_sign_div),
         ]
-        for item in footer_content:
-            story.append(item)
+
+        footer_table = Table(
+            [[footer_left, footer_right]],
+            colWidths=[110 * mm, 86 * mm]
+        )
+        footer_table.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.append(footer_table)
 
         # Build document
         doc.build(story)

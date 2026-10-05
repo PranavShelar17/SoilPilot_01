@@ -34,6 +34,14 @@ DEMO_LAB_PARAMETERS = [
     {"sr_no": 14, "key": "boron", "name": "Available Boron (B)", "name_mr": "उपलब्ध बोरॉन (B)", "category": "Micronutrient", "value": 0.35, "unit": "ppm", "source": "LAB OBSERVATION"},
     # Physical metric
     {"sr_no": 15, "key": "bd", "name": "Bulk Density", "name_mr": "मातीची घनता (BD)", "category": "Physical", "value": 1.58, "unit": "g/cm³", "source": "LAB OBSERVATION"},
+    # DSM Standardized Root-Zone Layers (0-30 cm)
+    {"sr_no": 16, "key": "total_nitrogen", "name": "Total Nitrogen", "name_mr": "एकूण नत्र", "category": "Nutrient", "value": 0.12, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 17, "key": "cec", "name": "Cation Exchange Capacity (CEC)", "name_mr": "धनायन विनिमय क्षमता (CEC)", "category": "Chemical", "value": 31.20, "unit": "cmol(c)/kg", "source": "DSM PREDICTION"},
+    {"sr_no": 18, "key": "cfvo", "name": "Coarse Fragments", "name_mr": "दगड-गोटे प्रमाण", "category": "Physical", "value": 2.80, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 19, "key": "sand", "name": "Sand", "name_mr": "वाळू / रेती", "category": "Physical", "value": 34.00, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 20, "key": "silt", "name": "Silt", "name_mr": "गाळाचे प्रमाण", "category": "Physical", "value": 28.50, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 21, "key": "clay", "name": "Clay", "name_mr": "चिकणमाती", "category": "Physical", "value": 35.50, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 22, "key": "soil_texture", "name": "Soil Texture Class", "name_mr": "मातीचा पोत वर्ग", "category": "Physical", "value": "Clay Vertisol", "unit": "—", "source": "DSM PREDICTION"},
 ]
 
 class SoilHealthService:
@@ -145,11 +153,25 @@ class SoilHealthService:
             soc_val = 1.45
             n_val = 179.50
             bd_val = 1.58
+            total_n_val = 0.12
+            cec_val = 31.20
+            cfvo_val = 2.80
+            sand_val = 34.00
+            silt_val = 28.50
+            clay_val = 35.50
+            texture_val = "Clay Vertisol"
         elif is_gat_22:
             ph_val = 7.10
             soc_val = 1.60
             n_val = 189.30
             bd_val = 1.57
+            total_n_val = 0.14
+            cec_val = 32.50
+            cfvo_val = 2.40
+            sand_val = 32.20
+            silt_val = 29.10
+            clay_val = 36.30
+            texture_val = "Clay Vertisol"
         else:
             ph_raw = gat_stats.get("ph", {}).get("mean")
             ph_val = round(ph_raw, 2) if ph_raw is not None else 7.24
@@ -166,11 +188,52 @@ class SoilHealthService:
             bd_raw = gat_stats.get("bd", {}).get("mean")
             bd_val = round(bd_raw, 3) if bd_raw is not None else 1.58
 
+            tot_n_raw = gat_stats.get("total_nitrogen", {}).get("mean") or (round(n_raw * 0.008, 2) if n_raw else 0.12)
+            total_n_val = round(tot_n_raw, 2) if tot_n_raw is not None else 0.12
+
+            cec_raw = gat_stats.get("cec", {}).get("mean")
+            cec_val = round(cec_raw, 2) if cec_raw is not None else 31.20
+
+            cfvo_raw = gat_stats.get("cfvo", {}).get("mean")
+            cfvo_val = round(cfvo_raw, 2) if cfvo_raw is not None else 2.80
+
+            sand_raw = gat_stats.get("sand", {}).get("mean")
+            sand_val = round(sand_raw, 2) if sand_raw is not None else 34.00
+
+            silt_raw = gat_stats.get("silt", {}).get("mean")
+            silt_val = round(silt_raw, 2) if silt_raw is not None else 28.50
+
+            clay_raw = gat_stats.get("clay", {}).get("mean")
+            clay_val = round(clay_raw, 2) if clay_raw is not None else 35.50
+
+            texture_val = "Clay Vertisol"
+
         params = []
         for p in DEMO_LAB_PARAMETERS:
             val = p["value"]
             src = p["source"]
-            if not is_gat_18 and not is_gat_22:
+            if p["key"] == "total_nitrogen":
+                val = total_n_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "cec":
+                val = cec_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "cfvo":
+                val = cfvo_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "sand":
+                val = sand_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "silt":
+                val = silt_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "clay":
+                val = clay_val
+                src = "DSM PREDICTION"
+            elif p["key"] == "soil_texture":
+                val = texture_val
+                src = "DSM PREDICTION"
+            elif not is_gat_18 and not is_gat_22:
                 if p["key"] == "ph":
                     val = ph_val
                     src = "DSM PREDICTION" if ph_raw is not None else p["source"]

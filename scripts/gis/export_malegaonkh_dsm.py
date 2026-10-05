@@ -83,17 +83,17 @@ MOISTURE_PALETTE = [
     (1.00, (37, 99, 235)),    # #2563eb - Saturated water blue
 ]
 
-# Dynamic World Categorical Palette
+# QGIS LULC Symbology Palette matching DSM workflow specifications
 DYNAMIC_WORLD_COLORS = {
-    0: (65, 155, 223),   # Water: #419BDF
-    1: (57, 125, 73),    # Trees: #397D49
-    2: (136, 176, 83),   # Grass: #88B053
-    3: (122, 135, 198),  # Flooded Veg: #7A87C6
-    4: (228, 150, 53),   # Crops: #E49635
-    5: (223, 195, 90),   # Shrub & Scrub: #DFC35A
-    6: (196, 40, 27),    # Built Area: #C4281B
-    7: (165, 155, 143),  # Bare Ground: #A59B8F
-    8: (179, 159, 225),  # Snow & Ice: #B39FE1
+    0: (0, 102, 255),    # 0: Water -> Blue (#0066ff)
+    1: (0, 100, 0),      # 1: Trees -> Dark Green (#006400)
+    2: (124, 252, 0),    # 2: Grass -> Light Green (#7cfc00)
+    3: (0, 230, 230),    # 3: Flooded Vegetation -> Cyan (#00e6e6)
+    4: (233, 30, 99),    # 4: Crops -> Magenta / Pink (#e91e63)
+    5: (128, 128, 0),    # 5: Shrub & Scrub -> Olive (#808000)
+    6: (63, 81, 181),    # 6: Built Area -> Blue / Indigo (#3f51b5)
+    7: (210, 180, 140),  # 7: Bare Ground -> Light Gray / Tan (#d2b48c)
+    8: (255, 255, 255),  # 8: Snow & Ice -> White (#ffffff)
 }
 
 DYNAMIC_WORLD_LABELS = {
@@ -105,6 +105,7 @@ DYNAMIC_WORLD_LABELS = {
     5: ("Shrub & Scrub", "झुडपे"),
     6: ("Built Area", "वस्ती / बांधकाम"),
     7: ("Bare Ground", "उघडी जमीन"),
+    8: ("Snow & Ice", "बर्फ / हिम"),
 }
 
 # USDA Soil Texture Classes
@@ -114,6 +115,79 @@ SOIL_TEXTURE_COLORS = {
     3: (130, 85, 60),    # Sandy Clay
     4: (150, 100, 70),   # Clay Loam
 }
+
+# -----------------------------------------------------------------------------
+# Scientifically Fixed Index Color Classifications (Copernicus Sentinel-2)
+# -----------------------------------------------------------------------------
+INDEX_CLASSES = {
+    "ndvi": [
+        {"min": -10.0, "max": 0.20, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< 0.20: Very Low / Stressed"},
+        {"min": 0.20, "max": 0.40, "rgb": (249, 115, 22), "hex": "#F97316", "label": "0.20–0.40: Low / Sparse"},
+        {"min": 0.40, "max": 0.60, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.40–0.60: Moderate"},
+        {"min": 0.60, "max": 0.80, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.60–0.80: Healthy"},
+        {"min": 0.80, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.80: Dense / Very Healthy"},
+    ],
+    "evi": [
+        {"min": -10.0, "max": 0.12, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< 0.12: Low EVI / Stressed"},
+        {"min": 0.12, "max": 0.20, "rgb": (249, 115, 22), "hex": "#F97316", "label": "0.12–0.20: Moderate-Low"},
+        {"min": 0.20, "max": 0.30, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.20–0.30: Moderate"},
+        {"min": 0.30, "max": 0.42, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.30–0.42: Healthy"},
+        {"min": 0.42, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.42: High / Dense"},
+    ],
+    "savi": [
+        {"min": -10.0, "max": 0.12, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< 0.12: Low Vegetation"},
+        {"min": 0.12, "max": 0.18, "rgb": (249, 115, 22), "hex": "#F97316", "label": "0.12–0.18: Low-Moderate"},
+        {"min": 0.18, "max": 0.28, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.18–0.28: Moderate"},
+        {"min": 0.28, "max": 0.40, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.28–0.40: Healthy"},
+        {"min": 0.40, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.40: Dense Vegetation"},
+    ],
+    "ndmi": [
+        {"min": -10.0, "max": -0.08, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< -0.08: Very Dry / Severe Stress"},
+        {"min": -0.08, "max": 0.02, "rgb": (249, 115, 22), "hex": "#F97316", "label": "-0.08–0.02: Dry / Moisture Stressed"},
+        {"min": 0.02, "max": 0.12, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.02–0.12: Moderate Moisture"},
+        {"min": 0.12, "max": 0.24, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.12–0.24: Good Moisture"},
+        {"min": 0.24, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.24: High Moisture"},
+    ],
+    "ndre": [
+        {"min": -10.0, "max": 0.12, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< 0.12: Low / Stressed"},
+        {"min": 0.12, "max": 0.20, "rgb": (249, 115, 22), "hex": "#F97316", "label": "0.12–0.20: Moderate-Low"},
+        {"min": 0.20, "max": 0.30, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.20–0.30: Moderate"},
+        {"min": 0.30, "max": 0.42, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.30–0.42: Healthy"},
+        {"min": 0.42, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.42: High / Dense"},
+    ],
+    "bsi": [
+        {"min": -10.0, "max": -0.05, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "< -0.05: Dense Vegetation Cover"},
+        {"min": -0.05, "max": 0.04, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "-0.05–0.04: Mixed Cover"},
+        {"min": 0.04, "max": 0.12, "rgb": (249, 115, 22), "hex": "#F97316", "label": "0.04–0.12: Partial Soil Exposure"},
+        {"min": 0.12, "max": 10.0, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "> 0.12: Bare / Exposed Soil"},
+    ],
+    "ndwi": [
+        {"min": -10.0, "max": -0.50, "rgb": (249, 115, 22), "hex": "#F97316", "label": "< -0.50: Very Low / Dry"},
+        {"min": -0.50, "max": -0.38, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "-0.50–-0.38: Low Water Presence"},
+        {"min": -0.38, "max": -0.20, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "-0.38–-0.20: Moderate Water"},
+        {"min": -0.20, "max": 0.00, "rgb": (56, 189, 248), "hex": "#38BDF8", "label": "-0.20–0.00: High Water"},
+        {"min": 0.00, "max": 10.0, "rgb": (37, 99, 235), "hex": "#2563EB", "label": "> 0.00: Very High / Surface Water"},
+    ],
+}
+
+
+def colorize_classified_index(arr: np.ndarray, class_defs: list[dict], valid_mask: np.ndarray) -> np.ndarray:
+    """Colorize continuous spectral index array into exact scientifically fixed classification zones."""
+    h, w_img = arr.shape
+    rgba = np.zeros((h, w_img, 4), dtype=np.uint8)
+    for c in class_defs:
+        c_min = c["min"]
+        c_max = c["max"]
+        rgb = c["rgb"]
+        if c_max >= 9.0:
+            m = valid_mask & (arr >= c_min)
+        else:
+            m = valid_mask & (arr >= c_min) & (arr < c_max)
+        rgba[m, 0] = rgb[0]
+        rgba[m, 1] = rgb[1]
+        rgba[m, 2] = rgb[2]
+        rgba[m, 3] = 255
+    return rgba
 
 
 def colorize_continuous(arr: np.ndarray, vmin: float, vmax: float, palette: list[tuple[float, tuple[int, int, int]]], valid_mask: np.ndarray) -> np.ndarray:
@@ -613,8 +687,11 @@ def build_malegaonkh_dsm(src: Path, out: Path) -> None:
             arr[~village_mask] = np.nan
 
         elif spec["type"] == "lulc_categorical":
-            with tifffile.TiffFile(tif_path) as tif:
-                arr = tif.pages[0].asarray().astype(np.float32)
+            try:
+                arr = np.array(Image.open(tif_path)).astype(np.float32)
+            except Exception:
+                with tifffile.TiffFile(tif_path) as tif:
+                    arr = tif.pages[0].asarray().astype(np.float32)
             arr[~village_mask] = np.nan
 
         elif spec["type"] == "rgb_composite":
@@ -707,6 +784,32 @@ def build_malegaonkh_dsm(src: Path, out: Path) -> None:
             ]
             vmin, vmax = 1.0, 1.0
             mean_val, std_val = 1.0, 0.0
+
+        elif spec["type"] == "master_index" and layer_id in INDEX_CLASSES:
+            # Fixed Copernicus Sentinel-2 discrete scientific classification
+            vals = arr[valid]
+            raw_min, raw_max = float(vals.min()), float(vals.max())
+            mean_val, std_val = float(vals.mean()), float(vals.std())
+            vmin, vmax = raw_min, raw_max
+
+            class_defs = INDEX_CLASSES[layer_id]
+            rgba = colorize_classified_index(arr, class_defs, valid)
+            Image.fromarray(rgba, "RGBA").save(out / "layers" / f"{layer_id}.png", optimize=True)
+
+            step = (raw_max - raw_min) / MAX_U16 if (raw_max - raw_min) > 0 else 1.0
+            q = np.full((h, w), NODATA_U16, dtype="<u2")
+            q[valid] = np.round((arr[valid] - raw_min) / step).astype("<u2")
+            (out / "grids" / f"{layer_id}.bin").write_bytes(q.tobytes())
+
+            stops = []
+            for i, c in enumerate(class_defs):
+                stops.append({
+                    "pct": int(i * (100 / (len(class_defs) - 1))) if len(class_defs) > 1 else 0,
+                    "color": f"rgb({c['rgb'][0]}, {c['rgb'][1]}, {c['rgb'][2]})",
+                    "hex": c["hex"],
+                    "value": round(c["min"] if c["min"] > -5.0 else raw_min, 2),
+                    "label": c["label"],
+                })
 
         else:
             # Continuous agronomic / topographic / index layers

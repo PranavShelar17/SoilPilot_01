@@ -20,6 +20,7 @@ import { formatValue } from "@/lib/gis/format";
 import { dsmService, getOrCreateGatEntry, type GatDataFull } from "@/services/dsmService";
 import { MapLegend } from "./MapLegend";
 import { translateStatus } from "@/i18n/marathiHelper";
+import { isVegetationIndex, classifyVegetationIndexValue, getVegetationIndexStyle } from "@/lib/gis/vegetationIndexStyles";
 
 export type BasemapStyle = "satellite" | "dark" | "street" | "topo";
 
@@ -64,8 +65,13 @@ interface ClickedProbeState {
 /**
  * Smoothly interpolates the color for a value against the layer's color stops.
  */
-export function interpolateColor(val: number, stops?: ColorStop[]): string {
+export function interpolateColor(val: number, stops?: ColorStop[], isCategorical = false): string {
   if (!stops || stops.length === 0) return "#22c55e";
+  if (isCategorical) {
+    const rounded = Math.round(val);
+    const match = stops.find((s) => Math.round(s.value) === rounded);
+    if (match) return match.color;
+  }
   if (val <= stops[0].value) return stops[0].color;
   if (val >= stops[stops.length - 1].value) return stops[stops.length - 1].color;
 
@@ -104,23 +110,18 @@ export function getClassification(layerId: string | undefined, val: number, loca
   const id = (layerId || "ndvi").toLowerCase();
   let res: ClassificationResult;
 
-  if (id === "ndvi" || id === "evi" || id === "savi" || id === "ndre") {
-    if (val < 0.2) res = { status: "Sparse / Fallow", color: "#94a3b8", textColor: "#080d19" };
-    else if (val < 0.45) res = { status: "Moderate Canopy", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Healthy / Dense Canopy", color: "#00e676", textColor: "#000000" };
-  } else if (id === "ndmi") {
-    if (val < -0.1) res = { status: "Moisture Stressed (Dry)", color: "#ef4444", textColor: "#ffffff" };
-    else if (val < 0.2) res = { status: "Moderate Moisture", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "High Canopy Moisture", color: "#00e676", textColor: "#000000" };
-  } else if (id === "bsi") {
-    if (val < 0.0) res = { status: "Dense Vegetation Cover", color: "#00e676", textColor: "#000000" };
-    else if (val < 0.15) res = { status: "Partial Soil Exposure", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Bare Exposed Soil", color: "#ef4444", textColor: "#ffffff" };
-  } else if (id === "ndwi") {
-    if (val < -0.3) res = { status: "Non-Water / Dry", color: "#94a3b8", textColor: "#080d19" };
-    else if (val < 0.0) res = { status: "Moist Ground / Saturated", color: "#06b6d4", textColor: "#000000" };
-    else res = { status: "Open Surface Water", color: "#2563eb", textColor: "#ffffff" };
-  } else if (id === "ph") {
+  if (isVegetationIndex(id)) {
+    const vegCls = classifyVegetationIndexValue(id, val, locale);
+    if (vegCls) {
+      return {
+        status: vegCls.status,
+        color: vegCls.color,
+        textColor: vegCls.textColor,
+      };
+    }
+  }
+
+  if (id === "ph") {
     if (val < 6.5) res = { status: "Acidic Soil", color: "#ef4444", textColor: "#ffffff" };
     else if (val <= 7.8) res = { status: "Optimal Neutral", color: "#00e676", textColor: "#000000" };
     else if (val <= 8.5) res = { status: "Moderate Alkaline", color: "#f59e0b", textColor: "#000000" };
@@ -165,17 +166,31 @@ export function getClassification(layerId: string | undefined, val: number, loca
   } else if (id === "elevation") {
     res = { status: "Deccan Plateau (~540-580m)", color: "#00e676", textColor: "#000000" };
   } else if (id === "lulc") {
-    const lulcNames: Record<number, string> = {
-      0: "Water Body (पाणी)",
-      1: "Trees / Orchard (झाडे)",
-      2: "Grassland (गवत)",
-      3: "Flooded Veg (जलमय)",
-      4: "Cropland (पिके / शेती)",
-      5: "Shrubland (झुडपे)",
-      6: "Built-up / Settlement (वस्ती)",
+    const lulcClasses: Record<
+      number,
+      { name: string; mrName: string; color: string; textColor: string; workflow: string }
+    > = {
+      0: { name: "Water", mrName: "पाणी", color: "#0066ff", textColor: "#ffffff", workflow: "Masked" },
+      1: { name: "Trees", mrName: "झाडे", color: "#006400", textColor: "#ffffff", workflow: "Masked" },
+      2: { name: "Grass", mrName: "गवत", color: "#7cfc00", textColor: "#000000", workflow: "Retained" },
+      3: { name: "Flooded Veg", mrName: "जलमय", color: "#00e6e6", textColor: "#000000", workflow: "Masked" },
+      4: { name: "Crops", mrName: "पिके / शेती", color: "#e91e63", textColor: "#ffffff", workflow: "Primary Soil Mask" },
+      5: { name: "Shrub & Scrub", mrName: "झुडपे", color: "#808000", textColor: "#ffffff", workflow: "Masked" },
+      6: { name: "Built Area", mrName: "वस्ती", color: "#3f51b5", textColor: "#ffffff", workflow: "Masked" },
+      7: { name: "Bare Ground", mrName: "उघडी जमीन", color: "#d2b48c", textColor: "#000000", workflow: "Fallow Retained" },
+      8: { name: "Snow & Ice", mrName: "बर्फ", color: "#ffffff", textColor: "#000000", workflow: "N/A" },
     };
     const c = Math.round(val);
-    res = { status: lulcNames[c] || `Class ${c}`, color: "#00e676", textColor: "#000000" };
+    const item = lulcClasses[c];
+    if (item) {
+      res = {
+        status: locale === "mr" ? `वर्ग ${c}: ${item.mrName}` : `Class ${c}: ${item.name} (${item.workflow})`,
+        color: item.color,
+        textColor: item.textColor,
+      };
+    } else {
+      res = { status: `Class ${c}`, color: "#00e676", textColor: "#000000" };
+    }
   } else if (id === "kharif_rgb" || id === "rabi_rgb") {
     res = { status: "True-Color Optical Satellite Image", color: "#00e676", textColor: "#000000" };
   } else if (id === "uncertainty") {
@@ -230,6 +245,20 @@ export function sampleSpatialLayerValue(
 
   const id = layerConfig.id;
 
+  // Categorical layers
+  if (id === "lulc") {
+    if (currentGrid) {
+      const gv = sampleGrid(currentGrid, lng, lat);
+      if (gv !== null && !isNaN(gv) && gv >= 0 && gv <= 8) {
+        return Math.round(gv);
+      }
+    }
+    return 4; // Crops (Magenta / Pink)
+  }
+  if (id === "soil_texture") {
+    return 1; // Class 1: Clay Vertisol
+  }
+
   // 1. Check precomputed overlay grid in gatDataFull (checking aliases like bd vs bdod)
   if (entry?.overlays) {
     const overlay = entry.overlays[id] || (id === "bdod" ? entry.overlays["bd"] : undefined);
@@ -242,7 +271,7 @@ export function sampleSpatialLayerValue(
     }
   }
 
-  // 2. Check village raster grid if loaded
+  // 2. Check village raster grid if loaded (Authoritative GeoTIFF Grid Source of Truth)
   if (currentGrid) {
     const col = Math.floor((lng - currentGrid.west) / currentGrid.pxW);
     const row = Math.floor((currentGrid.north - lat) / currentGrid.pxH);
@@ -250,11 +279,7 @@ export function sampleSpatialLayerValue(
       let gv = sampleGrid(currentGrid, lng, lat);
       if (gv !== null && !isNaN(gv)) {
         if ((id === "ndvi" || id === "evi") && gv > 1.0) gv = gv / 100;
-        const minBound = (layerConfig.min ?? 0) * 0.5;
-        const maxBound = (layerConfig.max ?? 100) * 1.5;
-        if (gv >= minBound && gv <= maxBound) {
-          return Number(gv.toFixed(id === "ndvi" || id === "evi" || id === "savi" || id === "ndre" || id === "bsi" || id === "ndwi" || id === "ndmi" ? 3 : 2));
-        }
+        return Number(gv.toFixed(id === "ndvi" || id === "evi" || id === "savi" || id === "ndre" || id === "bsi" || id === "ndwi" || id === "ndmi" ? 3 : 2));
       }
     }
   }
@@ -310,7 +335,8 @@ function probeValueAt(
 
   const val = sampleSpatialLayerValue(lng, lat, layerConfig, currentGrid, entry, bounds);
   const interp = getInterpretation(layerConfig, val);
-  const swatch = interpolateColor(val, layerConfig?.colorStops);
+  const isCategorical = layerConfig?.id === "lulc" || layerConfig?.id === "soil_texture";
+  const swatch = interpolateColor(val, layerConfig?.colorStops, isCategorical);
 
   let col = 432;
   let row = 287;
@@ -376,6 +402,81 @@ export function generateParcelLayerCanvas(
   });
   ctx.closePath();
   ctx.clip(); // Outside the polygon is guaranteed 100% transparent
+
+  // Dedicated renderer for LULC categorical layer using QGIS symbology colors
+  if (layer.id === "lulc") {
+    const QGIS_COLORS: Record<number, [number, number, number]> = {
+      0: [0, 102, 255],    // 0: Water -> Blue (#0066ff)
+      1: [0, 100, 0],      // 1: Trees -> Dark Green (#006400)
+      2: [124, 252, 0],    // 2: Grass -> Light Green (#7cfc00)
+      3: [0, 230, 230],    // 3: Flooded Veg -> Cyan (#00e6e6)
+      4: [233, 30, 99],    // 4: Crops -> Magenta / Pink (#e91e63)
+      5: [128, 128, 0],    // 5: Shrub & Scrub -> Olive (#808000)
+      6: [63, 81, 181],    // 6: Built Area -> Blue / Indigo (#3f51b5)
+      7: [210, 180, 140],  // 7: Bare Ground -> Light Gray / Tan (#d2b48c)
+      8: [255, 255, 255],  // 8: Snow & Ice -> White (#ffffff)
+    };
+
+    const imgData = ctx.createImageData(W, H);
+    const data = imgData.data;
+
+    for (let y = 0; y < H; y++) {
+      const sampleLat = maxLat - (y / (H - 1)) * dLat;
+      for (let x = 0; x < W; x++) {
+        const sampleLng = minLng + (x / (W - 1)) * dLng;
+        let clsVal = 4; // Default Crops
+        if (grid) {
+          const gv = sampleGrid(grid, sampleLng, sampleLat);
+          if (gv !== null && !isNaN(gv) && gv >= 0 && gv <= 8) {
+            clsVal = Math.round(gv);
+          }
+        }
+        const rgb = QGIS_COLORS[clsVal] || QGIS_COLORS[4];
+        const idx = (y * W + x) * 4;
+        data[idx] = rgb[0];
+        data[idx + 1] = rgb[1];
+        data[idx + 2] = rgb[2];
+        data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL("image/png");
+  }
+
+  // Dedicated renderer for Sentinel-2 spectral indices with fixed scientific color classification
+  const vegStyle = getVegetationIndexStyle(layer.id);
+  if (vegStyle) {
+    const imgData = ctx.createImageData(W, H);
+    const data = imgData.data;
+
+    // Cache hex to RGB conversion
+    const hexRgbCache: Record<string, [number, number, number]> = {};
+    for (const c of vegStyle.classes) {
+      const hex = c.color.replace("#", "");
+      hexRgbCache[c.id] = [
+        parseInt(hex.slice(0, 2), 16),
+        parseInt(hex.slice(2, 4), 16),
+        parseInt(hex.slice(4, 6), 16),
+      ];
+    }
+
+    for (let y = 0; y < H; y++) {
+      const sampleLat = maxLat - (y / (H - 1)) * dLat;
+      for (let x = 0; x < W; x++) {
+        const sampleLng = minLng + (x / (W - 1)) * dLng;
+        const val = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, null, bounds);
+        const cls = classifyVegetationIndexValue(layer.id, val);
+        const rgb = hexRgbCache[cls.id] || [128, 128, 128];
+        const idx = (y * W + x) * 4;
+        data[idx] = rgb[0];
+        data[idx + 1] = rgb[1];
+        data[idx + 2] = rgb[2];
+        data[idx + 3] = 255;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL("image/png");
+  }
 
   // 2. Value range and palette selection
   const minVal = layer.min ?? 0.05;
@@ -469,39 +570,6 @@ export function generateParcelLayerCanvas(
   }
 
   ctx.putImageData(imgData, 0, 0);
-
-  // 5. Draw Central Soil Sampling Point Marker (matching reference image)
-  let cLng = 0;
-  let cLat = 0;
-  for (const [lng, lat] of outerRing) {
-    cLng += lng;
-    cLat += lat;
-  }
-  cLng /= outerRing.length;
-  cLat /= outerRing.length;
-
-  const cx = Math.max(12, Math.min(W - 12, ((cLng - minLng) / dLng) * W));
-  const cy = Math.max(12, Math.min(H - 12, ((maxLat - cLat) / dLat) * H));
-
-  ctx.save();
-  // Outer dark green stroke
-  ctx.beginPath();
-  ctx.arc(cx, cy, 6.5, 0, Math.PI * 2);
-  ctx.fillStyle = "#0e5c00";
-  ctx.fill();
-
-  // Vibrant neon green core
-  ctx.beginPath();
-  ctx.arc(cx, cy, 4.8, 0, Math.PI * 2);
-  ctx.fillStyle = "#62f612";
-  ctx.fill();
-
-  // Crisp center point
-  ctx.beginPath();
-  ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.restore();
 
   return canvas.toDataURL("image/png");
 }
@@ -857,6 +925,48 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     parcelBoundsRef.current = { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat };
 
+    // Dedicated direct authoritative GeoTIFF raster clipping (Kharif / Rabi RGB & all 7 Sentinel-2 Indices)
+    const isRgbComposite = layer.id === "kharif_rgb" || layer.id === "rabi_rgb";
+    const isSpectralIndex = Boolean(getVegetationIndexStyle(layer.id));
+    if ((isRgbComposite || isSpectralIndex) && layer.rasterImageUrl && layer.rasterBounds) {
+      const [w, s, e, n] = layer.rasterBounds;
+      const overlay = L.imageOverlay(layer.rasterImageUrl, [[s, w], [n, e]], {
+        opacity,
+        interactive: false,
+        zIndex: 10,
+      }).addTo(map);
+
+      overlayLayerRef.current = overlay;
+
+      const dLngVillage = e - w || 0.0001;
+      const dLatVillage = n - s || 0.0001;
+      const clipPoints = outerRing.map(([lng, lat]) => {
+        const x = Math.max(0, Math.min(100, ((lng - w) / dLngVillage) * 100));
+        const y = Math.max(0, Math.min(100, ((n - lat) / dLatVillage) * 100));
+        return `${x.toFixed(4)}% ${y.toFixed(4)}%`;
+      });
+      const clipPathCss = `polygon(${clipPoints.join(", ")})`;
+
+      const applyClip = () => {
+        const el = overlay.getElement();
+        if (el) {
+          el.style.clipPath = clipPathCss;
+          el.style.webkitClipPath = clipPathCss;
+        }
+      };
+
+      applyClip();
+      overlay.on("load", applyClip);
+      map.on("zoomend", applyClip);
+      map.on("viewreset", applyClip);
+
+      if (geojsonLayerRef.current) geojsonLayerRef.current.bringToFront();
+      return () => {
+        map.off("zoomend", applyClip);
+        map.off("viewreset", applyClip);
+      };
+    }
+
     // Always generate crisp, high-definition precision agronomic contour heatmap directly clipped to parcel
     const overlayUrl = generateParcelLayerCanvas(
       outerRing,
@@ -880,35 +990,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     overlayLayerRef.current = overlay;
 
-    // 4. Add Central Soil Sample Location Marker matching reference screenshot
-    let cLng = 0;
-    let cLat = 0;
-    for (const [lng, lat] of outerRing) {
-      cLng += lng;
-      cLat += lat;
-    }
-    cLng /= outerRing.length;
-    cLat /= outerRing.length;
-
-    const sampleMarker = L.circleMarker([cLat, cLng], {
-      radius: 6,
-      fillColor: "#62f612",
-      color: "#0e5c00",
-      weight: 2,
-      opacity: 1.0,
-      fillOpacity: 1.0,
-      zIndexOffset: 3000,
-    }).addTo(map);
-
-    sampleMarker.bindTooltip(
-      `<div style="font-weight:700;font-size:12px;color:#052e16;padding:2px 4px;">📍 ${
-        locale === "mr" ? "माती नमुना बिंदू (Soil Sample Point)" : "Soil Sampling Point (GPS Probe)"
-      }</div>`,
-      { direction: "top", offset: [0, -6] }
-    );
-    sampleMarkerRef.current = sampleMarker;
-
-    // 5. Calculate exact SVG/CSS percentage clipping path based on the overlay's bounds
+    // 4. Calculate exact SVG/CSS percentage clipping path based on the overlay's bounds
     const overlaySouth = latLngBounds[0][0];
     const overlayWest = latLngBounds[0][1];
     const overlayNorth = latLngBounds[1][0];
@@ -986,7 +1068,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   // Precompute / memoize parcel raster class area distribution (Acres & Hectares)
   // based on the selected Gat polygon and actual classified raster pixels.
   // Cached per Gat and layer; dynamically calculates authentic area covered by each color.
-  const parcelClassAreas = useMemo<Record<string, { acres: number; ha: number }> | null>(() => {
+  const parcelClassAreas = useMemo<Record<string, { acres: number; ha: number; color?: string }> | null>(() => {
     if (!layer || layer.id === "farm_boundary") return null;
     const cleanNum = selectedGatId?.replace(/[^\d]/g, "") || myGatId?.replace(/[^\d]/g, "") || selectedGatId;
     if (!cleanNum) return null;
@@ -1265,6 +1347,31 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       return locale === "mr" ? `${acres} एकर (${ha} हे.)` : `${acres} Acres (${ha} Ha)`;
     })();
 
+    const totalClassAcres = parcelClassAreas
+      ? Object.values(parcelClassAreas).reduce((acc, curr) => acc + curr.acres, 0) || (parseFloat(acres) || 1)
+      : (parseFloat(acres) || 1);
+
+    const breakdownRows = parcelClassAreas && Object.keys(parcelClassAreas).length > 0
+      ? Object.entries(parcelClassAreas)
+          .map(([statusName, ca]) => {
+            const isCurrent = statusName === classInfo.status;
+            const pct = (totalClassAcres > 0 ? (ca.acres / totalClassAcres) * 100 : 0).toFixed(1);
+            const dotColor = ca.color || classInfo.color;
+            return `
+              <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; padding: 2px 4px; border-radius: 4px; ${isCurrent ? "background: rgba(255,255,255,0.1); font-weight: 700;" : ""}">
+                <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: ${dotColor}; flex-shrink: 0;"></span>
+                  <span style="color: ${isCurrent ? "#ffffff" : "#cbd5e1"}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${statusName}</span>
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #f1f5f9; margin-left: 8px; flex-shrink: 0;">
+                  ${ca.acres.toFixed(2)} Ac <span style="color: #94a3b8; font-weight: 400; font-size: 10px;">(${pct}%)</span>
+                </span>
+              </div>
+            `;
+          })
+          .join("")
+      : "";
+
     const hudHtml = `
       <div style="background: rgba(8, 14, 26, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 14px; border: 2px solid #00e676; box-shadow: 0 0 20px rgba(0, 230, 118, 0.28), 0 12px 28px rgba(0, 0, 0, 0.75); padding: 11px 14px; width: 310px; color: #ffffff; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; pointer-events: none; user-select: none;">
         <!-- Top Row: Pin + Gat Number + Acreage + Lat/Lng Coordinates -->
@@ -1291,10 +1398,10 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
         <!-- Metric Row: Cursor [Layer]: [Value] [unit] -->
         <div style="display: flex; align-items: baseline; gap: 6px;">
-          <span style="font-weight: 800; font-size: 14.5px; color: #ffffff; letter-spacing: -0.01em;">
+          <span style="font-weight: 800; font-size: 14px; color: #ffffff; letter-spacing: -0.01em;">
             ${locale === "mr" ? `कर्सर ${layerName}:` : `Cursor ${layerName}:`}
           </span>
-          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 23px; color: #00e676; line-height: 1; letter-spacing: -0.02em;">
+          <span style="font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 900; font-size: 22px; color: ${classInfo.color}; line-height: 1; letter-spacing: -0.02em;">
             ${valDisplay}
           </span>
           <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">
@@ -1302,11 +1409,30 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           </span>
         </div>
 
+        <!-- Current Zone Row -->
+        <div style="display: flex; align-items: center; gap: 6px; margin: 4px 0 6px 0;">
+          <span style="font-size: 11.5px; color: #cbd5e1; font-weight: 600;">
+            ${locale === "mr" ? "सध्याचा विभाग:" : "Current Zone:"}
+          </span>
+          <span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor};">
+            ${classInfo.status}
+          </span>
+        </div>
+
         <!-- Plot Average Row -->
-        <div style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin: 4px 0 8px 0;">
+        <div style="font-size: 11.5px; color: #94a3b8; font-weight: 600; margin: 2px 0 6px 0;">
           ${locale === "mr" ? `प्लॉट सरासरी: ${avgDisplay} ${layerUnit}` : `Plot Avg: ${avgDisplay} ${layerUnit}`}
         </div>
 
+        ${breakdownRows ? `
+        <!-- Gat Area Breakdown Section -->
+        <div style="margin-top: 6px; border-top: 1px solid rgba(51, 65, 85, 0.75); padding-top: 6px;">
+          <div style="font-size: 10px; color: #94a3b8; font-weight: 700; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.05em;">
+            ${locale === "mr" ? `गट ${cleanNum} क्षेत्रफळ विश्लेषण (${acres} Ac):` : `Gat ${cleanNum} Area Analysis (${acres} Ac):`}
+          </div>
+          ${breakdownRows}
+        </div>
+        ` : `
         <!-- Bottom Badges Row: Classification Badge + Land Area Pill -->
         <div style="display: flex; align-items: center; gap: 8px;">
           <span style="display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 800; background: ${classInfo.color}; color: ${classInfo.textColor}; letter-spacing: -0.01em;">
@@ -1316,31 +1442,89 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
             ${areaTagText}
           </span>
         </div>
+        `}
       </div>
     `;
+
+    // Calculate parcel bounding box to ensure the HUD card stays strictly outside the plot boundaries
+    let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+    if (gatInfo?.bounds && Array.isArray(gatInfo.bounds) && gatInfo.bounds.length >= 2) {
+      const b0 = gatInfo.bounds[0];
+      const b1 = gatInfo.bounds[1];
+      if (Array.isArray(b0) && Array.isArray(b1) && typeof b0[0] === "number") {
+        minLat = Math.min(b0[0], b1[0]);
+        maxLat = Math.max(b0[0], b1[0]);
+        minLng = Math.min(b0[1], b1[1]);
+        maxLng = Math.max(b0[1], b1[1]);
+      }
+    } else if (one?.properties?.bounds && Array.isArray(one.properties.bounds)) {
+      const b = one.properties.bounds as any[];
+      if (b.length >= 4) {
+        minLng = Number(b[0]);
+        minLat = Number(b[1]);
+        maxLng = Number(b[2]);
+        maxLat = Number(b[3]);
+      }
+    } else if (one?.geometry?.coordinates) {
+      const scanCoords = (c: any) => {
+        if (!Array.isArray(c)) return;
+        if (typeof c[0] === "number") {
+          if (c[1] < minLat) minLat = c[1];
+          if (c[1] > maxLat) maxLat = c[1];
+          if (c[0] < minLng) minLng = c[0];
+          if (c[0] > maxLng) maxLng = c[0];
+        } else {
+          c.forEach(scanCoords);
+        }
+      };
+      scanCoords(one.geometry.coordinates);
+    }
+
+    if (minLat >= maxLat || minLng >= maxLng) {
+      minLat = centroidLat - 0.0006;
+      maxLat = centroidLat + 0.0006;
+      minLng = centroidLng - 0.0006;
+      maxLng = centroidLng + 0.0006;
+    }
+
+    // Position HUD Card safely OUTSIDE the plot boundary
+    // In screen container pixels, place with generous clearance above the northern-most parcel edge
+    const hudWidth = 310;
+    const hudHeight = 138;
+    const topPt = map.latLngToContainerPoint([maxLat, centroidLng]);
+
+    let hudLatLng: any;
+    if (topPt.y > hudHeight + 50) {
+      // Place above the top boundary of the parcel (25px clearance above the highest edge)
+      const hudContainerPt = L.point(topPt.x, topPt.y - (hudHeight / 2) - 25);
+      hudLatLng = map.containerPointToLatLng(hudContainerPt);
+    } else {
+      // If parcel is near top of viewport, position below the bottom boundary
+      const bottomPt = map.latLngToContainerPoint([minLat, centroidLng]);
+      const hudContainerPt = L.point(bottomPt.x, bottomPt.y + (hudHeight / 2) + 25);
+      hudLatLng = map.containerPointToLatLng(hudContainerPt);
+    }
 
     const customIcon = L.divIcon({
       className: "soilpilot-hud-marker",
       html: hudHtml,
-      iconSize: [310, 138],
-      iconAnchor: [155, 69],
+      iconSize: [hudWidth, hudHeight],
+      iconAnchor: [hudWidth / 2, hudHeight / 2],
     });
 
-    const marker = L.marker([probeLat, probeLng], { icon: customIcon, interactive: false }).addTo(map);
+    const marker = L.marker(hudLatLng, { icon: customIcon, interactive: false }).addTo(map);
     hudMarkerRef.current = marker;
 
     // Auto-align HUD to be completely visible and properly positioned inside the map viewport
     const ensureVisibleTimer = setTimeout(() => {
       if (!mapRef.current) return;
       const m = mapRef.current;
-      const pt = m.latLngToContainerPoint([probeLat, probeLng]);
+      const pt = m.latLngToContainerPoint(hudLatLng);
       const size = m.getSize();
       if (!size.x || !size.y) return;
 
-      const hudWidth = 310;
-      const hudHeight = 138;
-      const anchorX = 155;
-      const anchorY = 69;
+      const anchorX = hudWidth / 2;
+      const anchorY = hudHeight / 2;
 
       const left = pt.x - anchorX;
       const right = left + hudWidth;
@@ -1368,13 +1552,21 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
         panX = right - (size.x - padRight);
       }
 
-      if (panX !== 0 || panY !== 0) {
+      if (Math.abs(panX) > 5 || Math.abs(panY) > 5) {
         m.panBy([panX, panY], { animate: true, duration: 0.35 });
       }
     }, 60);
 
     return () => {
       clearTimeout(ensureVisibleTimer);
+      if (hudMarkerRef.current && map) {
+        map.removeLayer(hudMarkerRef.current);
+        hudMarkerRef.current = null;
+      }
+      if (sampleMarkerRef.current && map) {
+        map.removeLayer(sampleMarkerRef.current);
+        sampleMarkerRef.current = null;
+      }
     };
   }, [selectedGatId, myGatId, gats, ready, clickedProbe, layer, selectedStats, gatDataFull, parcelClassAreas, locale]);
 

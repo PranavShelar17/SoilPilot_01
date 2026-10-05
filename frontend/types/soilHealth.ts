@@ -4,7 +4,7 @@ export interface SoilParameter {
   name: string;
   name_mr: string;
   category: 'Chemical' | 'Primary Nutrient' | 'Secondary Nutrient' | 'Micronutrient' | string;
-  value: number | null;
+  value: number | string | null;
   unit: string;
   interpretation: string;
   interpretation_mr?: string;

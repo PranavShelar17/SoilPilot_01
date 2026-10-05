@@ -191,11 +191,99 @@ SOIL_THRESHOLDS: Dict[str, Dict[str, Any]] = {
         "reference_range": "< 1.40 (Optimal)",
         "reference_range_mr": "< 1.40 (उत्तम)",
     },
+    "total_nitrogen": {
+        "unit": "%",
+        "name": "Total Nitrogen",
+        "name_mr": "एकूण नत्र",
+        "interpret": lambda v: (
+            ("Low", "कमी") if v < 0.05 else
+            ("Medium", "मध्यम") if v <= 0.18 else
+            ("High", "जास्त")
+        ),
+        "reference_range": "AOI range: 0.05 - 0.18",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: ०.०५ - ०.१८%",
+    },
+    "cec": {
+        "unit": "cmol(c)/kg",
+        "name": "Cation Exchange Capacity (CEC)",
+        "name_mr": "धनायन विनिमय क्षमता (CEC)",
+        "interpret": lambda v: (
+            ("Low", "कमी") if v < 18.5 else
+            ("Moderate", "मध्यम") if v < 25.0 else
+            ("High", "जास्त (उत्कृष्ट)")
+        ),
+        "reference_range": "AOI range: 18.5 - 35.0",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: १८.५ - ३५.०",
+    },
+    "cfvo": {
+        "unit": "%",
+        "name": "Coarse Fragments",
+        "name_mr": "दगड-गोटे प्रमाण",
+        "interpret": lambda v: (
+            ("Optimal (Low)", "कमी (चांगले)") if v <= 6.5 else
+            ("Moderate", "मध्यम") if v <= 15.0 else
+            ("High Gravelly", "जास्त खडेयुक्त")
+        ),
+        "reference_range": "AOI range: 1.2 - 6.5",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: १.२ - ६.५%",
+    },
+    "sand": {
+        "unit": "%",
+        "name": "Sand",
+        "name_mr": "वाळू / रेती",
+        "interpret": lambda v: (
+            ("Low", "कमी") if v < 28.0 else
+            ("Moderate", "मध्यम") if v <= 45.0 else
+            ("High", "जास्त")
+        ),
+        "reference_range": "AOI range: 28.0 - 45.0",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: २८.० - ४५.०%",
+    },
+    "silt": {
+        "unit": "%",
+        "name": "Silt",
+        "name_mr": "गाळाचे प्रमाण",
+        "interpret": lambda v: (
+            ("Low", "कमी") if v < 25.0 else
+            ("Moderate", "मध्यम") if v <= 35.0 else
+            ("High", "जास्त")
+        ),
+        "reference_range": "AOI range: 25.0 - 35.0",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: २५.० - ३५.०%",
+    },
+    "clay": {
+        "unit": "%",
+        "name": "Clay",
+        "name_mr": "चिकणमाती",
+        "interpret": lambda v: (
+            ("Moderate Clay", "मध्यम चिकण") if v < 25.0 else
+            ("Heavy Clay", "काळी चिकण माती")
+        ),
+        "reference_range": "AOI range: 22.0 - 38.5",
+        "reference_range_mr": "कार्यक्षेत्र श्रेणी: २२.० - ३८.५%",
+    },
+    "soil_texture": {
+        "unit": "—",
+        "name": "Soil Texture Class",
+        "name_mr": "मातीचा पोत वर्ग",
+        "interpret": lambda v: ("Clayey (काळी माती)", "काळी चिकण माती (Vertisols)"),
+        "reference_range": "USDA Class: Clay / Vertisols",
+        "reference_range_mr": "USDA वर्ग: काळी चिकण माती",
+    },
 }
 
-def interpret_parameter(key: str, value: float) -> Tuple[str, str, str]:
+def interpret_parameter(key: str, value: Any) -> Tuple[str, str, str]:
     config = SOIL_THRESHOLDS.get(key)
-    if not config or value is None:
+    if not config:
         return ("Not Available", "उपलब्ध नाही", "N/A")
-    en, mr = config["interpret"](value)
-    return (en, mr, config["reference_range"])
+    if value is None:
+        return ("Not Available", "उपलब्ध नाही", config.get("reference_range", "N/A"))
+    if isinstance(value, str):
+        en, mr = config["interpret"](1.0)
+        return (en, mr, config["reference_range"])
+    try:
+        val_float = float(value)
+        en, mr = config["interpret"](val_float)
+        return (en, mr, config["reference_range"])
+    except (ValueError, TypeError):
+        return ("Normal", "सामान्य", config["reference_range"])

@@ -91,16 +91,22 @@ body {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 6mm 7mm;
   }
-  body {
+  html, body {
     background-color: #ffffff !important;
     color: #1a1a1a !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   header, footer, nav, .print\:hidden {
     display: none !important;
+  }
+  .soil-report-card-container {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }
 

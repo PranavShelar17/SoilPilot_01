@@ -359,24 +359,6 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
         }).addTo(map);
         centerMarkerRef.current = marker;
 
-        // Soil Sample GPS Location Marker (matching reference image)
-        const sampleDotMarker = L.circleMarker(center, {
-          radius: 6,
-          fillColor: "#62f612",
-          color: "#0e5c00",
-          weight: 2,
-          opacity: 1.0,
-          fillOpacity: 1.0,
-          zIndexOffset: 1500,
-        }).addTo(map);
-        sampleDotMarker.bindTooltip(
-          `<div style="font-weight:700;font-size:12px;color:#052e16;">📍 ${
-            language === "mr" ? "माती नमुना ठिकाण" : "Soil Sample Point"
-          }</div>`,
-          { direction: "top", offset: [0, -6] }
-        );
-        sampleDotMarkerRef.current = sampleDotMarker;
-
         // Auto-fit bounds to the selected Gat
         map.fitBounds(bounds, {
           padding: [60, 60],

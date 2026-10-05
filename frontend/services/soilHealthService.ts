@@ -242,6 +242,118 @@ export const DEFAULT_DEMO_SOIL_PARAMETERS: SoilParameter[] = [
     recommendation_mr: "मातीची भौतिक स्थिती आणि घनता मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
     source: "LABORATORY TEST",
   },
+  {
+    sr_no: 16,
+    key: "total_nitrogen",
+    name: "Total Nitrogen",
+    name_mr: "एकूण नत्र",
+    category: "Nutrient",
+    value: 0.12,
+    unit: "%",
+    interpretation: "Medium",
+    interpretation_mr: "मध्यम",
+    reference_range: "AOI range: 0.05 - 0.18",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: ०.०५ - ०.१८%",
+    recommendation: "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
+    recommendation_mr: "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 17,
+    key: "cec",
+    name: "Cation Exchange Capacity (CEC)",
+    name_mr: "धनायन विनिमय क्षमता (CEC)",
+    category: "Chemical",
+    value: 31.20,
+    unit: "cmol(c)/kg",
+    interpretation: "High",
+    interpretation_mr: "जास्त (उत्कृष्ट)",
+    reference_range: "AOI range: 18.5 - 35.0",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: १८.५ - ३५.०",
+    recommendation: "High nutrient retention capacity; excellent buffer against nutrient leaching.",
+    recommendation_mr: "धनायन विनिमय क्षमता उच्च आहे; खते धरून ठेवण्याची क्षमता उत्कृष्ट आहे.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 18,
+    key: "cfvo",
+    name: "Coarse Fragments",
+    name_mr: "दगड-गोटे प्रमाण",
+    category: "Physical",
+    value: 2.80,
+    unit: "%",
+    interpretation: "Optimal (Low)",
+    interpretation_mr: "कमी (चांगले)",
+    reference_range: "AOI range: 1.2 - 6.5",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: १.२ - ६.५%",
+    recommendation: "Minimal gravel content; favorable tillage and root elongation zone.",
+    recommendation_mr: "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 19,
+    key: "sand",
+    name: "Sand",
+    name_mr: "वाळू / रेती",
+    category: "Physical",
+    value: 34.00,
+    unit: "%",
+    interpretation: "Moderate",
+    interpretation_mr: "मध्यम",
+    reference_range: "AOI range: 28.0 - 45.0",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: २८.० - ४५.०%",
+    recommendation: "Adequate sand fraction ensuring baseline aeration and internal drainage.",
+    recommendation_mr: "वाळूचे प्रमाण संतुलित असून जमिनीत हवा खेळती राहण्यास व निचरा होण्यास मदत होते.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 20,
+    key: "silt",
+    name: "Silt",
+    name_mr: "गाळाचे प्रमाण",
+    category: "Physical",
+    value: 28.50,
+    unit: "%",
+    interpretation: "Moderate",
+    interpretation_mr: "मध्यम",
+    reference_range: "AOI range: 25.0 - 35.0",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: २५.० - ३५.०%",
+    recommendation: "Optimum silt content supporting available water capacity and nutrient retention.",
+    recommendation_mr: "गाळाचे प्रमाण योग्य असून ओलावा व अन्नद्रव्ये टिकवून ठेवण्यास मदत करते.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 21,
+    key: "clay",
+    name: "Clay",
+    name_mr: "चिकणमाती",
+    category: "Physical",
+    value: 35.50,
+    unit: "%",
+    interpretation: "Heavy Clay",
+    interpretation_mr: "काळी चिकण माती",
+    reference_range: "AOI range: 22.0 - 38.5",
+    reference_range_mr: "कार्यक्षेत्र श्रेणी: २२.० - ३८.५%",
+    recommendation: "High smectite clay vertisol; maintain proper drainage to prevent waterlogging.",
+    recommendation_mr: "काळी कसदार चिकणमाती; अति पावसात पाणी साचू नये म्हणून योग्य निचरा व्यवस्था ठेवावी.",
+    source: "DSM PREDICTION",
+  },
+  {
+    sr_no: 22,
+    key: "soil_texture",
+    name: "Soil Texture Class",
+    name_mr: "मातीचा पोत वर्ग",
+    category: "Physical",
+    value: "Clay Vertisol",
+    unit: "—",
+    interpretation: "Clayey (काळी माती)",
+    interpretation_mr: "काळी चिकण माती (Vertisols)",
+    reference_range: "USDA Class: Clay / Vertisols",
+    reference_range_mr: "USDA वर्ग: काळी चिकण माती",
+    recommendation: "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
+    recommendation_mr: "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
+    source: "DSM PREDICTION",
+  },
 ];
 
 export function buildFallbackReport(fieldIdentifier: string | number): SoilHealthReport {
@@ -288,7 +400,21 @@ export function buildFallbackReport(fieldIdentifier: string | number): SoilHealt
         "Available iron (3.80 ppm) and zinc (0.42 ppm) are deficient; apply micronutrient supplements as recommended.",
       ],
     },
-    parameters: DEFAULT_DEMO_SOIL_PARAMETERS,
+    parameters: DEFAULT_DEMO_SOIL_PARAMETERS.map((p) => {
+      if (cleanGat === "22") {
+        if (p.key === "ph") return { ...p, value: 7.10 };
+        if (p.key === "organic_carbon") return { ...p, value: 1.60 };
+        if (p.key === "available_nitrogen") return { ...p, value: 189.30 };
+        if (p.key === "bd") return { ...p, value: 1.57 };
+        if (p.key === "total_nitrogen") return { ...p, value: 0.14 };
+        if (p.key === "cec") return { ...p, value: 32.50 };
+        if (p.key === "cfvo") return { ...p, value: 2.40 };
+        if (p.key === "sand") return { ...p, value: 32.20 };
+        if (p.key === "silt") return { ...p, value: 29.10 };
+        if (p.key === "clay") return { ...p, value: 36.30 };
+      }
+      return p;
+    }),
     key_recommendations: [
       {
         parameter: "Available Nitrogen (N)",

@@ -92,34 +92,35 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
       ? "land_use"
       : "soil_properties");
 
-  // Group layers into the 3 categories (deduplicating redundant bd alias)
-  const soilLayers = layers.filter(
+  // Filter out unwanted / duplicate layers (bd alias, uncertainty, farm_boundary)
+  const excludedLayerIds = new Set(["bd", "uncertainty", "farm_boundary"]);
+  const cleanLayers = layers.filter((l) => !excludedLayerIds.has(l.id));
+
+  // Deduplicate by layer id to ensure strict uniqueness
+  const uniqueLayers: DSMLayerConfig[] = [];
+  const seenIds = new Set<string>();
+  for (const l of cleanLayers) {
+    if (!seenIds.has(l.id)) {
+      seenIds.add(l.id);
+      uniqueLayers.push(l);
+    }
+  }
+
+  // Group layers into the 3 categories (deduplicating redundant bd alias & boundaries)
+  const soilLayers = uniqueLayers.filter(
     (l) =>
-      (l.category === "soil_properties" ||
-      ["bdod", "cec", "cfvo", "clay", "sand", "silt", "soc", "nitrogen", "ph", "soil_texture", "cadastral"].includes(l.id)) &&
-      l.id !== "bd"
+      l.category === "soil_properties" ||
+      ["bdod", "cec", "cfvo", "clay", "sand", "silt", "soc", "nitrogen", "ph", "soil_texture"].includes(l.id)
   );
 
-  const topoLayers = layers.filter(
+  const topoLayers = uniqueLayers.filter(
     (l) => l.category === "topography" || ["elevation", "slope"].includes(l.id)
   );
 
-  const landUseLayers = layers.filter(
+  const landUseLayers = uniqueLayers.filter(
     (l) =>
       l.category === "land_use" ||
-      [
-        "lulc",
-        "kharif_rgb",
-        "rabi_rgb",
-        "ndvi",
-        "evi",
-        "savi",
-        "ndmi",
-        "ndre",
-        "bsi",
-        "ndwi",
-        "uncertainty",
-      ].includes(l.id)
+      ["lulc", "kharif_rgb", "rabi_rgb", "ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(l.id)
   );
 
   const getCategoryLayers = (catId: DSMLayerCategoryId): DSMLayerConfig[] => {
@@ -277,7 +278,7 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
           <span>{locale === "mr" ? "३ स्तर वर्ग ड्रॉपडाउन्स" : "3 LAYER CATEGORY SELECTORS"}</span>
           <span className="text-[10px] text-emerald-400 font-semibold lowercase">
-            {layers.length} {locale === "mr" ? "एकूण स्तर" : "total layers"}
+            {uniqueLayers.length} {locale === "mr" ? "एकूण स्तर" : "total layers"}
           </span>
         </div>
 
