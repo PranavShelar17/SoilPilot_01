@@ -42,8 +42,8 @@ const CATEGORIES: CategoryDefinition[] = [
   {
     id: "soil_properties",
     icon: <Sprout className="w-4 h-4 text-emerald-400" />,
-    enTitle: "1. Soil Properties (0–30 cm Root-Zone)",
-    mrTitle: "१. मातीचे गुणधर्म (०-३० सेमी प्रमाणबद्ध)",
+    enTitle: "1. Soil Properties",
+    mrTitle: "१. मातीचे गुणधर्म",
     badgeBg: "bg-emerald-950/60",
     badgeBorder: "border-emerald-700/50",
     badgeText: "text-emerald-300",
@@ -92,11 +92,12 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
       ? "land_use"
       : "soil_properties");
 
-  // Group layers into the 3 categories
+  // Group layers into the 3 categories (deduplicating redundant bd alias)
   const soilLayers = layers.filter(
     (l) =>
-      l.category === "soil_properties" ||
-      ["bdod", "cec", "cfvo", "clay", "sand", "silt", "soc", "nitrogen", "ph", "soil_texture", "bd"].includes(l.id)
+      (l.category === "soil_properties" ||
+      ["bdod", "cec", "cfvo", "clay", "sand", "silt", "soc", "nitrogen", "ph", "soil_texture", "cadastral"].includes(l.id)) &&
+      l.id !== "bd"
   );
 
   const topoLayers = layers.filter(
@@ -134,11 +135,114 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
     }
   };
 
-  const getLayerDisplayName = (layer: DSMLayerConfig) => {
+  /**
+   * Ultra-clean layer name formatter:
+   * Strips depth brackets like (0–30 cm), "Root-Zone", and units for clean farmer UX.
+   */
+  const getCleanLayerName = (layer: DSMLayerConfig): string => {
     if (locale === "mr") {
-      return layer.marathiName || layer.name || layer.shortName;
+      switch (layer.id) {
+        case "bdod":
+        case "bd":
+          return "मातीची घनता (Bulk Density)";
+        case "cec":
+          return "धनायन विनिमय क्षमता (CEC)";
+        case "cfvo":
+          return "जाड दगड-गोटे प्रमाण";
+        case "clay":
+          return "चिकणमाती (Clay)";
+        case "sand":
+          return "वाळू / रेती (Sand)";
+        case "silt":
+          return "गाळ (Silt)";
+        case "soc":
+          return "सेंद्रिय कर्ब (SOC)";
+        case "nitrogen":
+          return "उपलब्ध नत्र (N)";
+        case "ph":
+          return "मातीचा सामू (pH)";
+        case "soil_texture":
+          return "मातीचा पोत / प्रकार";
+        case "farm_boundary":
+          return "गट सीमा नकाशा";
+        case "elevation":
+          return "उंची (Elevation)";
+        case "slope":
+          return "उतार (Slope)";
+        case "lulc":
+          return "जमीन वापर (LULC)";
+        case "ndvi":
+          return "NDVI वनस्पती निर्देशांक";
+        case "evi":
+          return "EVI वनस्पती निर्देशांक";
+        default:
+          return (layer.marathiName || layer.name || layer.shortName || "")
+            .replace(/\s*\([0-9]+[–-][0-9]+\s*cm[^)]*\)/gi, "")
+            .replace(/\s*Root-Zone\s*/gi, "")
+            .replace(/\s*\[[^\]]+\]/g, "")
+            .trim();
+      }
     }
-    return layer.name || layer.shortName;
+
+    switch (layer.id) {
+      case "bdod":
+      case "bd":
+        return "Bulk Density";
+      case "cec":
+        return "Cation Exchange Capacity (CEC)";
+      case "cfvo":
+        return "Coarse Fragments";
+      case "clay":
+        return "Clay";
+      case "sand":
+        return "Sand";
+      case "silt":
+        return "Silt";
+      case "soc":
+        return "Soil Organic Carbon (SOC)";
+      case "nitrogen":
+        return "Available Nitrogen (N)";
+      case "ph":
+        return "Soil pH";
+      case "soil_texture":
+        return "Soil Texture Classes";
+      case "farm_boundary":
+        return "Cadastral Farm Boundary";
+      case "elevation":
+        return "Digital Elevation (DEM)";
+      case "slope":
+        return "Terrain Slope";
+      case "lulc":
+        return "Land Use / Land Cover";
+      case "ndvi":
+        return "NDVI Vegetation Index";
+      case "evi":
+        return "EVI Vegetation Index";
+      case "savi":
+        return "SAVI Soil-Adjusted Index";
+      case "ndmi":
+        return "NDMI Moisture Index";
+      case "ndre":
+        return "NDRE Red-Edge Index";
+      case "bsi":
+        return "BSI Bare Soil Index";
+      case "ndwi":
+        return "NDWI Water Index";
+      case "kharif_rgb":
+        return "Kharif True Color RGB";
+      case "rabi_rgb":
+        return "Rabi True Color RGB";
+      case "uncertainty":
+        return "Prediction Uncertainty";
+      default:
+        return (layer.shortName || layer.name || "")
+          .replace(/\s*\([0-9]+[–-][0-9]+\s*cm[^)]*\)/gi, "")
+          .replace(/\s*Root-Zone\s*/gi, "")
+          .replace(/\s*Proportion\b/gi, "")
+          .replace(/\s*Volumetric Fraction\b/gi, "")
+          .replace(/\s*\[[^\]]+\]/g, "")
+          .trim();
+    }
   };
 
   return (
@@ -179,8 +283,9 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
 
         {CATEGORIES.map((cat, idx) => {
           const catLayers = getCategoryLayers(cat.id);
-          const isCategoryActive = activeCategoryId === cat.id;
-          const isCategorySelectedLayer = catLayers.some((l) => l.id === activeLayerId);
+          const isCategorySelectedLayer = catLayers.some(
+            (l) => l.id === activeLayerId || (l.id === "bdod" && activeLayerId === "bd")
+          );
 
           return (
             <div
@@ -213,7 +318,13 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
               <div className="relative">
                 <select
                   id={`select-${cat.id}`}
-                  value={isCategorySelectedLayer ? activeLayerId : ""}
+                  value={
+                    isCategorySelectedLayer
+                      ? activeLayerId === "bd"
+                        ? "bdod"
+                        : activeLayerId
+                      : ""
+                  }
                   onChange={(e) => {
                     const selectedVal = e.target.value as DSMLayerId;
                     if (selectedVal) {
@@ -228,12 +339,12 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
                 >
                   <option value="" disabled className="bg-slate-900 text-slate-500">
                     {locale === "mr"
-                      ? `-- ${cat.mrTitle.split(" ")[1] || "स्तर"} निवडा (${catLayers.length}) --`
-                      : `-- Select ${cat.enTitle.split(". ")[1] || "Layer"} (${catLayers.length}) --`}
+                      ? `-- ${cat.mrTitle.replace(/^[०-९0-9.]+\s*/, "")} निवडा (${catLayers.length}) --`
+                      : `-- Select ${cat.enTitle.replace(/^[0-9.]+\s*/, "")} (${catLayers.length}) --`}
                   </option>
                   {catLayers.map((l) => (
                     <option key={l.id} value={l.id} className="bg-slate-900 text-white py-1">
-                      {getLayerDisplayName(l)} {l.unit ? `[${l.unit}]` : ""}
+                      {getCleanLayerName(l)}
                     </option>
                   ))}
                 </select>
@@ -259,7 +370,7 @@ export const DSMLayerSelector: React.FC<DSMLayerSelectorProps> = ({
             </span>
           </div>
           <div className="text-xs font-extrabold text-white leading-tight">
-            {getLayerDisplayName(activeLayer)}
+            {getCleanLayerName(activeLayer)}
           </div>
           {activeLayer.description && (
             <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed font-normal pt-0.5">
