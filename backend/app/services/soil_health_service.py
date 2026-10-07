@@ -35,12 +35,12 @@ DEMO_LAB_PARAMETERS = [
     # Physical metric
     {"sr_no": 15, "key": "bd", "name": "Bulk Density", "name_mr": "मातीची घनता (BD)", "category": "Physical", "value": 1.58, "unit": "g/cm³", "source": "LAB OBSERVATION"},
     # DSM Standardized Root-Zone Layers (0-30 cm)
-    {"sr_no": 16, "key": "total_nitrogen", "name": "Total Nitrogen", "name_mr": "एकूण नत्र", "category": "Nutrient", "value": 0.12, "unit": "%", "source": "DSM PREDICTION"},
-    {"sr_no": 17, "key": "cec", "name": "Cation Exchange Capacity (CEC)", "name_mr": "धनायन विनिमय क्षमता (CEC)", "category": "Chemical", "value": 31.20, "unit": "cmol(c)/kg", "source": "DSM PREDICTION"},
-    {"sr_no": 18, "key": "cfvo", "name": "Coarse Fragments", "name_mr": "दगड-गोटे प्रमाण", "category": "Physical", "value": 2.80, "unit": "%", "source": "DSM PREDICTION"},
-    {"sr_no": 19, "key": "sand", "name": "Sand", "name_mr": "वाळू / रेती", "category": "Physical", "value": 34.00, "unit": "%", "source": "DSM PREDICTION"},
-    {"sr_no": 20, "key": "silt", "name": "Silt", "name_mr": "गाळाचे प्रमाण", "category": "Physical", "value": 28.50, "unit": "%", "source": "DSM PREDICTION"},
-    {"sr_no": 21, "key": "clay", "name": "Clay", "name_mr": "चिकणमाती", "category": "Physical", "value": 35.50, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 16, "key": "total_nitrogen", "name": "Total Nitrogen", "name_mr": "एकूण नत्र", "category": "Nutrient", "value": 0.14, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 17, "key": "cec", "name": "Cation Exchange Capacity (CEC)", "name_mr": "धनायन विनिमय क्षमता (CEC)", "category": "Chemical", "value": 32.50, "unit": "cmol(c)/kg", "source": "DSM PREDICTION"},
+    {"sr_no": 18, "key": "cfvo", "name": "Coarse Fragments", "name_mr": "दगड-गोटे प्रमाण", "category": "Physical", "value": 2.40, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 19, "key": "sand", "name": "Sand", "name_mr": "वाळू / रेती", "category": "Physical", "value": 32.20, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 20, "key": "silt", "name": "Silt", "name_mr": "गाळाचे प्रमाण", "category": "Physical", "value": 29.10, "unit": "%", "source": "DSM PREDICTION"},
+    {"sr_no": 21, "key": "clay", "name": "Clay", "name_mr": "चिकणमाती", "category": "Physical", "value": 36.30, "unit": "%", "source": "DSM PREDICTION"},
     {"sr_no": 22, "key": "soil_texture", "name": "Soil Texture Class", "name_mr": "मातीचा पोत वर्ग", "category": "Physical", "value": "Clay Vertisol", "unit": "—", "source": "DSM PREDICTION"},
 ]
 
@@ -126,14 +126,18 @@ class SoilHealthService:
             2.69
             if is_gat_18
             else (
-                kml_gat["area_ha"]
-                if kml_gat and kml_gat.get("area_ha")
-                else (gat_stats.get("area_ha") if gat_stats else (field.area if field and field.area else 3.92))
+                1.49
+                if is_gat_22
+                else (
+                    kml_gat["area_ha"]
+                    if kml_gat and kml_gat.get("area_ha")
+                    else (gat_stats.get("area_ha") if gat_stats else (field.area if field and field.area else 3.92))
+                )
             )
         )
         village_name = (
             "Malegaon Kh."
-            if is_gat_18
+            if (is_gat_18 or is_gat_22)
             else (
                 "Malegaon Bk"
                 if display_gat == "104"
@@ -144,27 +148,15 @@ class SoilHealthService:
                 )
             )
         )
-        taluka_name = "Malegaon Kh." if is_gat_18 else "Baramati"
-        district_name = "Pune, Maharashtra" if is_gat_18 else "Pune"
+        taluka_name = "Baramati"
+        district_name = "Pune"
 
         # Gat reference laboratory report values confirmation
-        if is_gat_18:
+        if is_gat_18 or is_gat_22:
             ph_val = 7.24
             soc_val = 1.45
             n_val = 179.50
             bd_val = 1.58
-            total_n_val = 0.12
-            cec_val = 31.20
-            cfvo_val = 2.80
-            sand_val = 34.00
-            silt_val = 28.50
-            clay_val = 35.50
-            texture_val = "Clay Vertisol"
-        elif is_gat_22:
-            ph_val = 7.10
-            soc_val = 1.60
-            n_val = 189.30
-            bd_val = 1.57
             total_n_val = 0.14
             cec_val = 32.50
             cfvo_val = 2.40
@@ -348,6 +340,7 @@ class SoilHealthService:
                 "laboratory_name": "ADT AI Training Foundation — Agricultural Diagnostic & Digital Soil Testing Center, Baramati, Pune, Maharashtra",
                 "center_name": "Agricultural Diagnostic & Digital Soil Testing Center",
                 "center_location": "Baramati, Pune, Maharashtra",
+                "chemist_name": "A.B.C (Chief Chemist)",
                 "is_demo": True,
                 "status": "Demonstration Diagnostic Record",
                 "observations": dynamic_observations,

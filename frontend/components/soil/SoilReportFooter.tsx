@@ -48,7 +48,7 @@ export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
 
         <div className="sm:text-right space-y-0.5">
           <p className="font-bold text-stone-900 text-xs">
-            {isMr ? "डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" : "Dr. S. K. Joshi (Chief Chemist)"}
+            {isMr ? "ए.बी.सी (मुख्य रसायनशास्त्रज्ञ)" : "A.B.C (Chief Chemist)"}
           </p>
           <p className="font-bold uppercase text-[10.5px] print:text-[9.5px] text-stone-900 tracking-wider">
             {isMr ? "अधिकृत मृदा परीक्षण रसायनशास्त्रज्ञ" : "AUTHORIZED SOIL TESTING CHEMIST"}

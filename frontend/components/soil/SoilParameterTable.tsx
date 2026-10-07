@@ -84,6 +84,8 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
 
   return (
     <div className="mb-6">
+      {/* Green Divider Line above section */}
+      <div className="w-full border-t-2 border-[#1e5622] mb-2" />
       {/* Section Title */}
       <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2">
         {isMr ? "प्रयोगशाळा मृदा रासायनिक आणि पोषकतत्व विश्लेषण" : "LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS"}
@@ -181,7 +183,7 @@ export const SoilParameterTable: React.FC<SoilParameterTableProps> = ({ paramete
       </div>
 
       {/* Note below table */}
-      <p className="text-[#dc2626] font-medium text-xs mt-3 print:mt-1.5 print:text-[9.5px]">
+      <p className="italic text-stone-700 font-medium text-xs mt-3 print:mt-1.5 print:text-[9.5px]">
         {isMr
           ? "टीप: या अहवालातील मातीचे गुणधर्म व निष्कर्ष ०–३० सें.मी. मुळांच्या कार्यक्षेत्रातील खोलीवर आधारित आहेत."
           : "Note: Soil properties and interpretations in this report are based on the 0–30 cm root-zone soil depth."}

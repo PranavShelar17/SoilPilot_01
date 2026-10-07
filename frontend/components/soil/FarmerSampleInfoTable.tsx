@@ -27,25 +27,25 @@ export const FarmerSampleInfoTable: React.FC<FarmerSampleInfoTableProps> = ({
     translateFarmerName(farmer?.name, isMr) ||
     (isMr ? "रमेश पाटील" : "Ramesh Patil (रमेश पाटील)");
 
-  const gatNumber = field?.gat_no || "18";
+  const gatNumber = field?.gat_no || "22";
   const gatLabel = `${isMr ? "गट क्र." : "Gat No."} ${gatNumber}`;
   const areaPart = field?.area
     ? ` (${field.area} ${isMr ? "हेक्टर" : "hectare"})`
-    : gatNumber === "18"
-    ? ` (2.69 ${isMr ? "हेक्टर" : "hectare"})`
+    : gatNumber === "22"
+    ? ` (1.49 ${isMr ? "हेक्टर" : "hectare"})`
     : "";
 
   const villageName = translateGeoName(field?.village || "Malegaon Kh.", isMr);
-  const talukaName = translateGeoName(field?.taluka || "Malegaon Kh.", isMr);
-  const districtName = `${translateGeoName(field?.district || "Pune", isMr)}, ${translateGeoName(field?.state || "Maharashtra", isMr)}`;
+  const talukaName = translateGeoName(field?.taluka || "Baramati", isMr);
+  const districtName = translateGeoName(field?.district || "Pune", isMr);
   
-  // Reference date: 03/10/2026
-  const displayDate = report?.report_date && report.report_date.includes("/")
-    ? report.report_date
-    : "03/10/2026";
+  // Reference date: 20-09-2026
+  const displayDate = report?.report_date || "20-09-2026";
 
   return (
     <div className="mb-6 print:mb-2">
+      {/* Green Divider Line above section */}
+      <div className="w-full border-t-2 border-[#1e5622] mb-2" />
       {/* Section Title */}
       <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-2 print:mb-1">
         {locale === "mr" ? "शेतकरी व माती नमुना तपशील" : "FARMER & SAMPLE INFORMATION"}

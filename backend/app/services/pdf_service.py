@@ -442,7 +442,7 @@ class PDFService:
             fontName=FONT_REGULAR,
             fontSize=6.5,
             leading=8,
-            textColor=COLOR_RED_DEMO,
+            textColor=colors.HexColor("#374151"),
         )
         st_cert_head = ParagraphStyle(
             "CertHead",
@@ -537,11 +537,11 @@ class PDFService:
                 "बारामती, पुणे, महाराष्ट्र" if is_mr else "Baramati, Pune, Maharashtra",
                 st_head_loc,
             ),
+            Paragraph(
+                "<b>मृदा चाचणी अहवाल</b>" if is_mr else "<b>SOIL TEST REPORT</b>",
+                st_report_title,
+            ),
         ]
-        if is_demo:
-            header_elements.append(
-                Paragraph("<b>डेमो डेटा</b>" if is_mr else "<b>DEMO DATA</b>", st_head_demo)
-            )
 
         header_table = Table([[el] for el in header_elements], colWidths=[196 * mm])
         header_table.setStyle(TableStyle([
@@ -552,33 +552,26 @@ class PDFService:
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
         story.append(header_table)
-        story.append(Spacer(1, 1.0 * mm))
-
-        # Solid Green Horizontal Rule
-        story.append(HRFlowable(width="100%", thickness=1.2, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.2 * mm))
-
-        # Centered SOIL SAMPLE TEST REPORT
-        report_title_text = "मृदा नमुना चाचणी अहवाल" if is_mr else "SOIL SAMPLE TEST REPORT"
-        story.append(Paragraph(f"<b>{report_title_text}</b>", st_report_title))
         story.append(Spacer(1, 1.2 * mm))
 
         # --------------------------------------------------------------
         # 2. FARMER & SAMPLE INFORMATION (4-Column Table)
         # --------------------------------------------------------------
+        story.append(HRFlowable(width="100%", thickness=1.2, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.0 * mm))
         sec_farmer_text = "शेतकरी व माती नमुना तपशील" if is_mr else "FARMER & SAMPLE INFORMATION"
         story.append(Paragraph(f"<b>{sec_farmer_text}</b>", st_sec_head))
         story.append(Spacer(1, 0.8 * mm))
 
         farmer_name = farmer.get("name") or ("रमेश पाटील" if is_mr else "Ramesh Patil (रमेश पाटील)")
-        gat_no = field.get("gat_no", "18")
+        gat_no = field.get("gat_no", "22")
         area_unit = "हेक्टर" if is_mr else "hectare"
-        area_val = field.get("area", "2.69")
+        area_val = field.get("area", "1.49")
         gat_label = f"गट क्र. {gat_no} ({area_val} {area_unit})" if is_mr else f"Gat No. {gat_no} ({area_val} {area_unit})"
 
-        taluka_val = field.get("taluka") or ("माळेगाव खुर्द" if is_mr else "Malegaon Kh.")
-        district_val = field.get("district") or ("पुणे, महाराष्ट्र" if is_mr else "Pune, Maharashtra")
+        taluka_val = field.get("taluka") or ("बारामती" if is_mr else "Baramati")
+        district_val = field.get("district") or ("पुणे" if is_mr else "Pune")
         village_val = field.get("village") or ("माळेगाव खुर्द" if is_mr else "Malegaon Kh.")
-        date_val = report_meta.get("report_date") or report_meta.get("sample_date") or "03/10/2026"
+        date_val = report_meta.get("report_date") or "20-09-2026"
 
         f_data = [
             [
@@ -825,7 +818,7 @@ class PDFService:
             else f"Report Ref: {report_no} • Date: {report_date}"
         )
 
-        sign_name_text = report_meta.get("chemist_name") or ("डॉ. एस. के. जोशी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "Dr. S. K. Joshi (Chief Chemist)")
+        sign_name_text = report_meta.get("chemist_name") or ("ए.बी.सी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "A.B.C (Chief Chemist)")
         sign_title_text = "अधिकृत मृदा परीक्षण रसायनशास्त्रज्ञ" if is_mr else "AUTHORIZED SOIL TESTING CHEMIST"
         sign_div_text = "मृदा निदान व विश्लेषणात्मक रसायनशास्त्र विभाग" if is_mr else "Soil Diagnostics & Analytical Chemistry Division"
 
