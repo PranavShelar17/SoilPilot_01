@@ -25,10 +25,13 @@ class FieldLookupResponse(BaseModel):
     id: int
     gat_no: str
     area: Optional[float] = None
+    area_ha: Optional[float] = None
+    area_acres: Optional[float] = None
     area_unit: str = "hectare"
     is_demo: bool = True
     is_active: bool = True
     geometry_wkt: Optional[str] = None
+    geometry: Optional[dict] = None
     village: Optional[VillageBriefResponse] = None
     farmer: Optional[FarmerBriefResponse] = None
 

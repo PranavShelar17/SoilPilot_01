@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SoilMapViewer, BasemapStyle } from "@/components/map/SoilMapViewer";
 import { DSMLayerSelector } from "@/components/map/DSMLayerSelector";
-import { dsmService, createCustomGatFeature } from "@/services/dsmService";
+import { dsmService } from "@/services/dsmService";
 import { fieldService, GeoJSONGeometry } from "@/services/fieldService";
 import { DSMLayerConfig, DSMLayerId, DSMRasterLayerId } from "@/types/gis";
 import { GatCollection, GatSourceInfo, GatStats, KML_AVAILABLE_GATS } from "@/types/gat";
@@ -208,14 +208,16 @@ function SoilMapContent() {
             userFeature = collection.features[0];
           }
 
-          // 3. Fallback to generating geometry for custom registered Gat
           if (!userFeature) {
-            userFeature = createCustomGatFeature(cleanTarget) as any;
+            setGats({ type: "FeatureCollection", features: [] });
+            setSelectedGatId(null);
+            setGatError(`No boundary found for Gat ${cleanTarget}.`);
+            return;
           }
 
           const filteredCollection: GatCollection = {
             type: "FeatureCollection",
-            features: [userFeature!],
+            features: [userFeature],
           };
 
           setGats(filteredCollection);
@@ -224,7 +226,7 @@ function SoilMapContent() {
             label: `Gat ${cleanTarget}`,
             count: 1,
           });
-          setSelectedGatId(userFeature!.id);
+          setSelectedGatId(userFeature.id);
           if (typeof window !== "undefined") {
             localStorage.setItem("soilpilot_selected_gat", cleanTarget);
           }

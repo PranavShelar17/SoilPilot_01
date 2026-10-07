@@ -222,5 +222,8 @@ def main():
         print(f"  • Gat {props['gat_no']:5s} | {props['village']}, {props['taluka']} | Area: {props['area']} Ha")
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from process_kmz import main as process_kmz_main
+
 if __name__ == "__main__":
-    main()
+    process_kmz_main()

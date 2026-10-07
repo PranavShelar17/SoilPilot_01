@@ -153,8 +153,9 @@ export function parseKml(
         continue;
       }
 
+      const subMatch = name.match(/\d+\/[A-Za-z0-9]+/);
       const numMatch = name.match(/\d+/);
-      const cleanGat = numMatch ? numMatch[0] : (name || `gat_${features.length + 1}`);
+      const cleanGat = subMatch ? subMatch[0].toUpperCase() : (numMatch ? numMatch[0] : (name || `gat_${features.length + 1}`));
 
       const areaHa = calculatePolygonAreaHa(rings[0]);
       const areaSqm = Math.round(areaHa * 10000);
@@ -168,8 +169,7 @@ export function parseKml(
 
       const isVillage =
         name.toLowerCase().includes("village") ||
-        name.toLowerCase().includes("boundary") ||
-        areaHa > 50;
+        (name.toLowerCase().includes("boundary") && !name.toLowerCase().includes("gat"));
 
       features.push({
         type: "Feature",
@@ -201,8 +201,9 @@ export function parseKml(
     for (const pmText of matches) {
       const nameMatch = pmText.match(/<name>([^<]+)<\/name>/i);
       const name = nameMatch ? nameMatch[1].trim() : `gat_${features.length + 1}`;
+      const subMatch = name.match(/\d+\/[A-Za-z0-9]+/);
       const numMatch = name.match(/\d+/);
-      const cleanGat = numMatch ? numMatch[0] : name;
+      const cleanGat = subMatch ? subMatch[0].toUpperCase() : (numMatch ? numMatch[0] : name);
 
       const coordMatch = pmText.match(/<coordinates>([\s\S]*?)<\/coordinates>/i);
       if (!coordMatch) {

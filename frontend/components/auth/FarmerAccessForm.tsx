@@ -29,7 +29,7 @@ interface FarmerAccessFormProps {
   className?: string;
 }
 
-const GAT_OPTIONS = Array.from({ length: 221 }, (_, i) => String(i + 1));
+const GAT_OPTIONS: readonly string[] = KML_AVAILABLE_GATS;
 
 export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = "" }) => {
   const { t, language } = useI18n();
@@ -643,7 +643,7 @@ export const FarmerAccessForm: React.FC<FarmerAccessFormProps> = ({ className = 
                 className="w-full appearance-none rounded-xl border border-surface-border bg-white px-3.5 py-3 text-sm font-semibold text-text-main focus:border-soil-primary focus:ring-2 focus:ring-soil-primary/20 transition-all cursor-pointer shadow-xs"
               >
                 <option value="">
-                  {language === "mr" ? "गट नंबर निवडा (१ ते २२१)" : "Select Gat Number (1 to 221)"}
+                  {language === "mr" ? "गट नंबर निवडा" : "Select Gat Number"}
                 </option>
                 {GAT_OPTIONS.map((g) => (
                   <option key={g} value={g}>

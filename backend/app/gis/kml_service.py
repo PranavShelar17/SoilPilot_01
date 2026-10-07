@@ -106,9 +106,10 @@ class KMLService:
 
     def _discover_files(self):
         candidates = [
-            ("trial.kml", KML_DIR / "trial.kml"),
-            ("trial.kml", LAYERS_DIR / "trial.kml"),
-            ("trial.kml", FRONTEND_DATA_DIR / "dsm" / "sample-gats.kml"),
+            ("malegaon_gat_map_final.kml", KML_DIR / "malegaon_gat_map_final.kml"),
+            ("malegaon_gat_map_final.kml", LAYERS_DIR / "malegaon_gat_map_final.kml"),
+            ("sample-gats.kml", FRONTEND_DATA_DIR / "dsm" / "sample-gats.kml"),
+            ("sample-gats.kml", FRONTEND_DATA_DIR / "sample-gats.kml"),
             ("malegaonkh_final1.kml", KML_DIR / "malegaonkh_final1.kml"),
             ("malegaonkh_final1.kml", FRONTEND_DATA_DIR / "malegaonkh_final1.kml"),
             ("malegaonkh_final1.kml", FRONTEND_DATA_DIR / "dsm" / "malegaonkh_final1.kml"),
@@ -177,12 +178,19 @@ class KMLService:
             # Gat normalization key
             norm_gat = name.strip()
             # If name is village boundary e.g. "Malegaon Kh."
-            is_village_boundary = "malegaon" in norm_gat.lower() or "boundary" in norm_gat.lower() or filename.startswith("malegaonkh")
+            is_village_boundary = "malegaon" in norm_gat.lower() and ("boundary" in norm_gat.lower() or "final1" in filename)
+            
+            clean_num_m = re.search(r'(\d+/[A-Za-z0-9]+)', norm_gat)
+            if clean_num_m:
+                clean_gat = clean_num_m.group(1).upper()
+            else:
+                num_m = re.search(r'\d+', norm_gat)
+                clean_gat = num_m.group(0) if num_m else norm_gat
 
-            item_id = norm_gat if not is_village_boundary else "malegaon_kh"
+            item_id = clean_gat if not is_village_boundary else "malegaon_kh"
             entry = {
                 "id": item_id,
-                "gat_no": norm_gat,
+                "gat_no": clean_gat,
                 "name": name,
                 "source_file": filename,
                 "is_village_boundary": is_village_boundary,
@@ -199,9 +207,8 @@ class KMLService:
             }
 
             self._cache[item_id.lower()] = entry
-            # Also register raw name if different
-            if norm_gat.lower() not in self._cache:
-                self._cache[norm_gat.lower()] = entry
+            self._cache[clean_gat.lower()] = entry
+            self._cache[norm_gat.lower()] = entry
 
     def get_available_kml_files(self) -> List[Dict[str, Any]]:
         if not self._loaded:
@@ -214,7 +221,7 @@ class KMLService:
                 "path": str(path),
                 "feature_count": len(gats),
                 "features": [g["gat_no"] for g in gats],
-                "description": "Cadastral Gat Parcels" if "trial" in name else "Village Boundary",
+                "description": "Cadastral Gat Parcels" if ("malegaon" in name.lower() or "sample" in name.lower() or "gat" in name.lower()) and "final1" not in name.lower() else "Village Boundary",
             })
         return files_info
 
@@ -251,40 +258,11 @@ class KMLService:
             if k == clean or v["gat_no"].lower() == clean:
                 return v
 
-        # If not in local KML, generate a realistic cadastral parcel only if explicitly requested
-        if generate_fallback and clean and clean != "boundary":
-            coords, area_ha, centroid, bounds = generate_gat_polygon(clean)
-            poly = Polygon(coords)
-            multi_poly = MultiPolygon([poly])
-            entry = {
-                "id": clean,
-                "gat_no": clean,
-                "name": f"Gat {clean}",
-                "source_file": "cadastral_parcel",
-                "is_village_boundary": False,
-                "area_ha": area_ha,
-                "bounds": bounds,
-                "centroid": centroid,
-                "geometry": mapping(multi_poly),
-                "geometry_wkt": multi_poly.wkt,
-                "attributes": {
-                    "SUB_DIST": "Baramati",
-                    "DISTRICT": "Pune",
-                    "STATE": "Maharashtra",
-                    "NAME": "Malegaon Kh.",
-                },
-                "taluka": "Baramati",
-                "district": "Pune",
-                "state": "Maharashtra",
-                "village": "Malegaon Kh.",
-            }
-            self._cache[clean] = entry
-            return entry
-
+        # If not in local KML, do NOT generate fake/approximate boundary
         return None
 
     def get_gat_geometry(self, gat_no: str):
-        g = self.get_gat_by_no(gat_no, generate_fallback=True)
+        g = self.get_gat_by_no(gat_no, generate_fallback=False)
         if not g:
             return None
         try:

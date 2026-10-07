@@ -86,7 +86,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-text-muted truncate">
-            {info?.fileName ? info.fileName : "layers/trial.kml & malegaonkh_final1.kml"}
+            {info?.fileName ? info.fileName : "Malegaon_Gat_Map_Final.kmz & malegaonkh_final1.kml"}
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export const GatKmlPanel: React.FC<GatKmlPanelProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            <span className="truncate">{locale === "mr" ? "गट (trial.kml)" : "Gats (trial.kml)"}</span>
+            <span className="truncate">{locale === "mr" ? "माळेगाव गट (KMZ)" : "Malegaon Gats (KMZ)"}</span>
           </button>
           <button
             type="button"

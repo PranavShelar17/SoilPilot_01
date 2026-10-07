@@ -113,14 +113,19 @@ class FieldService:
                 from app.gis.kml_service import kml_service
                 kml_gat = kml_service.get_gat_by_no(clean_gat)
                 if kml_gat and not kml_gat.get("is_village_boundary"):
+                    kml_ha = kml_gat.get("area_ha")
+                    kml_ac = round(kml_ha * 2.47105, 2) if kml_ha is not None else None
                     return {
                         "id": 9000 + int(clean_gat) if clean_gat.isdigit() else 9999,
                         "gat_no": kml_gat["gat_no"],
-                        "area": kml_gat["area_ha"],
+                        "area": kml_ha,
+                        "area_ha": kml_ha,
+                        "area_acres": kml_ac,
                         "area_unit": "hectare",
                         "is_demo": True,
                         "is_active": True,
-                        "geometry_wkt": kml_gat["geometry_wkt"],
+                        "geometry_wkt": kml_gat.get("geometry_wkt"),
+                        "geometry": kml_gat.get("geometry"),
                         "village": {
                             "id": village.id,
                             "name": village.name,
@@ -142,26 +147,32 @@ class FieldService:
                 detail=f"No farm plot was found for Gat number '{clean_gat}' in {taluka_name}, Village '{village.name}'."
             )
 
-
         geom_wkt = None
+        geojson_geom = None
         if field.geometry is not None:
             geom_wkt = str(field.geometry)
+            geojson_geom = geometry_to_geojson(field.geometry)
         else:
             from app.gis.kml_service import kml_service
             kml_gat = kml_service.get_gat_by_no(clean_gat)
             if kml_gat and kml_gat.get("geometry_wkt"):
                 geom_wkt = kml_gat["geometry_wkt"]
-            else:
-                geom_wkt = "MULTIPOLYGON(((73.9800 18.5700, 73.9840 18.5700, 73.9840 18.5740, 73.9800 18.5740, 73.9800 18.5700)))"
+                geojson_geom = kml_gat.get("geometry")
+
+        tot_ha = field.area
+        tot_ac = round(tot_ha * 2.47105, 2) if tot_ha is not None else None
 
         return {
             "id": field.id,
             "gat_no": field.gat_no,
             "area": field.area,
+            "area_ha": tot_ha,
+            "area_acres": tot_ac,
             "area_unit": field.area_unit,
             "is_demo": field.is_demo,
             "is_active": field.is_active,
             "geometry_wkt": geom_wkt,
+            "geometry": geojson_geom,
             "village": {
                 "id": village.id,
                 "name": village.name,

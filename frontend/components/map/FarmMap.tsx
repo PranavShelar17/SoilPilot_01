@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { fieldService, AuthorizedFieldResponse, GeoJSONGeometry } from "@/services/fieldService";
-import { dsmService, createCustomGatFeature } from "@/services/dsmService";
+import { dsmService } from "@/services/dsmService";
 import { MapLibreWrapper } from "./MapLibreWrapper";
 import {
   MapPinOff,
@@ -185,18 +185,8 @@ export const FarmMap: React.FC<FarmMapProps> = ({
         }
       }
 
-      // Final fallback: generate a synthetic cadastral boundary for any custom Gat number
-      if (!resolvedGeometry && cleanNum) {
-        const customFeature = createCustomGatFeature(cleanNum);
-        resolvedGeometry = customFeature.geometry as GeoJSONGeometry;
-        if (!calculatedArea) {
-          calculatedArea = customFeature.properties.area_ha;
-        }
-      }
-
-      // Fallback area based on Gat 13 (5.14 Ha) or default
       if (calculatedArea === null || calculatedArea === undefined) {
-        calculatedArea = cleanNum === "13" ? 5.14 : (data?.area ?? authField?.area ?? 1.49);
+        calculatedArea = data?.area ?? authField?.area ?? null;
       }
 
       const enriched: AuthorizedFieldResponse = {

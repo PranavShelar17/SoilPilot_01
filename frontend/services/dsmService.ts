@@ -111,84 +111,16 @@ function toLayerConfig(m: DSMManifestLayer, bounds: BBox, base?: DSMLayerConfig)
 }
 
 export function createCustomGatFeature(gatNoStr: string) {
-  const clean = gatNoStr.replace(/[^\d]/g, "") || gatNoStr;
-  const num = parseInt(clean, 10) || 123;
-  const offsetX = (((num * 37) % 21) - 10) * 0.00065;
-  const offsetY = (((num * 53) % 19) - 9) * 0.00055;
-  const cLon = 74.5065 + offsetX;
-  const cLat = 18.1655 + offsetY;
-  const dx = 0.00075;
-  const dy = 0.00065;
-
-  return {
-    type: "Feature" as const,
-    id: clean,
-    properties: {
-      gat_id: clean,
-      name: `Gat ${clean}`,
-      area_ha: 2.48,
-      area_acres: 6.13,
-      centroid: [cLon, cLat] as [number, number],
-      bounds: [cLon - dx, cLat - dy, cLon + dx, cLat + dy * 1.05] as [number, number, number, number],
-      source: "custom-cadastral",
-      attributes: {
-        village: "Malegaon Kh.",
-        taluka: "Baramati",
-        district: "Pune",
-      },
-    },
-    geometry: {
-      type: "Polygon" as const,
-      coordinates: [[
-        [cLon - dx, cLat - dy],
-        [cLon + dx * 0.95, cLat - dy * 0.9],
-        [cLon + dx, cLat + dy],
-        [cLon - dx * 0.9, cLat + dy * 1.05],
-        [cLon - dx, cLat - dy],
-      ]],
-    },
-  };
+  // Disallowed by policy: No synthetic or fake boundaries.
+  // The authoritative KMZ (Malegaon_Gat_Map_Final.kmz) is the single source of truth.
+  return null;
 }
 
-export function getOrCreateGatEntry(data: Record<string, GatDataFull>, gatId: string): GatDataFull {
+export function getOrCreateGatEntry(data: Record<string, GatDataFull>, gatId: string): GatDataFull | null {
   const clean = gatId.replace(/[^\d]/g, "") || gatId;
   if (data[clean]) return data[clean];
-
-  const num = parseInt(clean, 10) || 123;
-  const offsetX = (((num * 37) % 21) - 10) * 0.00065;
-  const offsetY = (((num * 53) % 19) - 9) * 0.00055;
-  const cLon = 74.5065 + offsetX;
-  const cLat = 18.1655 + offsetY;
-  const dx = 0.00075;
-  const dy = 0.00065;
-
-  const defaultStats = {
-    ndvi: { mean: 0.41, median: 0.40, min: 0.18, max: 0.65, std: 0.09, p10: 0.26, p90: 0.52, classification: { status: "Moderate Canopy", color: "#f59e0b", advice: "Vegetative growth phase." } },
-    evi: { mean: 0.22, median: 0.21, min: 0.09, max: 0.41, std: 0.06, p10: 0.12, p90: 0.32, classification: { status: "Moderate Biomass", color: "#f59e0b", advice: "Healthy growth." } },
-    ph: { mean: 7.35, median: 7.34, min: 7.1, max: 7.6, std: 0.12, p10: 7.15, p90: 7.55, classification: { status: "Optimal Neutral", color: "#00e676", advice: "Excellent nutrient availability." } },
-    soc: { mean: 0.68, median: 0.67, min: 0.52, max: 0.82, std: 0.07, p10: 0.55, p90: 0.79, classification: { status: "Medium Organic Carbon", color: "#f59e0b", advice: "Maintain compost applications." } },
-    nitrogen: { mean: 14.8, median: 14.7, min: 13.1, max: 16.5, std: 0.8, p10: 13.5, p90: 16.1, classification: { status: "Medium Nitrogen", color: "#f59e0b", advice: "Apply recommended N dose." } },
-    bd: { mean: 1.48, median: 1.48, min: 1.42, max: 1.54, std: 0.03, p10: 1.44, p90: 1.52, classification: { status: "Moderate Density", color: "#f59e0b", advice: "Good aeration." } },
-    elevation: { mean: 565, median: 565, min: 560, max: 570, std: 2.5, p10: 562, p90: 568, classification: { status: "Deccan Plateau", color: "#00e676", advice: "Gentle plateau slope." } },
-    uncertainty: { mean: 6.8, median: 6.7, min: 5.5, max: 8.2, std: 0.6, p10: 5.8, p90: 7.9, classification: { status: "High Confidence", color: "#00e676", advice: "High accuracy predictions." } }
-  };
-
-  const syntheticEntry: GatDataFull = {
-    gat_id: clean,
-    name: `Gat ${clean}`,
-    village: "Malegaon Kh.",
-    taluka: "Baramati",
-    district: "Pune",
-    area_acres: 6.13,
-    area_ha: 2.48,
-    area_sqm: 24800,
-    centroid: [cLon, cLat],
-    bounds: [[cLat - dy, cLon - dx], [cLat + dy * 1.05, cLon + dx]],
-    stats: defaultStats as any,
-    overlays: {},
-  };
-  data[clean] = syntheticEntry;
-  return syntheticEntry;
+  if (data[gatId]) return data[gatId];
+  return null;
 }
 
 export const dsmService = {
@@ -336,19 +268,6 @@ export const dsmService = {
     }
 
     const featureList = parsed?.features || [];
-
-    // Include custom registered Gat if not in the default list
-    const activeTarget = typeof window !== "undefined" ? localStorage.getItem("soilpilot_selected_gat") : null;
-    if (activeTarget) {
-      const clean = activeTarget.replace(/[^\d]/g, "") || activeTarget;
-      const exists = featureList.some((f: any) => {
-        const num = (f.properties?.name || f.properties?.gat_no || f.id || "").toString().replace(/[^\d]/g, "");
-        return num === clean;
-      });
-      if (!exists && clean) {
-        featureList.push(createCustomGatFeature(clean) as any);
-      }
-    }
 
     return {
       collection: { type: "FeatureCollection", features: featureList },

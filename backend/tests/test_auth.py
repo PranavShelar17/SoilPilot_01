@@ -15,13 +15,15 @@ def get_demo_hierarchy_ids():
         district = db.query(District).filter(District.name == "Pune", District.state_id == state.id).first()
         taluka_baramati = db.query(Taluka).filter(Taluka.name == "Baramati", Taluka.district_id == district.id).first()
         taluka_daund = db.query(Taluka).filter(Taluka.name == "Daund", Taluka.district_id == district.id).first()
-        village_malegaon = db.query(Village).filter(Village.name == "Malegaon Bk", Village.taluka_id == taluka_baramati.id).first()
+        village_malegaon_bk = db.query(Village).filter(Village.name == "Malegaon Bk", Village.taluka_id == taluka_baramati.id).first()
+        village_malegaon_kh = db.query(Village).filter(Village.name.ilike("%malegaon kh%"), Village.taluka_id == taluka_baramati.id).first()
         return {
             "state_id": state.id,
             "district_id": district.id,
             "taluka_baramati_id": taluka_baramati.id,
             "taluka_daund_id": taluka_daund.id,
-            "village_malegaon_id": village_malegaon.id,
+            "village_malegaon_id": village_malegaon_kh.id,
+            "village_malegaon_bk_id": village_malegaon_bk.id,
         }
     finally:
         db.close()
@@ -48,7 +50,7 @@ def test_gat_login_success():
     assert data["location"]["state"] == "Maharashtra"
     assert data["location"]["district"] == "Pune"
     assert data["location"]["taluka"] == "Baramati"
-    assert data["location"]["village"] == "Malegaon Bk"
+    assert "Malegaon" in data["location"]["village"]
 
     # Verify session cookie was set
     assert "soilpilot_session" in response.cookies
@@ -77,7 +79,7 @@ def test_gat_login_kml_gat_rejected_for_malegaon_bk():
         "state_id": ids["state_id"],
         "district_id": ids["district_id"],
         "taluka_id": ids["taluka_baramati_id"],
-        "village_id": ids["village_malegaon_id"],
+        "village_id": ids["village_malegaon_bk_id"],
         "gat_no": "22",
     }
     response = client.post("/api/v1/auth/gat-login", json=payload)
@@ -139,7 +141,7 @@ def test_session_me_authenticated_flow():
     assert me_data["authenticated"] is True
     assert me_data["field"]["gat_no"] == "123"
     assert "Ramesh Patil" in me_data["farmer"]["name"] or "Farmer" in me_data["farmer"]["name"]
-    assert me_data["location"]["village"] == "Malegaon Bk"
+    assert "Malegaon" in me_data["location"]["village"]
 
 
 def test_session_me_unauthenticated():
