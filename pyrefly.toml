@@ -1,0 +1,10 @@
+preset = "basic"
+python-interpreter-path = "C:/Program Files/Python313/python.exe"
+
+search-path = [
+    ".",
+    "backend",
+    "scripts",
+    "scripts/database",
+    "scripts/gis"
+]

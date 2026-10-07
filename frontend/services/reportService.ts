@@ -53,13 +53,28 @@ export const reportService = {
   },
 
   /**
+   * Get direct URL for Soil Health Card PDF.
+   */
+  getSoilHealthCardPdfUrl(fieldId: string | number, lang: string = "en"): string {
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
+    return `/api/pdf/soil-health-card?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+  },
+
+  /**
+   * Get direct URL for Detailed Soil Report PDF.
+   */
+  getDetailedReportPdfUrl(fieldId: string | number, lang: string = "en"): string {
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
+    return `/api/pdf/detailed-report?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+  },
+
+  /**
    * Trigger download of official Soil Health Card PDF from backend.
    */
   async downloadSoilHealthCardPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
     const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
     const filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}.pdf`;
-    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
-    const directUrl = `/api/pdf/soil-health-card?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+    const directUrl = this.getSoilHealthCardPdfUrl(fieldId, lang);
 
     try {
       const res = await fetch(directUrl);
@@ -77,12 +92,11 @@ export const reportService = {
           targetFilename += ".pdf";
         }
 
-        const pdfFile = new File([arrayBuffer], targetFilename, { type: "application/pdf" });
-        const blobUrl = window.URL.createObjectURL(pdfFile);
+        const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+        const blobUrl = window.URL.createObjectURL(blob);
 
         const a = document.createElement("a");
-        a.style.position = "fixed";
-        a.style.left = "-9999px";
+        a.style.display = "none";
         a.href = blobUrl;
         a.download = targetFilename;
         a.setAttribute("download", targetFilename);
@@ -92,23 +106,15 @@ export const reportService = {
         setTimeout(() => {
           if (a.parentNode) a.parentNode.removeChild(a);
           window.URL.revokeObjectURL(blobUrl);
-        }, 3000);
+        }, 2000);
         return;
       }
     } catch (e) {
-      console.warn("Proxy download failed, attempting native browser download:", e);
+      console.warn("Proxy download failed, falling back to direct navigation:", e);
     }
 
     // Direct browser navigation stream fallback
-    const link = document.createElement("a");
-    link.href = directUrl;
-    link.download = filename;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (link.parentNode) link.parentNode.removeChild(link);
-    }, 1000);
+    window.location.assign(directUrl);
   },
 
   /**
@@ -117,8 +123,7 @@ export const reportService = {
   async downloadDetailedReportPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
     const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
     const filename = `SoilPilot_Detailed_Soil_Report_Gat_${cleanGat}.pdf`;
-    const token = typeof window !== "undefined" ? sessionStorage.getItem("soilpilot_token") || "" : "";
-    const directUrl = `/api/pdf/detailed-report?fieldId=${encodeURIComponent(fieldId)}&lang=${encodeURIComponent(lang)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
+    const directUrl = this.getDetailedReportPdfUrl(fieldId, lang);
 
     try {
       const res = await fetch(directUrl);
@@ -136,12 +141,11 @@ export const reportService = {
           targetFilename += ".pdf";
         }
 
-        const pdfFile = new File([arrayBuffer], targetFilename, { type: "application/pdf" });
-        const blobUrl = window.URL.createObjectURL(pdfFile);
+        const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+        const blobUrl = window.URL.createObjectURL(blob);
 
         const a = document.createElement("a");
-        a.style.position = "fixed";
-        a.style.left = "-9999px";
+        a.style.display = "none";
         a.href = blobUrl;
         a.download = targetFilename;
         a.setAttribute("download", targetFilename);
@@ -151,23 +155,15 @@ export const reportService = {
         setTimeout(() => {
           if (a.parentNode) a.parentNode.removeChild(a);
           window.URL.revokeObjectURL(blobUrl);
-        }, 3000);
+        }, 2000);
         return;
       }
     } catch (e) {
-      console.warn("Detailed report proxy download failed, attempting native browser download:", e);
+      console.warn("Detailed report proxy download failed, falling back to direct navigation:", e);
     }
 
     // Direct browser navigation stream fallback
-    const link = document.createElement("a");
-    link.href = directUrl;
-    link.download = filename;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      if (link.parentNode) link.parentNode.removeChild(link);
-    }, 1000);
+    window.location.assign(directUrl);
   },
 
   /**

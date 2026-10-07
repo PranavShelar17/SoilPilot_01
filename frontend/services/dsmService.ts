@@ -278,32 +278,87 @@ export const dsmService = {
   },
   /** Load the bundled sample Gat boundaries (trial.kml / sample-gats.kml) and parse them. */
   async loadSampleGats(): Promise<{ collection: GatCollection; info: GatSourceInfo }> {
-    const manifest = await this.getManifest();
-    const text = await (await fetchOk(url(manifest.sampleKml.file))).text();
-    const parsed = parseKml(text, "sample");
+    let parsed: any = null;
+    let fileName = "sample-gats.kml";
+    let label = "Malegaon Khurd Plots";
+
+    try {
+      const manifest = await this.getManifest();
+      fileName = manifest.sampleKml?.file || "sample-gats.kml";
+      label = manifest.sampleKml?.label || "Malegaon Khurd Plots";
+      const text = await (await fetchOk(url(fileName))).text();
+      parsed = parseKml(text, "sample");
+    } catch (err) {
+      console.warn("Could not load KML from manifest path:", err);
+    }
+
+    // If loaded file only had the single outer village boundary, fall back to root /data/sample-gats.kml
+    if (!parsed || parsed.features.length <= 1) {
+      try {
+        const altText = await (await fetchOk("/data/sample-gats.kml")).text();
+        const altParsed = parseKml(altText, "sample");
+        if (altParsed.features.length > (parsed?.features?.length || 0)) {
+          parsed = altParsed;
+          fileName = "sample-gats.kml";
+        }
+      } catch (altErr) {
+        console.warn("Could not load fallback /data/sample-gats.kml:", altErr);
+      }
+    }
+
+    // If still <= 1 feature, load /data/malegaon_plots.geojson
+    if (!parsed || parsed.features.length <= 1) {
+      try {
+        const geoRes = await fetchOk("/data/malegaon_plots.geojson");
+        const geojson = await geoRes.json();
+        if (geojson?.features && geojson.features.length > 0) {
+          const features = geojson.features.map((f: any) => ({
+            type: "Feature" as const,
+            id: f.properties?.gat_no || f.id,
+            properties: {
+              ...f.properties,
+              gat_id: f.properties?.gat_no || f.id,
+              name: f.properties?.source_name || `Gat ${f.properties?.gat_no || f.id}`,
+              area_ha: f.properties?.area || 2.0,
+            },
+            geometry: f.geometry,
+          }));
+          parsed = {
+            features,
+            skipped: 0,
+            warnings: [],
+          };
+          fileName = "malegaon_plots.geojson";
+        }
+      } catch (geoErr) {
+        console.warn("Could not load /data/malegaon_plots.geojson:", geoErr);
+      }
+    }
+
+    const featureList = parsed?.features || [];
 
     // Include custom registered Gat if not in the default list
     const activeTarget = typeof window !== "undefined" ? localStorage.getItem("soilpilot_selected_gat") : null;
     if (activeTarget) {
       const clean = activeTarget.replace(/[^\d]/g, "") || activeTarget;
-      const exists = parsed.features.some((f) => {
-        const num = (f.properties?.name || f.id || "").replace(/[^\d]/g, "");
+      const exists = featureList.some((f: any) => {
+        const num = (f.properties?.name || f.properties?.gat_no || f.id || "").toString().replace(/[^\d]/g, "");
         return num === clean;
       });
       if (!exists && clean) {
-        parsed.features.push(createCustomGatFeature(clean) as any);
+        featureList.push(createCustomGatFeature(clean) as any);
       }
     }
 
     return {
-      collection: { type: "FeatureCollection", features: parsed.features },
+      collection: { type: "FeatureCollection", features: featureList },
       info: {
         kind: "sample",
-        label: manifest.sampleKml.label,
-        fileName: manifest.sampleKml.file,
-        count: parsed.features.length,
-        skipped: parsed.skipped,
-        warnings: parsed.warnings,
+        label,
+        fileName,
+        count: featureList.length,
+        skipped: parsed?.skipped || 0,
+        warnings: parsed?.warnings || [],
       },
     };
   },

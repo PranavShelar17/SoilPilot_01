@@ -91,15 +91,15 @@ function getSteppedColors(colorStops?: ColorStop[], steps = 18): string[] {
 }
 
 const QGIS_LULC_CLASSES = [
-  { val: 0, name: "Water", mr: "पाणी", color: "#0066ff", role: "Masked" },
-  { val: 1, name: "Trees", mr: "झाडे", color: "#006400", role: "Masked" },
-  { val: 2, name: "Grass", mr: "गवत", color: "#7cfc00", role: "Retained" },
-  { val: 3, name: "Flooded Veg", mr: "जलमय", color: "#00e6e6", role: "Masked" },
-  { val: 4, name: "Crops", mr: "पिके / शेती", color: "#e91e63", role: "Soil Mask" },
-  { val: 5, name: "Shrub", mr: "झुडपे", color: "#808000", role: "Masked" },
-  { val: 6, name: "Built Area", mr: "वस्ती", color: "#3f51b5", role: "Masked" },
-  { val: 7, name: "Bare Ground", mr: "उघडी जमीन", color: "#d2b48c", role: "Fallow" },
-  { val: 8, name: "Snow & Ice", mr: "बर्फ", color: "#ffffff", role: "N/A" },
+  { val: 0, name: "Water", mr: "पाणी", color: "#2563eb", qgisColor: "Blue", role: "Masked" },
+  { val: 1, name: "Trees", mr: "झाडे", color: "#15803d", qgisColor: "Dark Green", role: "Masked" },
+  { val: 2, name: "Grass", mr: "गवत", color: "#65a30d", qgisColor: "Light Green", role: "Retained" },
+  { val: 3, name: "Flooded Vegetation", mr: "जलमय वनस्पती", color: "#06b6d4", qgisColor: "Cyan", role: "Masked" },
+  { val: 4, name: "Crops", mr: "पिके / शेती", color: "#d946ef", qgisColor: "Magenta / Pink", role: "Soil Mask" },
+  { val: 5, name: "Shrub & Scrub", mr: "झुडपे", color: "#854d0e", qgisColor: "Olive / Brown", role: "Masked" },
+  { val: 6, name: "Built Area", mr: "वस्ती", color: "#3b82f6", qgisColor: "Blue / Indigo", role: "Masked" },
+  { val: 7, name: "Bare Ground", mr: "उघडी जमीन", color: "#d6c7b2", qgisColor: "Light Gray / Sand", role: "Fallow" },
+  { val: 8, name: "Snow & Ice", mr: "बर्फ", color: "#ffffff", qgisColor: "White", role: "N/A" },
 ];
 
 export const MapLegend: React.FC<MapLegendProps> = ({
@@ -147,7 +147,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({
       if (layer.id === "rabi_rgb") return "रब्बी हंगाम उपग्रह प्रतिमा";
       if (layer.marathiName) return layer.marathiName;
     }
-    if (layer.id === "lulc") return "QGIS LULC CLASSES";
+    if (layer.id === "lulc") return "LULC INDEX";
     if (vegStyle) return vegStyle.name;
     if (layer.id === "kharif_rgb") return "KHARIF RGB COMPOSITE";
     if (layer.id === "rabi_rgb") return "RABI RGB COMPOSITE";
@@ -160,7 +160,9 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
   return (
     <div
-      className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-100/90 p-3.5 sm:p-4 text-xs w-[220px] sm:w-[245px] transition-all select-none ${className}`}
+      className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-100/90 p-3.5 sm:p-4 text-xs ${
+        isLulc ? "w-[235px] sm:w-[260px]" : "w-[220px] sm:w-[245px]"
+      } transition-all select-none ${className}`}
     >
       {/* Top Header */}
       <div className="flex items-center justify-between">
@@ -214,27 +216,29 @@ export const MapLegend: React.FC<MapLegendProps> = ({
           </div>
         </div>
       ) : isLulc ? (
-        <div className="mt-2 space-y-1.5">
-          {/* Segmented Color Pill Bar */}
-          <div className="h-3 w-full rounded-full overflow-hidden flex shadow-inner border border-slate-200/60">
-            {segments.map((color, idx) => (
-              <div
-                key={idx}
-                className="flex-1 h-full"
-                style={{ backgroundColor: color }}
-              />
-            ))}
+        <div className="mt-2 space-y-1">
+          {/* Table Header: CLASS (PIXEL) vs QGIS COLOR */}
+          <div className="flex items-center justify-between text-[10px] font-bold tracking-wider text-slate-500 uppercase pb-1 border-b border-slate-100">
+            <span>CLASS (PIXEL)</span>
+            <span>QGIS COLOR</span>
           </div>
 
-          {/* QGIS Class Swatches Grid */}
-          <div className="grid grid-cols-2 gap-x-2 gap-y-1 pt-1 text-[10px] text-slate-700 font-medium">
-            {QGIS_LULC_CLASSES.slice(0, 8).map((item) => (
-              <div key={item.val} className="flex items-center gap-1.5 truncate" title={`${item.val}: ${item.name} (${item.role})`}>
-                <span
-                  className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/20"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="truncate">{locale === "mr" ? item.mr : item.name}</span>
+          {/* QGIS Class Swatches List */}
+          <div className="space-y-1 pt-1 text-[11px] text-slate-700">
+            {QGIS_LULC_CLASSES.map((item) => (
+              <div key={item.val} className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span
+                    className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/20"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="font-medium text-slate-800">
+                    {item.val}: {locale === "mr" ? item.mr : item.name}
+                  </span>
+                </div>
+                <span className="text-[10.5px] text-slate-500 ml-2 font-mono truncate">
+                  {item.qgisColor}
+                </span>
               </div>
             ))}
           </div>

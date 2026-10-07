@@ -11,23 +11,17 @@ import { KML_AVAILABLE_GATS } from "@/types/gat";
 import { SoilReportHeader } from "./SoilReportHeader";
 import { FarmerSampleInfoTable } from "./FarmerSampleInfoTable";
 import { SoilParameterTable } from "./SoilParameterTable";
-import { SoilHealthSummaryCards } from "./SoilHealthSummaryCards";
 import { SoilReportFooter } from "./SoilReportFooter";
-import { GatSoilHealthPanel } from "@/components/gat/GatSoilHealthPanel";
 import Link from "next/link";
 import {
   Download,
   Printer,
   FileText,
-  LayoutGrid,
-  Radar,
   AlertCircle,
   RefreshCw,
   FlaskConical,
   ArrowLeft,
-  BookOpen,
 } from "lucide-react";
-import { SoilReferenceStandardsTable } from "./SoilReferenceStandardsTable";
 import { translateGeoName } from "@/i18n/marathiHelper";
 
 interface SoilHealthCardViewProps {
@@ -66,7 +60,6 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
     }
   }, [urlGat, field?.gat_no]);
 
-  const [activeTab, setActiveTab] = useState<"detailed" | "dsm_matrix" | "summary" | "standards">("detailed");
   const [report, setReport] = useState<SoilHealthReport | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,66 +178,16 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
       </div>
 
 
-      {/* Top Action Bar: Level Toggle & Download Buttons */}
+      {/* Top Action Bar: Laboratory Health Card & Download Buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs print:hidden">
-        {/* Level Toggle: Detailed Report vs DSM Soil Matrix vs Summary */}
-        <div className="flex items-center p-1 bg-stone-100 rounded-lg border border-stone-200/80 gap-1 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setActiveTab("detailed")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "detailed"
-                ? "bg-white text-soil-primary shadow-xs"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <FileText className="w-4 h-4" />
-            <span>{t("soilHealthCard.viewDetailed") || "Laboratory Health Card"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("dsm_matrix")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "dsm_matrix"
-                ? "bg-white text-soil-primary shadow-xs"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <Radar className="w-4 h-4 text-emerald-600" />
-            <span>{t("soilHealthCard.viewDsmMatrix") || "DSM Soil Matrix & Variability"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("summary")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "summary"
-                ? "bg-white text-soil-primary shadow-xs"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            <span>{t("soilHealthCard.viewSummary") || "Nutrient Summary"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("standards")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer ${
-              activeTab === "standards"
-                ? "bg-white text-soil-primary shadow-xs"
-                : "text-stone-600 hover:text-stone-900"
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-soil-primary" />
-            <span>{t("soilHealthCard.viewStandards") || "Reference Standards & Norms"}</span>
-          </button>
+        {/* Only Laboratory Health Card View */}
+        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded-lg text-xs font-bold shadow-xs">
+          <FileText className="w-4 h-4 text-emerald-700" />
+          <span>{t("soilHealthCard.viewDetailed") || "Laboratory Health Card"}</span>
         </div>
 
         {/* Action Buttons: PDF Downloads & Print */}
         <div className="flex flex-wrap items-center gap-2">
-
           <button
             type="button"
             disabled={downloadingCard}
@@ -253,12 +196,14 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
                 setDownloadingCard(true);
                 await reportService.downloadSoilHealthCardPdf(activeFieldId, locale);
               } catch (err) {
-                console.error("PDF download failed:", err);
+                console.error("PDF download failed, using fallback:", err);
+                window.location.assign(reportService.getSoilHealthCardPdfUrl(activeFieldId, locale));
               } finally {
                 setDownloadingCard(false);
               }
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-soil-primary text-white rounded-lg hover:bg-soil-primaryHover transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+            title="Download Official Soil Health Card PDF"
           >
             {downloadingCard ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -276,12 +221,14 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
                 setDownloadingDetailed(true);
                 await reportService.downloadDetailedReportPdf(activeFieldId, locale);
               } catch (err) {
-                console.error("Detailed dossier download failed:", err);
+                console.error("Detailed dossier download failed, using fallback:", err);
+                window.location.assign(reportService.getDetailedReportPdfUrl(activeFieldId, locale));
               } finally {
                 setDownloadingDetailed(false);
               }
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+            title="Download Detailed Laboratory Soil Report PDF"
           >
             {downloadingDetailed ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -306,57 +253,29 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
         </div>
       </div>
 
-      {/* Main Content Area */}
-      {activeTab === "standards" ? (
-        <SoilReferenceStandardsTable />
-      ) : activeTab === "dsm_matrix" ? (
-        <div className="space-y-4">
-          <GatSoilHealthPanel
-            dsmStats={report.dsm_stats}
-            fieldInfo={report.field}
-            loading={loading}
-          />
-        </div>
-      ) : activeTab === "summary" ? (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6">
-          <SoilReportHeader isDemo={report.is_demo} />
-          <FarmerSampleInfoTable
-            farmer={report.farmer}
-            field={report.field}
-            report={report.report}
-          />
-          <SoilHealthSummaryCards parameters={report.parameters} />
-          <SoilReportFooter
-            isDemo={report.is_demo}
-            reportDate={report.report?.report_date}
-            reportNo={report.report?.report_no}
-            observations={report.observations || report.report?.observations}
-          />
-        </div>
-      ) : (
-        <div className="soil-report-card-container bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6 print:space-y-2.5 print:max-w-none">
-          {/* 1. Header Section */}
-          <SoilReportHeader isDemo={report.is_demo} />
+      {/* Main Content Area: Official Laboratory Soil Health Card */}
+      <div className="soil-report-card-container bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6 print:space-y-2.5 print:max-w-none">
+        {/* 1. Header Section */}
+        <SoilReportHeader isDemo={report.is_demo} />
 
-          {/* 2. Farmer & Sample Information Table */}
-          <FarmerSampleInfoTable
-            farmer={report.farmer}
-            field={report.field}
-            report={report.report}
-          />
+        {/* 2. Farmer & Sample Information Table */}
+        <FarmerSampleInfoTable
+          farmer={report.farmer}
+          field={report.field}
+          report={report.report}
+        />
 
-          {/* 3. Laboratory Chemical & Physical Soil Analysis Table */}
-          <SoilParameterTable parameters={report.parameters} />
+        {/* 3. Laboratory Chemical & Physical Soil Analysis Table */}
+        <SoilParameterTable parameters={report.parameters} />
 
-          {/* 4. Report Footer */}
-          <SoilReportFooter
-            isDemo={report.is_demo}
-            reportDate={report.report?.report_date}
-            reportNo={report.report?.report_no}
-            observations={report.observations || report.report?.observations}
-          />
-        </div>
-      )}
+        {/* 4. Report Footer */}
+        <SoilReportFooter
+          isDemo={report.is_demo}
+          reportDate={report.report?.report_date}
+          reportNo={report.report?.report_no}
+          observations={report.observations || report.report?.observations}
+        />
+      </div>
     </div>
   );
 };

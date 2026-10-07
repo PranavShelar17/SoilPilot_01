@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${cleanFilename}"`,
+        "Access-Control-Expose-Headers": "Content-Disposition",
         "Content-Length": pdfBuffer.byteLength.toString(),
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache",

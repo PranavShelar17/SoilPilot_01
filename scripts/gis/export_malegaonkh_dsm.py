@@ -868,11 +868,21 @@ def build_malegaonkh_dsm(src: Path, out: Path) -> None:
         print(f"  -> Generated {layer_id}.png & {layer_id}.bin [range={vmin}..{vmax}, valid={valid_pixel_count}]")
 
     # Copy village boundary KML
-    kml_source = src / "malegaonkh_final1.kml"
-    if kml_source.exists():
-        shutil.copyfile(kml_source, out / "sample-gats.kml")
-        shutil.copyfile(kml_source, out / "malegaonkh_final1.kml")
-        print(f"Copied {kml_source.name} to {out / 'sample-gats.kml'}")
+    village_kml = src / "malegaonkh_final1.kml"
+    if village_kml.exists():
+        shutil.copyfile(village_kml, out / "malegaonkh_final1.kml")
+        print(f"Copied {village_kml.name} to {out / 'malegaonkh_final1.kml'}")
+
+    # Copy farm plots KML (trial.kml containing individual Gats: 12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 25)
+    trial_sources = [
+        root / "layers" / "trial.kml",
+        root / "kml" / "trial.kml",
+        root / "frontend" / "public" / "data" / "sample-gats.kml",
+    ]
+    trial_kml = next((p for p in trial_sources if p.exists()), None) 
+    if trial_kml:
+        shutil.copyfile(trial_kml, out / "sample-gats.kml")
+        print(f"Copied {trial_kml.name} to {out / 'sample-gats.kml'}")
 
     # Build manifest
     manifest = {

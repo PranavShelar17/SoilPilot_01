@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('../frontend/node_modules/puppeteer');
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -8,6 +8,7 @@ const puppeteer = require('puppeteer');
   const page = await browser.newPage();
   await page.setViewport({ width: 1440, height: 1080 });
 
+  console.log('1. Logging in with Quick Demo...');
   await page.goto('http://localhost:3000/', { waitUntil: 'networkidle2', timeout: 30000 });
   await new Promise((r) => setTimeout(r, 1000));
 
@@ -20,17 +21,18 @@ const puppeteer = require('puppeteer');
     }
   }
 
-  await new Promise((r) => setTimeout(r, 3000));
+  await new Promise((r) => setTimeout(r, 2500));
 
-  console.log('Navigating to /my-farm...');
+  console.log('2. Navigating to /my-farm...');
   await page.goto('http://localhost:3000/my-farm', { waitUntil: 'networkidle2', timeout: 30000 });
-  await new Promise((r) => setTimeout(r, 3000));
+  await new Promise((r) => setTimeout(r, 4000));
 
+  const dest = 'C:/Users/Pranav/.gemini/antigravity-ide/brain/4bf0c8fd-38ae-4128-9be6-bb5e29aea068/my_farm_fixed.png';
   await page.screenshot({ 
-    path: 'C:/Users/Pranav/.gemini/antigravity-ide/brain/496d648e-dc3d-43d6-87b7-c95d8a7424dc/my_farm_authenticated.png', 
+    path: dest, 
     fullPage: false 
   });
-  console.log('my_farm_authenticated.png captured successfully.');
+  console.log('Saved screenshot to:', dest);
 
   await browser.close();
 })();

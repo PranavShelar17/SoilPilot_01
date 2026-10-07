@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useI18n } from "@/i18n/useI18n";
 import { useAuth } from "@/context/AuthContext";
 import { fieldService, AuthorizedFieldResponse, GeoJSONGeometry } from "@/services/fieldService";
-import { dsmService } from "@/services/dsmService";
+import { dsmService, createCustomGatFeature } from "@/services/dsmService";
 import { MapLibreWrapper } from "./MapLibreWrapper";
 import {
   MapPinOff,
@@ -144,6 +144,28 @@ export const FarmMap: React.FC<FarmMapProps> = ({
         }
       }
 
+      // If not resolved from sample gats, look up in local GeoJSON (/data/malegaon_plots.geojson)
+      if (!resolvedGeometry && cleanNum) {
+        try {
+          const res = await fetch("/data/malegaon_plots.geojson");
+          if (res.ok) {
+            const geojson = await res.json();
+            const matched = (geojson.features || []).find((f: any) => {
+              const pGat = (f.properties?.gat_no || f.properties?.name || f.id || "").toString().replace(/[^\d]/g, "");
+              return pGat === cleanNum;
+            });
+            if (matched?.geometry) {
+              resolvedGeometry = matched.geometry as GeoJSONGeometry;
+              if (matched.properties?.area) {
+                calculatedArea = matched.properties.area;
+              }
+            }
+          }
+        } catch (geoErr) {
+          console.warn("Could not load geometry from malegaon_plots.geojson:", geoErr);
+        }
+      }
+
       // If still not resolved, query backend by Gat
       if (!resolvedGeometry && cleanNum) {
         try {
@@ -160,6 +182,15 @@ export const FarmMap: React.FC<FarmMapProps> = ({
           }
         } catch (lookupErr) {
           console.warn("Could not lookup field by gat:", lookupErr);
+        }
+      }
+
+      // Final fallback: generate a synthetic cadastral boundary for any custom Gat number
+      if (!resolvedGeometry && cleanNum) {
+        const customFeature = createCustomGatFeature(cleanNum);
+        resolvedGeometry = customFeature.geometry as GeoJSONGeometry;
+        if (!calculatedArea) {
+          calculatedArea = customFeature.properties.area_ha;
         }
       }
 
