@@ -367,16 +367,61 @@ export const CONTOUR_RGB_PALETTE: [number, number, number][] = [
 export const CONTOUR_INVERTED_PALETTE: [number, number, number][] = [...CONTOUR_RGB_PALETTE].reverse();
 
 /**
+ * Catmull-Rom cubic interpolation kernel for continuous C1 smooth surfaces.
+ */
+function catmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return 0.5 * (
+    (2 * p1) +
+    (-p0 + p2) * t +
+    (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+    (-p0 + 3 * p1 - 3 * p2 + p3) * t3
+  );
+}
+
+/**
+ * Samples a 2D scalar grid with continuous bicubic interpolation.
+ */
+function sampleGridBicubic(
+  grid: number[][],
+  rows: number,
+  cols: number,
+  u: number,
+  v: number
+): number {
+  const clampedU = Math.max(0, Math.min(cols - 1, u));
+  const clampedV = Math.max(0, Math.min(rows - 1, v));
+  const u0 = Math.floor(clampedU);
+  const v0 = Math.floor(clampedV);
+  const tu = clampedU - u0;
+  const tv = clampedV - v0;
+
+  const colVals: number[] = [];
+  for (let di = -1; di <= 2; di++) {
+    const rIdx = Math.max(0, Math.min(rows - 1, v0 + di));
+    const row = grid[rIdx];
+    const p0 = row[Math.max(0, Math.min(cols - 1, u0 - 1))];
+    const p1 = row[Math.max(0, Math.min(cols - 1, u0))];
+    const p2 = row[Math.max(0, Math.min(cols - 1, u0 + 1))];
+    const p3 = row[Math.max(0, Math.min(cols - 1, u0 + 2))];
+    colVals.push(catmullRom(p0, p1, p2, p3, tu));
+  }
+
+  return catmullRom(colVals[0], colVals[1], colVals[2], colVals[3], tv);
+}
+
+/**
  * Generates an in-memory high-definition canvas DataURL for a parcel,
- * sampling continuous values from the layer's RasterGrid or field model,
- * quantized into stepped organic contour bands with anti-aliasing and
- * central soil sampling point marker matching the reference screenshot.
+ * producing crisp, vibrant, distinct management contour zones strictly
+ * clipped inside the parcel polygon matching the user reference photo.
  */
 export function generateParcelLayerCanvas(
   outerRing: [number, number][],
   layer: DSMLayerConfig,
   grid: RasterGrid | null,
-  bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number }
+  bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number },
+  entry?: GatDataFull | null
 ): string {
   if (typeof document === "undefined" || !outerRing || outerRing.length < 3) return "";
 
@@ -443,14 +488,69 @@ export function generateParcelLayerCanvas(
     return canvas.toDataURL("image/png");
   }
 
-  // Dedicated renderer for Sentinel-2 spectral indices with fixed scientific color classification
-  const vegStyle = getVegetationIndexStyle(layer.id);
-  if (vegStyle) {
-    const imgData = ctx.createImageData(W, H);
-    const data = imgData.data;
+  // 2. Extract or construct 2D control grid for the parcel
+  const overlayGrid = entry?.overlays?.[layer.id]?.grid ||
+    (layer.id === "bdod" ? entry?.overlays?.["bd"]?.grid : undefined);
 
-    // Cache hex to RGB conversion
-    const hexRgbCache: Record<string, [number, number, number]> = {};
+  let matrix: number[][];
+  let rows: number;
+  let cols: number;
+
+  if (overlayGrid && overlayGrid.values && overlayGrid.values.length > 0) {
+    rows = overlayGrid.rows;
+    cols = overlayGrid.cols;
+    let sum = 0;
+    let count = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const v = overlayGrid.values[r]?.[c];
+        if (v !== null && v !== undefined && !isNaN(v)) {
+          sum += v;
+          count++;
+        }
+      }
+    }
+    const mean = count > 0 ? sum / count : (layer.mean ?? 0.5);
+    matrix = [];
+    for (let r = 0; r < rows; r++) {
+      matrix[r] = [];
+      for (let c = 0; c < cols; c++) {
+        const v = overlayGrid.values[r]?.[c];
+        matrix[r][c] = (v !== null && v !== undefined && !isNaN(v)) ? v : mean;
+      }
+    }
+  } else {
+    // 28x28 control grid sampled across the parcel bounding box
+    rows = 28;
+    cols = 28;
+    matrix = [];
+    for (let gy = 0; gy < rows; gy++) {
+      matrix[gy] = [];
+      const sampleLat = maxLat - (gy / (rows - 1)) * dLat;
+      for (let gx = 0; gx < cols; gx++) {
+        const sampleLng = minLng + (gx / (cols - 1)) * dLng;
+        matrix[gy][gx] = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, entry || null, bounds);
+      }
+    }
+  }
+
+  let minVal = layer.min ?? 0.05;
+  let maxVal = layer.max ?? 0.8;
+
+  const pStats = entry?.stats?.[layer.id as DSMRasterLayerId] ||
+    (layer.id === "bdod" ? entry?.stats?.["bd"] : undefined);
+  if (pStats && pStats.min !== undefined && pStats.max !== undefined && pStats.max > pStats.min) {
+    if (pStats.min >= maxVal || pStats.max <= minVal) {
+      minVal = pStats.min;
+      maxVal = pStats.max;
+    }
+  }
+  const span = maxVal - minVal || 1.0;
+  const vegStyle = getVegetationIndexStyle(layer.id);
+
+  // Cached hex-to-rgb for spectral index classes
+  const hexRgbCache: Record<string, [number, number, number]> = {};
+  if (vegStyle) {
     for (const c of vegStyle.classes) {
       const hex = c.color.replace("#", "");
       hexRgbCache[c.id] = [
@@ -459,106 +559,66 @@ export function generateParcelLayerCanvas(
         parseInt(hex.slice(4, 6), 16),
       ];
     }
-
-    for (let y = 0; y < H; y++) {
-      const sampleLat = maxLat - (y / (H - 1)) * dLat;
-      for (let x = 0; x < W; x++) {
-        const sampleLng = minLng + (x / (W - 1)) * dLng;
-        const val = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, null, bounds);
-        const cls = classifyVegetationIndexValue(layer.id, val);
-        const rgb = (cls && hexRgbCache[cls.classId]) || [128, 128, 128];
-        const idx = (y * W + x) * 4;
-        data[idx] = rgb[0];
-        data[idx + 1] = rgb[1];
-        data[idx + 2] = rgb[2];
-        data[idx + 3] = 255;
-      }
-    }
-    ctx.putImageData(imgData, 0, 0);
-    return canvas.toDataURL("image/png");
   }
 
-  // 2. Value range and palette selection
-  const minVal = layer.min ?? 0.05;
-  const maxVal = layer.max ?? 0.8;
-  const span = maxVal - minVal || 1.0;
-  const meanVal = layer.mean ?? (minVal + maxVal) / 2;
+  // 5 discrete crisp high-contrast contour zone colors matching reference photo
+  const isInverse = layer.id === "bd" || layer.id === "bdod" || layer.id === "uncertainty" || layer.id === "bsi";
+  const standardZonePal: [number, number, number][] = isInverse
+    ? [
+        [22, 163, 74],   // Zone 0: #16a34a - Deep Green (Optimal / Low compaction)
+        [74, 212, 126],  // Zone 1: #4ad47e - Light Green
+        [228, 197, 31],  // Zone 2: #e4c51f - Yellow
+        [229, 119, 32],  // Zone 3: #e57720 - Orange
+        [222, 79, 75],   // Zone 4: #de4f4b - Red (Compacted / High uncertainty)
+      ]
+    : [
+        [222, 79, 75],   // Zone 0: #de4f4b - Tomato / Crimson Red (Deficient / Critical)
+        [229, 119, 32],  // Zone 1: #e57720 - Vibrant Orange (Low)
+        [228, 197, 31],  // Zone 2: #e4c51f - Golden Yellow (Medium / Marginal)
+        [74, 212, 126],  // Zone 3: #4ad47e - Mint / Light Green (Good / Optimal)
+        [22, 163, 74],   // Zone 4: #16a34a - Deep Forest Green (High / Prime)
+      ];
 
-  const pal =
-    layer.id === "bd" || layer.id === "uncertainty"
-      ? CONTOUR_INVERTED_PALETTE
-      : CONTOUR_RGB_PALETTE;
-  const N = pal.length;
-
-  // 3. Sample 24x24 control grid across the parcel bounding box
-  const gw = 24;
-  const gh = 24;
-  const valGrid: number[][] = [];
-
-  for (let gy = 0; gy < gh; gy++) {
-    valGrid[gy] = [];
-    const sampleLat = maxLat - (gy / (gh - 1)) * dLat;
-    for (let gx = 0; gx < gw; gx++) {
-      const sampleLng = minLng + (gx / (gw - 1)) * dLng;
-      const val = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, null, bounds);
-      valGrid[gy][gx] = val;
-    }
-  }
-
-  // 4. Smooth Hermite interpolation and 8-level contour stepped quantization
   const imgData = ctx.createImageData(W, H);
   const data = imgData.data;
 
+  // 3. Evaluate high-definition continuous bicubic surface and assign discrete crisp colors
   for (let y = 0; y < H; y++) {
-    const gyFloat = (y / (H - 1)) * (gh - 1);
-    const gy0 = Math.floor(gyFloat);
-    const gy1 = Math.min(gh - 1, gy0 + 1);
-    const ty = gyFloat - gy0;
-    // Smooth Hermite step
-    const sy = ty * ty * (3 - 2 * ty);
-
-    const pyNorm = y / H;
-
+    const vCoord = (y / (H - 1)) * (rows - 1);
     for (let x = 0; x < W; x++) {
-      const gxFloat = (x / (W - 1)) * (gw - 1);
-      const gx0 = Math.floor(gxFloat);
-      const gx1 = Math.min(gw - 1, gx0 + 1);
-      const tx = gxFloat - gx0;
-      const sx = tx * tx * (3 - 2 * tx);
+      const uCoord = (x / (W - 1)) * (cols - 1);
+      const val = sampleGridBicubic(matrix, rows, cols, uCoord, vCoord);
 
-      const v00 = valGrid[gy0][gx0];
-      const v10 = valGrid[gy0][gx1];
-      const v01 = valGrid[gy1][gx0];
-      const v11 = valGrid[gy1][gx1];
+      let r: number;
+      let g: number;
+      let b: number;
 
-      const vTop = v00 + sx * (v10 - v00);
-      const vBottom = v01 + sx * (v11 - v01);
-      const val = vTop + sy * (vBottom - vTop);
-
-      // Subtle organic harmonic perturbation for natural rounded isoline curves
-      const pxNorm = x / W;
-      const boundaryWave =
-        Math.sin(pxNorm * 6.5 + pyNorm * 3.2) * 0.012 +
-        Math.cos(pyNorm * 7.5 - pxNorm * 4.1) * 0.01;
-      const norm = Math.max(0, Math.min(1.0, (val - minVal) / span + boundaryWave));
-
-      // Stepped contour quantization with anti-aliased transitions between bands
-      const t = norm * (N - 1);
-      const idxFloor = Math.min(N - 2, Math.floor(t));
-      const idxCeil = idxFloor + 1;
-      const frac = t - idxFloor;
-
-      const w = 0.08;
-      let r = pal[idxFloor][0];
-      let g = pal[idxFloor][1];
-      let b = pal[idxFloor][2];
-
-      if (frac > 1.0 - w) {
-        let trans = (frac - (1.0 - w)) / w;
-        trans = trans * trans * (3 - 2 * trans);
-        r = Math.round(pal[idxFloor][0] * (1 - trans) + pal[idxCeil][0] * trans);
-        g = Math.round(pal[idxFloor][1] * (1 - trans) + pal[idxCeil][1] * trans);
-        b = Math.round(pal[idxFloor][2] * (1 - trans) + pal[idxCeil][2] * trans);
+      if (layer.id === "ndvi") {
+        // Exact discrete classification matching reference photo:
+        if (val < 0.20) {
+          r = 222; g = 79; b = 75;  // Red (#de4f4b)
+        } else if (val < 0.40) {
+          r = 229; g = 119; b = 32; // Orange (#e57720)
+        } else if (val < 0.60) {
+          r = 228; g = 197; b = 31; // Yellow (#e4c51f)
+        } else if (val < 0.80) {
+          r = 74; g = 212; b = 126; // Mint/Light Green (#4ad47e)
+        } else {
+          r = 22; g = 163; b = 74;  // Deep Green (#16a34a)
+        }
+      } else if (vegStyle) {
+        const cls = classifyVegetationIndexValue(layer.id, val);
+        const rgb = (cls && hexRgbCache[cls.classId]) || [128, 128, 128];
+        r = rgb[0];
+        g = rgb[1];
+        b = rgb[2];
+      } else {
+        // Discrete stepped classification across layer range (5 zones)
+        const norm = Math.max(0, Math.min(1.0, (val - minVal) / span));
+        const stepIdx = Math.min(4, Math.max(0, Math.floor(norm * 5)));
+        r = standardZonePal[stepIdx][0];
+        g = standardZonePal[stepIdx][1];
+        b = standardZonePal[stepIdx][2];
       }
 
       const idx = (y * W + x) * 4;
@@ -570,7 +630,6 @@ export function generateParcelLayerCanvas(
   }
 
   ctx.putImageData(imgData, 0, 0);
-
   return canvas.toDataURL("image/png");
 }
 
@@ -925,10 +984,9 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     parcelBoundsRef.current = { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat };
 
-    // Dedicated direct authoritative GeoTIFF raster clipping (Kharif / Rabi RGB & all 7 Sentinel-2 Indices)
+    // Dedicated direct authoritative GeoTIFF raster clipping (Kharif / Rabi RGB ONLY)
     const isRgbComposite = layer.id === "kharif_rgb" || layer.id === "rabi_rgb";
-    const isSpectralIndex = Boolean(getVegetationIndexStyle(layer.id));
-    if ((isRgbComposite || isSpectralIndex) && layer.rasterImageUrl && layer.rasterBounds) {
+    if (isRgbComposite && layer.rasterImageUrl && layer.rasterBounds) {
       const [w, s, e, n] = layer.rasterBounds;
       const overlay = L.imageOverlay(layer.rasterImageUrl, [[s, w], [n, e]], {
         opacity,
@@ -967,12 +1025,15 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       };
     }
 
+    const targetGatInfo = cleanGat && gatDataFullRef.current ? (gatDataFullRef.current[cleanGat] || getOrCreateGatEntry(gatDataFullRef.current, cleanGat)) : null;
+
     // Always generate crisp, high-definition precision agronomic contour heatmap directly clipped to parcel
     const overlayUrl = generateParcelLayerCanvas(
       outerRing,
       layer,
       grid,
-      { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat }
+      { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat },
+      targetGatInfo
     );
     const latLngBounds: [[number, number], [number, number]] = [
       [pMinLat, pMinLng],

@@ -6,6 +6,7 @@ import { GeoJSONGeometry } from "@/services/fieldService";
 import { useI18n } from "@/i18n/useI18n";
 import { Plus, Minus, Focus, Satellite, Map as StreetIcon } from "lucide-react";
 import { DSMLayerConfig } from "@/types/gis";
+import { generateParcelLayerCanvas } from "./SoilMapViewer";
 
 interface MapLibreWrapperProps {
   geometry: GeoJSONGeometry;
@@ -418,6 +419,56 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
     }
 
     if (!dsmLayer || dsmLayer.id === "farm_boundary") return;
+
+    // Check if we have polygon geometry to generate crisp clipped parcel canvas
+    let outerRing: [number, number][] = [];
+    if (geometry) {
+      if (geometry.type === "Polygon") {
+        outerRing = (geometry.coordinates[0] || []) as [number, number][];
+      } else if (geometry.type === "MultiPolygon") {
+        outerRing = (geometry.coordinates[0]?.[0] || []) as [number, number][];
+      }
+    }
+
+    const b = computeBounds(geometry);
+    if (outerRing.length >= 3 && b) {
+      const [minLng, minLat, maxLng, maxLat] = b;
+      const bounds = { minLng, maxLng, minLat, maxLat };
+      const overlayUrl = generateParcelLayerCanvas(outerRing, dsmLayer, null, bounds);
+      if (overlayUrl) {
+        const overlay = L.imageOverlay(overlayUrl, [[minLat, minLng], [maxLat, maxLng]], {
+          opacity: dsmOpacity,
+          interactive: false,
+          zIndex: 5,
+        }).addTo(map);
+        dsmLayerRef.current = overlay;
+
+        const dLng = maxLng - minLng || 0.0001;
+        const dLat = maxLat - minLat || 0.0001;
+        const clipPoints = outerRing.map(([lng, lat]) => {
+          const x = Math.max(0, Math.min(100, ((lng - minLng) / dLng) * 100));
+          const y = Math.max(0, Math.min(100, ((maxLat - lat) / dLat) * 100));
+          return `${x.toFixed(4)}% ${y.toFixed(4)}%`;
+        });
+        const clipPathCss = `polygon(${clipPoints.join(", ")})`;
+
+        const applyClip = () => {
+          const el = overlay.getElement();
+          if (el) {
+            el.style.clipPath = clipPathCss;
+            el.style.webkitClipPath = clipPathCss;
+          }
+        };
+
+        applyClip();
+        overlay.on("load", applyClip);
+        map.on("zoomend", applyClip);
+        map.on("viewreset", applyClip);
+
+        if (farmLayerRef.current) farmLayerRef.current.bringToFront();
+        return;
+      }
+    }
 
     if (dsmLayer.rasterTileUrl) {
       const dsmLayerObj = L.tileLayer(dsmLayer.rasterTileUrl, {
