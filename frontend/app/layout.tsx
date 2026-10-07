@@ -23,7 +23,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-surface-subtle font-sans">
         <Providers>
-          <DemoBanner />
           <Header />
           <AppShell>{children}</AppShell>
           <Footer />

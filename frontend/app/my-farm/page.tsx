@@ -270,21 +270,6 @@ function MyFarmContent() {
             </span>
           </div>
         </div>
-
-        {/* Demo Data Disclaimer Banner */}
-        {isDemo && (
-          <div className="p-3.5 rounded-xl bg-soil-cream/70 border border-soil-secondary/30 text-xs text-text-main flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-soil-primary shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-bold text-soil-primary block">
-                {t("common.demoData")}
-              </span>
-              <span className="text-text-muted">
-                {t("common.demoDataNotice") || t("myFarm.demoNotice")}
-              </span>
-            </div>
-          </div>
-        )}
       </section>
     </div>
   );

@@ -93,14 +93,6 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
           {translateGeoName(district || "Pune", isMr)}, {translateGeoName(state || "Maharashtra", isMr)}
         </span>
       </div>
-
-      {/* Demo Data Disclaimer if applicable */}
-      {isDemo && (
-        <div className="p-2.5 rounded-lg bg-soil-cream/50 border border-soil-beige text-[11px] text-text-muted flex items-start gap-2">
-          <Info className="w-3.5 h-3.5 text-soil-primary shrink-0 mt-0.5" />
-          <span>{t("dashboard.demoNotice")}</span>
-        </div>
-      )}
     </section>
   );
 };

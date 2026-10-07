@@ -151,12 +151,6 @@ export default function ReportsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {isDemo && (
-              <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1 shadow-xs">
-                <Sparkles className="w-3 h-3 text-amber-600" />
-                <span>{t("reports.demoNotice") || "DEMO DATA"}</span>
-              </span>
-            )}
             <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-soil-cream text-soil-primary border border-soil-secondary/40 shadow-xs">
               {t("reports.phaseTag") || "Phase 9"}
             </span>
@@ -538,11 +532,6 @@ export default function ReportsPage() {
                       ADT AI Training Foundation · Agricultural Diagnostic &amp; Digital Soil Testing Center, Baramati
                     </p>
                   </div>
-                  {isDemo && (
-                    <span className="self-start md:self-center px-3 py-1 rounded bg-amber-200 text-amber-900 text-[11px] font-black uppercase tracking-wider">
-                      {t("reports.demoNotice") || "DEMO DATA"}
-                    </span>
-                  )}
                 </div>
 
                 {/* Identification Sub-grid */}

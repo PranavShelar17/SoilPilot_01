@@ -23,8 +23,8 @@
     "language": "Language",
     "english": "English",
     "marathi": "मराठी",
-    "demoData": "DEMO DATA",
-    "demoNotice": "This preview uses sample demonstration data. It does not represent official cadastral records.",
+    "demoData": "",
+    "demoNotice": "",
     "status": "System Status",
     "comingInPhase": "Coming in Phase {phase}",
     "phase1Status": "Phase 1: Project Foundation is active.",
@@ -33,7 +33,7 @@
     "backToDashboard": "Back to Dashboard",
     "viewDetails": "View Details",
     "version": "SoilPilot v1.0.0 (Phase 3)",
-    "demoDataNotice": "This preview uses sample demonstration data. It does not represent official cadastral records."
+    "demoDataNotice": ""
   },
   "auth": {
     "findYourField": "Find Your Field",
@@ -120,7 +120,7 @@
     "testRules": "Validated Soil Test Rules",
     "dsmModels": "Digital Soil Mapping (DSM) ML Models",
     "copyright": "© 2026 SoilPilot — Digital Soil Mapping & Soil Health Portal. All rights reserved.",
-    "precision": "SoilPilot V1 • Cadastral GIS Precision (Demo Data)"
+    "precision": "SoilPilot V1 • Cadastral GIS Precision"
   },
   "dashboard": {
     "title": "Farmer Dashboard",
@@ -128,7 +128,7 @@
     "subtitle": "Here is an overview of your farm and soil information.",
     "verifiedFarmerAccess": "Verified Farmer Access",
     "yourFarm": "YOUR FARM",
-    "demoNotice": "This is sample demonstration data and does not represent official cadastral records.",
+    "demoNotice": "",
     "exploreFarm": "Explore Your Farm",
     "exploreFarmSubtitle": "Direct access to your farm boundaries, digital soil maps, and health records.",
     "soilOverview": "Soil Overview",
@@ -181,7 +181,7 @@
     "noFieldFound": "No farm location available",
     "noFieldFoundDesc": "We couldn't find a mapped farm for this Gat number yet.",
     "retry": "Retry",
-    "demoNotice": "This preview uses sample demonstration data. It does not represent official cadastral records.",
+    "demoNotice": "",
     "areaUnitHa": "Ha",
     "phase5Tag": "Active Farm",
     "cadastralBoundary": "Cadastral Boundary"
@@ -242,7 +242,7 @@
     "reportInfo": "Report Information & Laboratory Certification",
     "certifiedBy": "Authorized Soil Testing Chemist",
     "labAddress": "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra",
-    "demoWarning": "This report uses sample demonstration data and does not represent official cadastral or laboratory records.",
+    "demoWarning": "",
     "noReportTitle": "No Soil Health Report Available Yet",
     "noReportDesc": "No laboratory soil testing or digital soil health report has been recorded for this field parcel yet.",
     "reportPending": "Report Pending",
@@ -348,12 +348,12 @@
     "viewReport": "View Report",
     "noReports": "No soil data available yet.",
     "soilPending": "Soil information is pending.",
-    "demoNotice": "DEMO DATA",
+    "demoNotice": "",
     "onlinePreview": "Online Report Preview",
     "closePreview": "Close Preview",
     "recommendationSummary": "Soil-Based Recommendation Summary",
     "viewAllRecommendations": "View All Recommendations",
-    "disclaimer": "This report contains information available through the SoilPilot Digital Soil Mapping and Soil Health Portal. Values may originate from laboratory observations, digital soil mapping predictions, or imported datasets. Where data is unavailable, it is marked accordingly. Demo/sample data must never be represented as official cadastral or laboratory data.",
+    "disclaimer": "This report contains information available through the SoilPilot Digital Soil Mapping and Soil Health Portal. Values may originate from laboratory observations, digital soil mapping predictions, or imported datasets. Where data is unavailable, it is marked accordingly.",
     "verifyTitle": "Official Report Verification",
     "verifySubtitle": "Verify authenticity of your laboratory record",
     "scanQr": "Scan QR code or click to verify online",

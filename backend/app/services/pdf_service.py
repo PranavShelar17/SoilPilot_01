@@ -900,15 +900,12 @@ class PDFService:
             if is_mr
             else "ADT AI Training Foundation • Agricultural Diagnostic & Digital Soil Testing Center, Baramati"
         )
-        demo_str = "प्रात्यक्षिक नमुना (DEMO DATA)" if is_mr else "DEMO DATA"
+        demo_str = ""
 
         header_data = [
             [
                 Paragraph(f"<b>SOILPILOT</b> — {main_title}", styles["title"]),
-                Paragraph(
-                    f"<font color='{COLOR_AMBER_TEXT}'><b>{demo_str}</b></font>" if is_demo else "",
-                    ParagraphStyle("DemoTag2", parent=styles["val"], alignment=2),
-                ),
+                Paragraph("", ParagraphStyle("DemoTag2", parent=styles["val"], alignment=2)),
             ],
             [
                 Paragraph(sub_title, styles["subtitle"]),
@@ -1135,12 +1132,10 @@ class PDFService:
 
         disclaimer_body = (
             "<b>माहिती स्रोत (Data Sources):</b> या अहवालातील नोंदी प्रयोगशाळा निरीक्षण (LAB OBSERVATION), डिजिटल सॉईल मॅपिंग अंदाज (DSM PREDICTION) किंवा आयात केलेल्या डेटावरून घेतल्या आहेत. डेटा उपलब्ध नसलेल्या ठिकाणी 'उपलब्ध नाही' (Not Available) किंवा 'प्रलंबित' (Pending) दर्शवले आहे.<br/>"
-            "<b>प्रात्यक्षिक डेटा सूचना (Demo Data Policy):</b> हा अहवाल प्रात्यक्षिक/प्रोटोटाइप हेतूसाठी तयार केला असून शासकीय महसूल अभिलेख (७/१२ उतारा) किंवा अधिकृत कायदेशीर दस्तऐवज म्हणून वापरता येणार नाही.<br/>"
             f"<b>डिजिटल पडताळणी:</b> अहवाल क्रमांक {report_no} ची ऑनलाइन पडताळणी करण्यासाठी सोबत दिलेला QR कोड स्कॅन करा."
             if is_mr
             else
             "<b>Data Sources:</b> This report contains information available through the SoilPilot Digital Soil Mapping and Soil Health Portal. Values originate from verified laboratory observations (LAB OBSERVATION), machine-learning digital soil mapping predictions (DSM PREDICTION), or imported datasets. Where data is unavailable, it is marked accordingly. No fabricated values are generated.<br/>"
-            "<b>Demo Data Notice:</b> Demonstration and prototype data must never be represented as official cadastral land records or legal laboratory certifications.<br/>"
             f"<b>Digital Verification:</b> Scan the QR code to verify report authenticity online at {verify_url}."
         )
 
