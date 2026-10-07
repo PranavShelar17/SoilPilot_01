@@ -86,6 +86,27 @@ function SoilMapContent() {
   const [activeGrid, setActiveGrid] = useState<RasterGrid | null>(null);
   const [grids, setGrids] = useState<GridMap>({});
 
+  const effectiveActiveGrid = useMemo(() => {
+    if (
+      activeGrid &&
+      (activeGrid.id === activeLayer.id ||
+        (activeGrid.id === "bdod" && activeLayer.id === "bd") ||
+        (activeGrid.id === "bd" && activeLayer.id === "bdod"))
+    ) {
+      return activeGrid;
+    }
+    const preloaded = grids[activeLayer.id as DSMRasterLayerId];
+    if (
+      preloaded &&
+      (preloaded.id === activeLayer.id ||
+        (preloaded.id === "bdod" && activeLayer.id === "bd") ||
+        (preloaded.id === "bd" && activeLayer.id === "bdod"))
+    ) {
+      return preloaded;
+    }
+    return null;
+  }, [activeGrid, activeLayer.id, grids]);
+
   useEffect(() => {
     if (!activeLayer.gridMeta) {
       setActiveGrid(null);
@@ -455,7 +476,7 @@ function SoilMapContent() {
               layer={activeLayer}
               opacity={layerOpacity}
               onOpacityChange={setLayerOpacity}
-              grid={activeGrid}
+              grid={effectiveActiveGrid}
               gats={gats}
               selectedGatId={selectedGatId}
               onSelectGat={handleSelectGat}

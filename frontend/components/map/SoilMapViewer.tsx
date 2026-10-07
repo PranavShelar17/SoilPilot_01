@@ -21,6 +21,11 @@ import { dsmService, getOrCreateGatEntry, type GatDataFull } from "@/services/ds
 import { MapLegend } from "./MapLegend";
 import { translateStatus } from "@/i18n/marathiHelper";
 import { isVegetationIndex, classifyVegetationIndexValue, getVegetationIndexStyle } from "@/lib/gis/vegetationIndexStyles";
+import {
+  classifyActiveLayer,
+  getLayerClassificationDefinition,
+  type LayerClassResult,
+} from "@/lib/gis/layerClassification";
 
 export type BasemapStyle = "satellite" | "dark" | "street" | "topo";
 
@@ -60,6 +65,9 @@ interface ClickedProbeState {
   row: number | null;
   interpretation: string;
   swatchColor: string;
+  classId?: string;
+  isOutside?: boolean;
+  isNoData?: boolean;
 }
 
 /**
@@ -101,118 +109,42 @@ export interface ClassificationResult {
   status: string;
   color: string;
   textColor: string;
+  classId?: string;
+  isNoData?: boolean;
 }
 
 /**
- * Exact classification matching the Pune DSM standard and reference screenshot.
+ * Single source of truth classification delegator.
  */
-export function getClassification(layerId: string | undefined, val: number, locale?: string): ClassificationResult {
-  const id = (layerId || "ndvi").toLowerCase();
-  let res: ClassificationResult;
-
-  if (isVegetationIndex(id)) {
-    const vegCls = classifyVegetationIndexValue(id, val, locale);
-    if (vegCls) {
-      return {
-        status: vegCls.status,
-        color: vegCls.color,
-        textColor: vegCls.textColor,
-      };
-    }
-  }
-
-  if (id === "ph") {
-    if (val < 6.5) res = { status: "Acidic Soil", color: "#ef4444", textColor: "#ffffff" };
-    else if (val <= 7.8) res = { status: "Optimal Neutral", color: "#00e676", textColor: "#000000" };
-    else if (val <= 8.5) res = { status: "Moderate Alkaline", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Strongly Alkaline", color: "#ef4444", textColor: "#ffffff" };
-  } else if (id === "soc") {
-    if (val < 0.75) res = { status: "Low Organic Carbon", color: "#ef4444", textColor: "#ffffff" };
-    else if (val < 1.1) res = { status: "Medium Organic Carbon", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "High Organic Carbon", color: "#00e676", textColor: "#000000" };
-  } else if (id === "nitrogen") {
-    if (val < 0.85) res = { status: "Low / Deficient", color: "#ef4444", textColor: "#ffffff" };
-    else if (val < 1.15) res = { status: "Medium Nitrogen", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Sufficient / High", color: "#00e676", textColor: "#000000" };
-  } else if (id === "cec") {
-    if (val < 25.0) res = { status: "Moderate Cation Exchange", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "High Nutrient Buffer (Fertile)", color: "#00e676", textColor: "#000000" };
-  } else if (id === "bd" || id === "bdod") {
-    if (val < 1.45) res = { status: "Ideal Porosity", color: "#00e676", textColor: "#000000" };
-    else if (val <= 1.56) res = { status: "Moderate Density", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Compacted Soil", color: "#ef4444", textColor: "#ffffff" };
-  } else if (id === "cfvo") {
-    if (val < 10.0) res = { status: "Low Rock Fragments (Favorable)", color: "#00e676", textColor: "#000000" };
-    else if (val <= 14.0) res = { status: "Moderate Coarse Fragments", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "High Coarse Rock Content", color: "#ef4444", textColor: "#ffffff" };
-  } else if (id === "clay") {
-    if (val < 35.0) res = { status: "Medium Clay Texture", color: "#f59e0b", textColor: "#000000" };
-    else if (val <= 44.0) res = { status: "Optimal Vertisol Clay", color: "#00e676", textColor: "#000000" };
-    else res = { status: "Heavy Dense Clay", color: "#059669", textColor: "#ffffff" };
-  } else if (id === "sand") {
-    if (val < 25.0) res = { status: "Fine / Low Sand Fraction", color: "#84cc16", textColor: "#000000" };
-    else if (val <= 31.0) res = { status: "Optimal Loamy Sand", color: "#00e676", textColor: "#000000" };
-    else res = { status: "Coarse Sandy Fraction", color: "#f59e0b", textColor: "#000000" };
-  } else if (id === "silt") {
-    if (val < 24.0) res = { status: "Light Silt Fraction", color: "#f59e0b", textColor: "#000000" };
-    else if (val <= 28.0) res = { status: "Medium Silt Fraction", color: "#84cc16", textColor: "#000000" };
-    else res = { status: "Rich Silt Fraction", color: "#00e676", textColor: "#000000" };
-  } else if (id === "soil_texture") {
-    res = { status: "Class 1: Clay Vertisol (काळी माती)", color: "#5c3d2e", textColor: "#ffffff" };
-  } else if (id === "slope") {
-    if (val < 2.5) res = { status: "Level / Flat (0-2.5%)", color: "#00e676", textColor: "#000000" };
-    else if (val <= 6.0) res = { status: "Gentle Slope (2.5-6%)", color: "#84cc16", textColor: "#000000" };
-    else res = { status: "Moderate Slope (>6%)", color: "#f59e0b", textColor: "#000000" };
-  } else if (id === "elevation") {
-    res = { status: "Deccan Plateau (~540-580m)", color: "#00e676", textColor: "#000000" };
-  } else if (id === "lulc") {
-    const lulcClasses: Record<
-      number,
-      { name: string; mrName: string; color: string; textColor: string; workflow: string }
-    > = {
-      0: { name: "Water", mrName: "पाणी", color: "#0066ff", textColor: "#ffffff", workflow: "Masked" },
-      1: { name: "Trees", mrName: "झाडे", color: "#006400", textColor: "#ffffff", workflow: "Masked" },
-      2: { name: "Grass", mrName: "गवत", color: "#7cfc00", textColor: "#000000", workflow: "Retained" },
-      3: { name: "Flooded Veg", mrName: "जलमय", color: "#00e6e6", textColor: "#000000", workflow: "Masked" },
-      4: { name: "Crops", mrName: "पिके / शेती", color: "#e91e63", textColor: "#ffffff", workflow: "Primary Soil Mask" },
-      5: { name: "Shrub & Scrub", mrName: "झुडपे", color: "#808000", textColor: "#ffffff", workflow: "Masked" },
-      6: { name: "Built Area", mrName: "वस्ती", color: "#3f51b5", textColor: "#ffffff", workflow: "Masked" },
-      7: { name: "Bare Ground", mrName: "उघडी जमीन", color: "#d2b48c", textColor: "#000000", workflow: "Fallow Retained" },
-      8: { name: "Snow & Ice", mrName: "बर्फ", color: "#ffffff", textColor: "#000000", workflow: "N/A" },
-    };
-    const c = Math.round(val);
-    const item = lulcClasses[c];
-    if (item) {
-      res = {
-        status: locale === "mr" ? `वर्ग ${c}: ${item.mrName}` : `Class ${c}: ${item.name} (${item.workflow})`,
-        color: item.color,
-        textColor: item.textColor,
-      };
-    } else {
-      res = { status: `Class ${c}`, color: "#00e676", textColor: "#000000" };
-    }
-  } else if (id === "kharif_rgb" || id === "rabi_rgb") {
-    res = { status: "True-Color Optical Satellite Image", color: "#00e676", textColor: "#000000" };
-  } else if (id === "uncertainty") {
-    if (val < 8.0) res = { status: "High Confidence", color: "#00e676", textColor: "#000000" };
-    else if (val < 15.0) res = { status: "Moderate Confidence", color: "#f59e0b", textColor: "#000000" };
-    else res = { status: "Elevated Uncertainty", color: "#ef4444", textColor: "#ffffff" };
-  } else {
-    res = { status: "Standard Monitoring", color: "#00e676", textColor: "#000000" };
-  }
-
-  if (locale === "mr") {
-    return {
-      ...res,
-      status: translateStatus(res.status, true),
-    };
-  }
-  return res;
+export function getClassification(layerId: string | undefined, val: number | null | undefined, locale?: string): ClassificationResult {
+  const res = classifyActiveLayer(layerId, val, locale);
+  return {
+    status: res.status,
+    color: res.color,
+    textColor: res.textColor,
+    classId: res.classId,
+    isNoData: res.isNoData,
+  };
 }
 
-export function getInterpretation(layer: DSMLayerConfig | null, val: number, locale?: string): string {
+export function getInterpretation(layer: DSMLayerConfig | null, val: number | null | undefined, locale?: string): string {
   if (!layer) return locale === "mr" ? "प्रमाणित देखरेख" : "Standard Monitoring";
-  return getClassification(layer.id, val, locale).status;
+  return classifyActiveLayer(layer.id, val, locale).status;
+}
+
+/**
+ * Standard ray-casting point-in-polygon algorithm.
+ */
+export function isPointInPolygon(lng: number, lat: number, ring: [number, number][]): boolean {
+  if (!ring || ring.length < 3) return false;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    const intersect = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
 }
 
 function sampleGatGrid(
@@ -233,6 +165,11 @@ function sampleGatGrid(
   return null;
 }
 
+function isMatchingGrid(grid: RasterGrid | null, layerId?: string): boolean {
+  if (!grid || !layerId) return false;
+  return grid.id === layerId || (grid.id === "bdod" && layerId === "bd") || (grid.id === "bd" && layerId === "bdod");
+}
+
 export function sampleSpatialLayerValue(
   lng: number,
   lat: number,
@@ -247,7 +184,7 @@ export function sampleSpatialLayerValue(
 
   // Categorical layers
   if (id === "lulc") {
-    if (currentGrid) {
+    if (currentGrid && isMatchingGrid(currentGrid, id)) {
       const gv = sampleGrid(currentGrid, lng, lat);
       if (gv !== null && !isNaN(gv) && gv >= 0 && gv <= 8) {
         return Math.round(gv);
@@ -272,7 +209,7 @@ export function sampleSpatialLayerValue(
   }
 
   // 2. Check village raster grid if loaded (Authoritative GeoTIFF Grid Source of Truth)
-  if (currentGrid) {
+  if (currentGrid && isMatchingGrid(currentGrid, id)) {
     const col = Math.floor((lng - currentGrid.west) / currentGrid.pxW);
     const row = Math.floor((currentGrid.north - lat) / currentGrid.pxH);
     if (col >= 0 && row >= 0 && col < currentGrid.width && row < currentGrid.height) {
@@ -321,22 +258,51 @@ export function sampleSpatialLayerValue(
   return Number(val.toFixed(id === "ndvi" || id === "evi" || id === "savi" || id === "ndre" || id === "bsi" || id === "ndwi" || id === "ndmi" ? 3 : 2));
 }
 
-function probeValueAt(
+export function probeValueAt(
   lng: number,
   lat: number,
   layerConfig: DSMLayerConfig | null,
   currentGrid: RasterGrid | null,
   selectedGat: string | null,
   gatData: Record<string, GatDataFull> | null,
-  bounds?: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null
-): { val: number; interp: string; swatch: string; col: number; row: number } {
+  bounds?: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null,
+  parcelMatrix?: number[][] | null,
+  outerRing?: [number, number][] | null,
+  locale?: string
+): {
+  val: number;
+  interp: string;
+  swatch: string;
+  col: number;
+  row: number;
+  classId: string;
+  isOutside: boolean;
+  isNoData: boolean;
+} {
   const cleanGat = selectedGat?.replace(/[^\d]/g, "") || selectedGat;
   const entry = cleanGat && gatData ? (gatData[cleanGat] || getOrCreateGatEntry(gatData, cleanGat)) : null;
 
-  const val = sampleSpatialLayerValue(lng, lat, layerConfig, currentGrid, entry, bounds);
-  const interp = getInterpretation(layerConfig, val);
-  const isCategorical = layerConfig?.id === "lulc" || layerConfig?.id === "soil_texture";
-  const swatch = interpolateColor(val, layerConfig?.colorStops, isCategorical);
+  let val: number;
+  const matchingMatrix = parcelMatrix && parcelMatrix.length > 0 && bounds ? parcelMatrix : null;
+  const matchingGrid = isMatchingGrid(currentGrid, layerConfig?.id) ? currentGrid : null;
+
+  if (matchingMatrix && bounds) {
+    const rows = matchingMatrix.length;
+    const cols = matchingMatrix[0]?.length || 32;
+    const dLng = bounds.maxLng - bounds.minLng || 0.0001;
+    const dLat = bounds.maxLat - bounds.minLat || 0.0001;
+    const uCoord = Math.max(0, Math.min(cols - 1, ((lng - bounds.minLng) / dLng) * (cols - 1)));
+    const vCoord = Math.max(0, Math.min(rows - 1, ((bounds.maxLat - lat) / dLat) * (rows - 1)));
+    val = sampleGridBicubic(matchingMatrix, rows, cols, uCoord, vCoord);
+  } else {
+    val = sampleSpatialLayerValue(lng, lat, layerConfig, matchingGrid, entry, bounds);
+  }
+
+  const isMulti = ["ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(layerConfig?.id || "");
+  const roundedVal = Number(val.toFixed(isMulti ? 3 : 2));
+
+  const cls = classifyActiveLayer(layerConfig?.id, roundedVal, locale);
+  const isOutside = outerRing && outerRing.length >= 3 ? !isPointInPolygon(lng, lat, outerRing) : false;
 
   let col = 432;
   let row = 287;
@@ -348,11 +314,19 @@ function probeValueAt(
     row = Math.floor(((bounds.maxLat - lat) / (bounds.maxLat - bounds.minLat || 0.001)) * 512);
   }
 
-  return { val, interp, swatch, col, row };
+  return {
+    val: roundedVal,
+    interp: cls.status,
+    swatch: cls.color,
+    col,
+    row,
+    classId: cls.classId,
+    isOutside,
+    isNoData: cls.isNoData,
+  };
 }
 
 // Precision Agriculture Fertility Contour Palettes matching user reference screenshot
-// 8 discrete contour levels: Red (Deficient) -> Orange -> Amber -> Yellow -> Lime -> Olive -> Mid Green -> Deep Forest Green
 export const CONTOUR_RGB_PALETTE: [number, number, number][] = [
   [253, 35, 0],   // 0: #fd2300 - Deep Crimson Red (Deficient / Critical)
   [253, 136, 0],  // 1: #fd8800 - Vibrant Orange (Low)
@@ -412,16 +386,48 @@ function sampleGridBicubic(
 }
 
 /**
+ * Constructs a 2D scalar matrix for the parcel.
+ * Uses authoritative RasterGrid when loaded, falls back to smooth spatial model.
+ */
+export function buildParcelGridMatrix(
+  layer: DSMLayerConfig,
+  grid: RasterGrid | null,
+  bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number },
+  entry?: GatDataFull | null,
+  rows = 32,
+  cols = 32
+): number[][] {
+  const { minLng, maxLng, minLat, maxLat } = bounds;
+  const dLng = maxLng - minLng || 0.0001;
+  const dLat = maxLat - minLat || 0.0001;
+
+  const matrix: number[][] = [];
+  for (let gy = 0; gy < rows; gy++) {
+    matrix[gy] = [];
+    const sampleLat = maxLat - (gy / (rows - 1)) * dLat;
+    for (let gx = 0; gx < cols; gx++) {
+      const sampleLng = minLng + (gx / (cols - 1)) * dLng;
+      matrix[gy][gx] = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, entry || null, bounds);
+    }
+  }
+  return matrix;
+}
+
+/**
  * Generates an in-memory high-definition canvas DataURL for a parcel,
  * producing crisp, vibrant, distinct management contour zones strictly
  * clipped inside the parcel polygon matching the user reference photo.
+ *
+ * GUARANTEE:
+ * Renders colors strictly derived from classifyActiveLayer!
  */
 export function generateParcelLayerCanvas(
   outerRing: [number, number][],
   layer: DSMLayerConfig,
   grid: RasterGrid | null,
   bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number },
-  entry?: GatDataFull | null
+  entry?: GatDataFull | null,
+  passedMatrix?: number[][]
 ): string {
   if (typeof document === "undefined" || !outerRing || outerRing.length < 3) return "";
 
@@ -448,183 +454,27 @@ export function generateParcelLayerCanvas(
   ctx.closePath();
   ctx.clip(); // Outside the polygon is guaranteed 100% transparent
 
-  // Dedicated renderer for LULC categorical layer using QGIS symbology colors
-  if (layer.id === "lulc") {
-    const QGIS_COLORS: Record<number, [number, number, number]> = {
-      0: [37, 99, 235],    // 0: Water -> Blue (#2563eb)
-      1: [21, 128, 61],    // 1: Trees -> Dark Green (#15803d)
-      2: [101, 163, 13],   // 2: Grass -> Light Green (#65a30d)
-      3: [6, 182, 212],    // 3: Flooded Veg -> Cyan (#06b6d4)
-      4: [217, 70, 239],   // 4: Crops -> Vivid Magenta (#d946ef)
-      5: [133, 77, 14],    // 5: Shrub & Scrub -> Olive / Brown (#854d0e)
-      6: [59, 130, 246],   // 6: Built Area -> Blue / Indigo (#3b82f6)
-      7: [214, 199, 178],  // 7: Bare Ground -> Light Gray / Tan (#d6c7b2)
-      8: [255, 255, 255],  // 8: Snow & Ice -> White (#ffffff)
-    };
-
-    const imgData = ctx.createImageData(W, H);
-    const data = imgData.data;
-
-    for (let y = 0; y < H; y++) {
-      const sampleLat = maxLat - (y / (H - 1)) * dLat;
-      for (let x = 0; x < W; x++) {
-        const sampleLng = minLng + (x / (W - 1)) * dLng;
-        let clsVal = 4; // Default Crops
-        if (grid) {
-          const gv = sampleGrid(grid, sampleLng, sampleLat);
-          if (gv !== null && !isNaN(gv) && gv >= 0 && gv <= 8) {
-            clsVal = Math.round(gv);
-          }
-        }
-        const rgb = QGIS_COLORS[clsVal] || QGIS_COLORS[4];
-        const idx = (y * W + x) * 4;
-        data[idx] = rgb[0];
-        data[idx + 1] = rgb[1];
-        data[idx + 2] = rgb[2];
-        data[idx + 3] = 255;
-      }
-    }
-    ctx.putImageData(imgData, 0, 0);
-    return canvas.toDataURL("image/png");
-  }
-
   // 2. Extract or construct 2D control grid for the parcel
-  const overlayGrid = entry?.overlays?.[layer.id]?.grid ||
-    (layer.id === "bdod" ? entry?.overlays?.["bd"]?.grid : undefined);
-
-  let matrix: number[][];
-  let rows: number;
-  let cols: number;
-
-  if (overlayGrid && overlayGrid.values && overlayGrid.values.length > 0) {
-    rows = overlayGrid.rows;
-    cols = overlayGrid.cols;
-    let sum = 0;
-    let count = 0;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const v = overlayGrid.values[r]?.[c];
-        if (v !== null && v !== undefined && !isNaN(v)) {
-          sum += v;
-          count++;
-        }
-      }
-    }
-    const mean = count > 0 ? sum / count : (layer.mean ?? 0.5);
-    matrix = [];
-    for (let r = 0; r < rows; r++) {
-      matrix[r] = [];
-      for (let c = 0; c < cols; c++) {
-        const v = overlayGrid.values[r]?.[c];
-        matrix[r][c] = (v !== null && v !== undefined && !isNaN(v)) ? v : mean;
-      }
-    }
-  } else {
-    // 28x28 control grid sampled across the parcel bounding box
-    rows = 28;
-    cols = 28;
-    matrix = [];
-    for (let gy = 0; gy < rows; gy++) {
-      matrix[gy] = [];
-      const sampleLat = maxLat - (gy / (rows - 1)) * dLat;
-      for (let gx = 0; gx < cols; gx++) {
-        const sampleLng = minLng + (gx / (cols - 1)) * dLng;
-        matrix[gy][gx] = sampleSpatialLayerValue(sampleLng, sampleLat, layer, grid, entry || null, bounds);
-      }
-    }
-  }
-
-  let minVal = layer.min ?? 0.05;
-  let maxVal = layer.max ?? 0.8;
-
-  const pStats = entry?.stats?.[layer.id as DSMRasterLayerId] ||
-    (layer.id === "bdod" ? entry?.stats?.["bd"] : undefined);
-  if (pStats && pStats.min !== undefined && pStats.max !== undefined && pStats.max > pStats.min) {
-    if (pStats.min >= maxVal || pStats.max <= minVal) {
-      minVal = pStats.min;
-      maxVal = pStats.max;
-    }
-  }
-  const span = maxVal - minVal || 1.0;
-  const vegStyle = getVegetationIndexStyle(layer.id);
-
-  // Cached hex-to-rgb for spectral index classes
-  const hexRgbCache: Record<string, [number, number, number]> = {};
-  if (vegStyle) {
-    for (const c of vegStyle.classes) {
-      const hex = c.color.replace("#", "");
-      hexRgbCache[c.id] = [
-        parseInt(hex.slice(0, 2), 16),
-        parseInt(hex.slice(2, 4), 16),
-        parseInt(hex.slice(4, 6), 16),
-      ];
-    }
-  }
-
-  // 5 discrete crisp high-contrast contour zone colors matching reference photo
-  const isInverse = layer.id === "bd" || layer.id === "bdod" || layer.id === "uncertainty" || layer.id === "bsi";
-  const standardZonePal: [number, number, number][] = isInverse
-    ? [
-        [22, 163, 74],   // Zone 0: #16a34a - Deep Green (Optimal / Low compaction)
-        [74, 212, 126],  // Zone 1: #4ad47e - Light Green
-        [228, 197, 31],  // Zone 2: #e4c51f - Yellow
-        [229, 119, 32],  // Zone 3: #e57720 - Orange
-        [222, 79, 75],   // Zone 4: #de4f4b - Red (Compacted / High uncertainty)
-      ]
-    : [
-        [222, 79, 75],   // Zone 0: #de4f4b - Tomato / Crimson Red (Deficient / Critical)
-        [229, 119, 32],  // Zone 1: #e57720 - Vibrant Orange (Low)
-        [228, 197, 31],  // Zone 2: #e4c51f - Golden Yellow (Medium / Marginal)
-        [74, 212, 126],  // Zone 3: #4ad47e - Mint / Light Green (Good / Optimal)
-        [22, 163, 74],   // Zone 4: #16a34a - Deep Forest Green (High / Prime)
-      ];
+  const matrix = passedMatrix || buildParcelGridMatrix(layer, grid, bounds, entry);
+  const rows = matrix.length;
+  const cols = matrix[0]?.length || 32;
 
   const imgData = ctx.createImageData(W, H);
   const data = imgData.data;
 
   // 3. Evaluate high-definition continuous bicubic surface and assign discrete crisp colors
+  // using THE SAME classifyActiveLayer function as the popup, legend, and distribution!
   for (let y = 0; y < H; y++) {
     const vCoord = (y / (H - 1)) * (rows - 1);
     for (let x = 0; x < W; x++) {
       const uCoord = (x / (W - 1)) * (cols - 1);
       const val = sampleGridBicubic(matrix, rows, cols, uCoord, vCoord);
-
-      let r: number;
-      let g: number;
-      let b: number;
-
-      if (layer.id === "ndvi") {
-        // Exact discrete classification matching reference photo:
-        if (val < 0.20) {
-          r = 222; g = 79; b = 75;  // Red (#de4f4b)
-        } else if (val < 0.40) {
-          r = 229; g = 119; b = 32; // Orange (#e57720)
-        } else if (val < 0.60) {
-          r = 228; g = 197; b = 31; // Yellow (#e4c51f)
-        } else if (val < 0.80) {
-          r = 74; g = 212; b = 126; // Mint/Light Green (#4ad47e)
-        } else {
-          r = 22; g = 163; b = 74;  // Deep Green (#16a34a)
-        }
-      } else if (vegStyle) {
-        const cls = classifyVegetationIndexValue(layer.id, val);
-        const rgb = (cls && hexRgbCache[cls.classId]) || [128, 128, 128];
-        r = rgb[0];
-        g = rgb[1];
-        b = rgb[2];
-      } else {
-        // Discrete stepped classification across layer range (5 zones)
-        const norm = Math.max(0, Math.min(1.0, (val - minVal) / span));
-        const stepIdx = Math.min(4, Math.max(0, Math.floor(norm * 5)));
-        r = standardZonePal[stepIdx][0];
-        g = standardZonePal[stepIdx][1];
-        b = standardZonePal[stepIdx][2];
-      }
+      const cls = classifyActiveLayer(layer.id, val);
 
       const idx = (y * W + x) * 4;
-      data[idx] = r;
-      data[idx + 1] = g;
-      data[idx + 2] = b;
+      data[idx] = cls.rgb[0];
+      data[idx + 1] = cls.rgb[1];
+      data[idx + 2] = cls.rgb[2];
       data[idx + 3] = 255;
     }
   }
@@ -669,6 +519,14 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   clickedProbeRef.current = clickedProbe;
 
   const parcelBoundsRef = useRef<{ minLng: number; maxLng: number; minLat: number; maxLat: number } | null>(null);
+  const activeParcelMatrixRef = useRef<{
+    matrix: number[][];
+    rows: number;
+    cols: number;
+    bounds: { minLng: number; maxLng: number; minLat: number; maxLat: number };
+    layerId: string;
+  } | null>(null);
+  const activeOuterRingRef = useRef<[number, number][] | null>(null);
 
   // Full Gat dataset with precomputed contour-shaded overlays & exact stats
   const [gatDataFull, setGatDataFull] = useState<Record<string, GatDataFull> | null>(null);
@@ -852,7 +710,18 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
               onSelectGat(feature.id);
             }
             const { lat, lng } = e.latlng;
-            const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current, parcelBoundsRef.current);
+            const probe = probeValueAt(
+              lng,
+              lat,
+              layer,
+              grid,
+              selectedGatId,
+              gatDataFullRef.current,
+              parcelBoundsRef.current,
+              activeParcelMatrixRef.current?.matrix,
+              activeOuterRingRef.current,
+              locale
+            );
             setClickedProbe({
               lng,
               lat,
@@ -861,6 +730,9 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
               row: probe.row,
               interpretation: probe.interp,
               swatchColor: probe.swatch,
+              classId: probe.classId,
+              isOutside: probe.isOutside,
+              isNoData: probe.isNoData,
             });
           };
 
@@ -886,7 +758,18 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           return;
         }
       }
-      const probe = probeValueAt(lng, lat, layer, grid, selectedGatId, gatDataFullRef.current, parcelBoundsRef.current);
+      const probe = probeValueAt(
+        lng,
+        lat,
+        layer,
+        grid,
+        selectedGatId,
+        gatDataFullRef.current,
+        parcelBoundsRef.current,
+        activeParcelMatrixRef.current?.matrix,
+        activeOuterRingRef.current,
+        locale
+      );
       setClickedProbe({
         lng,
         lat,
@@ -895,6 +778,9 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
         row: probe.row,
         interpretation: probe.interp,
         swatchColor: probe.swatch,
+        classId: probe.classId,
+        isOutside: probe.isOutside,
+        isNoData: probe.isNoData,
       });
     };
 
@@ -1027,13 +913,27 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
 
     const targetGatInfo = cleanGat && gatDataFullRef.current ? (gatDataFullRef.current[cleanGat] || getOrCreateGatEntry(gatDataFullRef.current, cleanGat)) : null;
 
+    activeOuterRingRef.current = outerRing;
+    const parcelBounds = { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat };
+    parcelBoundsRef.current = parcelBounds;
+
+    const matrix = buildParcelGridMatrix(layer, grid, parcelBounds, targetGatInfo);
+    activeParcelMatrixRef.current = {
+      matrix,
+      rows: matrix.length,
+      cols: matrix[0]?.length || 32,
+      bounds: parcelBounds,
+      layerId: layer.id,
+    };
+
     // Always generate crisp, high-definition precision agronomic contour heatmap directly clipped to parcel
     const overlayUrl = generateParcelLayerCanvas(
       outerRing,
       layer,
       grid,
-      { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat },
-      targetGatInfo
+      parcelBounds,
+      targetGatInfo,
+      matrix
     );
     const latLngBounds: [[number, number], [number, number]] = [
       [pMinLat, pMinLng],
@@ -1126,183 +1026,130 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
     });
   }, [selectedGatId, myGatId, ready, layer, grid, gats, gatDataFull]);
 
-  // Precompute / memoize parcel raster class area distribution (Acres & Hectares)
-  // based on the selected Gat polygon and actual classified raster pixels.
-  // Cached per Gat and layer; dynamically calculates authentic area covered by each color.
-  const parcelClassAreas = useMemo<Record<string, { acres: number; ha: number; color?: string }> | null>(() => {
+  // 7b. Invalidate Stale Data on Layer Switch and re-probe at centroid or clicked location
+  const prevLayerIdRef = useRef<string | undefined>(layer?.id);
+  useEffect(() => {
+    if (!layer) return;
+    if (prevLayerIdRef.current !== layer.id) {
+      prevLayerIdRef.current = layer.id;
+      // Immediately reset clickedProbe so NO stale probe or labels from previous layer persist
+      setClickedProbe(null);
+    }
+  }, [layer?.id]);
+
+  // Authentically compute parcel raster statistics and class distribution from the active raster matrix
+  const parcelStatsAndDistribution = useMemo(() => {
     if (!layer || layer.id === "farm_boundary") return null;
     const cleanNum = selectedGatId?.replace(/[^\d]/g, "") || myGatId?.replace(/[^\d]/g, "") || selectedGatId;
     if (!cleanNum) return null;
 
-    const gatInfo = cleanNum && gatDataFull ? (gatDataFull[cleanNum] || getOrCreateGatEntry(gatDataFull, cleanNum)) : null;
-    const one = gats?.features?.find((f) => f.id === selectedGatId) || gats?.features?.[0];
-
-    const totalAcres = gatInfo?.area_acres
-      ?? one?.properties?.area_acres
-      ?? (one?.properties?.area_ha ? one.properties.area_ha * 2.47105 : 3.68);
-    const totalHa = gatInfo?.area_ha
-      ?? one?.properties?.area_ha
-      ?? (totalAcres * 0.404686);
-
-    const layerId = layer.id;
-
-    // 1. Primary Source: Exact clipped parcel overlay raster grid in gatDataFull
-    const overlayGrid = gatInfo?.overlays?.[layerId]?.grid || (layerId === "bdod" ? gatInfo?.overlays?.["bd"]?.grid : undefined);
-    if (overlayGrid && overlayGrid.values && overlayGrid.rows > 0) {
-      let validPixels = 0;
-      const classPixelCounts: Record<string, number> = {};
-
-      for (let r = 0; r < overlayGrid.rows; r++) {
-        const rowVals = overlayGrid.values[r];
-        if (!rowVals) continue;
-        for (let c = 0; c < overlayGrid.cols; c++) {
-          let v = rowVals[c];
-          if (v !== null && v !== undefined && !isNaN(v)) {
-            if ((layerId === "ndvi" || layerId === "evi") && v > 1.0) {
-              v = v / 100;
-            }
-            validPixels++;
-            const cls = getClassification(layerId, v);
-            classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
-          }
-        }
-      }
-
-      if (validPixels > 0) {
-        const result: Record<string, { acres: number; ha: number }> = {};
-        for (const [status, count] of Object.entries(classPixelCounts)) {
-          const ratio = count / validPixels;
-          result[status] = {
-            acres: Number((ratio * totalAcres).toFixed(2)),
-            ha: Number((ratio * totalHa).toFixed(2)),
-          };
-        }
-        return result;
-      }
-    }
-
-    // 2. Secondary Source: Sample raster grid across the Gat polygon geometry
-    if (grid && one && one.geometry) {
-      const coords = (one.geometry as any).coordinates;
-      const ring: [number, number][] =
-        one.geometry.type === "Polygon"
-          ? coords[0]
-          : one.geometry.type === "MultiPolygon"
-          ? coords[0]?.[0]
-          : [];
-
-      if (ring && ring.length >= 3) {
-        const [w, s, e, n] = one.properties?.bounds || [grid.west, grid.south, grid.east, grid.north];
-        const stepX = Math.max(grid.pxW, (e - w) / 25);
-        const stepY = Math.max(grid.pxH, (n - s) / 25);
-
-        let validCount = 0;
-        const classPixelCounts: Record<string, number> = {};
-
-        for (let x = w; x <= e; x += stepX) {
-          for (let y = s; y <= n; y += stepY) {
-            let inside = false;
-            for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-              const [xi, yi] = ring[i];
-              const [xj, yj] = ring[j];
-              const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-              if (intersect) inside = !inside;
-            }
-
-            if (inside) {
-              let v = sampleGrid(grid, x, y);
-              if (v !== null && !isNaN(v)) {
-                if ((layerId === "ndvi" || layerId === "evi") && v > 1.0) {
-                  v = v / 100;
-                }
-                validCount++;
-                const cls = getClassification(layerId, v);
-                classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
-              }
-            }
-          }
-        }
-
-        if (validCount > 0) {
-          const result: Record<string, { acres: number; ha: number }> = {};
-          for (const [status, count] of Object.entries(classPixelCounts)) {
-            const ratio = count / validCount;
-            result[status] = {
-              acres: Number((ratio * totalAcres).toFixed(2)),
-              ha: Number((ratio * totalHa).toFixed(2)),
-            };
-          }
-          return result;
-        }
-      }
-    }
-
-    // 3. Precision Agronomic Spatial Field Sampling across the Parcel Polygon
-    // (Used for all layers including Silt, Sand, Clay, Slope, CFVO, CEC, etc.)
-    const target = gats?.features?.find((f) => {
+    const one = gats?.features?.find((f) => {
       const fId = String(f.id ?? "").replace(/[^\d]/g, "");
-      const fName = String(f.properties?.name ?? (f.properties as any)?.gat_no ?? f.properties?.gat_id ?? "").replace(/[^\d]/g, "");
+      const fName = String(f.properties?.name ?? (f.properties as any)?.gat_no ?? "").replace(/[^\d]/g, "");
       return f.id === selectedGatId || (cleanNum && (fId === cleanNum || fName === cleanNum));
     }) || gats?.features?.[0];
 
+    const targetGatInfo = cleanNum && gatDataFull ? (gatDataFull[cleanNum] || getOrCreateGatEntry(gatDataFull, cleanNum)) : null;
+
     let ring: [number, number][] = [];
-    if (target?.geometry) {
-      if (target.geometry.type === "Polygon") {
-        ring = (target.geometry.coordinates[0] || []) as [number, number][];
-      } else if (target.geometry.type === "MultiPolygon") {
-        ring = (target.geometry.coordinates[0]?.[0] || []) as [number, number][];
+    if (one?.geometry) {
+      if (one.geometry.type === "Polygon") {
+        ring = (one.geometry.coordinates[0] || []) as [number, number][];
+      } else if (one.geometry.type === "MultiPolygon") {
+        ring = (one.geometry.coordinates[0]?.[0] || []) as [number, number][];
       }
     }
 
-    if (ring && ring.length >= 3) {
-      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-      for (const [lng, lat] of ring) {
-        if (lng < minLng) minLng = lng;
-        if (lng > maxLng) maxLng = lng;
-        if (lat < minLat) minLat = lat;
-        if (lat > maxLat) maxLat = lat;
-      }
-      const bounds = { minLng, maxLng, minLat, maxLat };
-      const steps = 25;
-      const stepX = (maxLng - minLng) / steps;
-      const stepY = (maxLat - minLat) / steps;
+    if (!ring || ring.length < 3) return null;
 
-      let validCount = 0;
-      const classPixelCounts: Record<string, number> = {};
+    let pMinLng = Infinity, pMaxLng = -Infinity, pMinLat = Infinity, pMaxLat = -Infinity;
+    for (const [lng, lat] of ring) {
+      if (lng < pMinLng) pMinLng = lng;
+      if (lng > pMaxLng) pMaxLng = lng;
+      if (lat < pMinLat) pMinLat = lat;
+      if (lat > pMaxLat) pMaxLat = lat;
+    }
+    const bounds = { minLng: pMinLng, maxLng: pMaxLng, minLat: pMinLat, maxLat: pMaxLat };
 
-      for (let x = minLng; x <= maxLng; x += stepX) {
-        for (let y = minLat; y <= maxLat; y += stepY) {
-          let inside = false;
-          for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-            const [xi, yi] = ring[i];
-            const [xj, yj] = ring[j];
-            const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
-            if (intersect) inside = !inside;
-          }
+    // Get or build matrix strictly for active layer
+    const matchingGrid = isMatchingGrid(grid, layer.id) ? grid : null;
+    const matrix = activeParcelMatrixRef.current?.layerId === layer.id
+      ? activeParcelMatrixRef.current.matrix
+      : buildParcelGridMatrix(layer, matchingGrid, bounds, targetGatInfo);
 
-          if (inside) {
-            const v = sampleSpatialLayerValue(x, y, layer, grid, gatInfo, bounds);
+    const rows = matrix.length;
+    const cols = matrix[0]?.length || 32;
+
+    const totalAcres = targetGatInfo?.area_acres
+      ?? one?.properties?.area_acres
+      ?? (one?.properties?.area_ha ? one.properties.area_ha * 2.47105 : 3.69);
+
+    const totalHa = targetGatInfo?.area_ha
+      ?? one?.properties?.area_ha
+      ?? (totalAcres * 0.404686);
+
+    // Dense grid sampling inside Gat polygon
+    const steps = 35;
+    const stepLng = (pMaxLng - pMinLng) / steps;
+    const stepLat = (pMaxLat - pMinLat) / steps;
+
+    let sum = 0;
+    let validCount = 0;
+    const classPixelCounts: Record<string, number> = {};
+
+    for (let sy = 0; sy <= steps; sy++) {
+      const lat = pMinLat + sy * stepLat;
+      const vCoord = Math.max(0, Math.min(rows - 1, ((pMaxLat - lat) / (pMaxLat - pMinLat || 0.0001)) * (rows - 1)));
+      for (let sx = 0; sx <= steps; sx++) {
+        const lng = pMinLng + sx * stepLng;
+        if (isPointInPolygon(lng, lat, ring)) {
+          const uCoord = Math.max(0, Math.min(cols - 1, ((lng - pMinLng) / (pMaxLng - pMinLng || 0.0001)) * (cols - 1)));
+          const v = sampleGridBicubic(matrix, rows, cols, uCoord, vCoord);
+          if (!isNaN(v)) {
+            sum += v;
             validCount++;
-            const cls = getClassification(layerId, v);
-            classPixelCounts[cls.status] = (classPixelCounts[cls.status] || 0) + 1;
+            const cls = classifyActiveLayer(layer.id, v, locale);
+            classPixelCounts[cls.classId] = (classPixelCounts[cls.classId] || 0) + 1;
           }
         }
       }
+    }
 
-      if (validCount > 0) {
-        const result: Record<string, { acres: number; ha: number }> = {};
-        for (const [status, count] of Object.entries(classPixelCounts)) {
-          const ratio = count / validCount;
-          result[status] = {
-            acres: Number((ratio * totalAcres).toFixed(2)),
-            ha: Number((ratio * totalHa).toFixed(2)),
-          };
-        }
-        return result;
+    const plotAvg = validCount > 0 ? sum / validCount : (layer.mean ?? 0.5);
+
+    // Generate ordered distribution from official class definition
+    const def = getLayerClassificationDefinition(layer.id);
+    const classes = def?.classes || [];
+
+    const distribution: { id: string; name: string; acres: number; ha: number; pct: string; color: string; classVal?: number }[] = [];
+
+    if (classes.length > 0) {
+      for (const c of classes) {
+        const count = classPixelCounts[c.id] || 0;
+        const ratio = validCount > 0 ? count / validCount : 0;
+        const acres = Number((ratio * totalAcres).toFixed(2));
+        const ha = Number((ratio * totalHa).toFixed(2));
+        const pct = (ratio * 100).toFixed(1);
+        distribution.push({
+          id: c.id,
+          name: locale === "mr" ? c.marathiLabel : c.label,
+          acres,
+          ha,
+          pct,
+          color: c.color,
+          classVal: def?.layerId === "lulc" ? Math.round(c.min + 0.5) : undefined,
+        });
       }
     }
-    return null;
-  }, [gats, selectedGatId, myGatId, gatDataFull, layer, grid, locale]);
+
+    return {
+      plotAvg,
+      distribution,
+      totalAcres,
+      totalHa,
+      validCount,
+    };
+  }, [layer, selectedGatId, myGatId, gats, gatDataFull, grid, locale]);
 
   // ---------------------------------------------------------------------------
   // 8. Precision Agronomic Bottom-Left Information Box (Matching Reference Screenshot)
@@ -1327,7 +1174,7 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   const centroidCoords = useMemo(() => {
     if (activeGatInfo?.centroid) return activeGatInfo.centroid;
     if (activeGatFeature?.properties?.centroid) return activeGatFeature.properties.centroid;
-    return [74.50187, 18.15416] as [number, number];
+    return [74.50664, 18.14902] as [number, number];
   }, [activeGatInfo, activeGatFeature]);
 
   const probeCoords = useMemo(() => {
@@ -1352,46 +1199,41 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
   }, [cleanGatNumber, activeGatInfo, activeGatFeature, totalAcresFormatted]);
 
   const infoBoxMetric = useMemo(() => {
-    const isLulc = layer?.id === "lulc";
     const layerName = locale === "mr"
       ? (layer?.marathiName || layer?.shortName || layer?.name || "NDVI")
       : (layer?.shortName || layer?.name || "NDVI");
 
+    const valUnit = layer?.unit || "index";
+    const isMulti = ["ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(layer?.id || "");
+
+    const isNoData = clickedProbe?.isNoData ?? false;
+    const isOutside = clickedProbe?.isOutside ?? false;
+
     let valDisplay = "";
-    let valUnit = "";
     let valColor = "#00e676";
     let zoneName = "";
     let zoneBg = "#00e676";
     let zoneText = "#ffffff";
     let avgDisplay = "";
 
-    if (isLulc) {
-      const probeVal = clickedProbe?.val ?? 4;
-      const classNum = Math.round(probeVal);
-      const isTrees = classNum === 1;
-      const name = isTrees ? "Trees" : "Crops";
-      const color = isTrees ? "#15803d" : "#d946ef";
-
-      valDisplay = `Class ${classNum}: ${name}`;
-      valUnit = "Class";
-      valColor = "#00e676";
-      zoneName = name;
-      zoneBg = color;
+    if (isNoData) {
+      valDisplay = locale === "mr" ? "माहिती उपलब्ध नाही" : "No Data";
+      zoneName = locale === "mr" ? "अनुपलब्ध" : "Unavailable";
+      zoneBg = "#64748B";
       zoneText = "#ffffff";
-      avgDisplay = "Class 4: Crops";
     } else {
-      const val = clickedProbe?.val ?? (layer?.mean ?? 0.41);
-      const isMulti = ["ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(layer?.id || "");
+      const val = clickedProbe?.val ?? (parcelStatsAndDistribution?.plotAvg ?? layer?.mean ?? 0.41);
       valDisplay = isMulti ? val.toFixed(3) : val.toFixed(2);
-      valUnit = layer?.unit || "index";
-      const cls = getClassification(layer?.id, val, locale);
-      valColor = cls.color || "#00e676";
-      zoneName = cls.status;
+      const cls = classifyActiveLayer(layer?.id, val, locale);
+      valColor = cls.color;
+      zoneName = isOutside ? (locale === "mr" ? "निवडलेल्या गटाबाहेर" : "Outside Selected Gat") : cls.status;
       zoneBg = cls.color;
-      zoneText = cls.textColor || "#ffffff";
-      const avgVal = layer?.mean !== undefined ? (isMulti ? layer.mean.toFixed(2) : layer.mean.toFixed(2)) : "0.41";
-      avgDisplay = `${avgVal} ${valUnit}`;
+      zoneText = cls.textColor;
     }
+
+    const plotAvg = parcelStatsAndDistribution?.plotAvg ?? (layer?.mean ?? 0.41);
+    const avgValFormatted = isMulti ? plotAvg.toFixed(2) : plotAvg.toFixed(2);
+    avgDisplay = `${avgValFormatted} ${valUnit}`;
 
     return {
       layerName,
@@ -1402,48 +1244,16 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
       zoneBg,
       zoneText,
       avgDisplay,
+      isOutside,
     };
-  }, [layer, clickedProbe, locale]);
+  }, [layer, clickedProbe, parcelStatsAndDistribution, locale]);
 
   const distributionList = useMemo(() => {
-    const totalAc = parseFloat(totalAcresFormatted) || 3.69;
-
-    if (layer?.id === "lulc") {
-      return [
-        { name: "Trees", acres: 1.45, pct: "39.0", color: "#15803d", classVal: 1 },
-        { name: "Crops", acres: 2.27, pct: "61.0", color: "#d946ef", classVal: 4 },
-      ];
+    if (!parcelStatsAndDistribution || parcelStatsAndDistribution.distribution.length === 0) {
+      return [];
     }
-
-    if (parcelClassAreas && Object.keys(parcelClassAreas).length > 0) {
-      const total = Object.values(parcelClassAreas).reduce((acc, c) => acc + c.acres, 0) || totalAc;
-      return Object.entries(parcelClassAreas).map(([name, data]) => {
-        const pct = ((data.acres / total) * 100).toFixed(1);
-        const cls = getClassification(layer?.id, 0.5, locale);
-        return {
-          name,
-          acres: data.acres,
-          pct,
-          color: data.color || cls.color,
-          classVal: undefined,
-        };
-      });
-    }
-
-    if (layer?.id === "ndvi") {
-      return [
-        { name: "Low / Sparse Vegetation", acres: 1.37, pct: "37.2", color: "#fd8800" },
-        { name: "Moderate Vegetation", acres: 1.41, pct: "38.3", color: "#febb00" },
-        { name: "Very Low / Stressed", acres: 0.46, pct: "12.5", color: "#fd2300" },
-        { name: "Healthy Vegetation", acres: 0.44, pct: "12.0", color: "#a4c400" },
-      ];
-    }
-
-    return [
-      { name: "Optimal Root-Zone", acres: Number((totalAc * 0.72).toFixed(2)), pct: "72.0", color: "#00e676" },
-      { name: "Marginal / Moderate", acres: Number((totalAc * 0.28).toFixed(2)), pct: "28.0", color: "#f59e0b" },
-    ];
-  }, [layer?.id, totalAcresFormatted, parcelClassAreas, locale]);
+    return parcelStatsAndDistribution.distribution;
+  }, [parcelStatsAndDistribution]);
 
   const handleCategoryClick = useCallback(
     (item: any) => {
@@ -1456,10 +1266,39 @@ export const SoilMapViewer: React.FC<SoilMapViewerProps> = ({
           row: prev?.row ?? 287,
           interpretation: item.name,
           swatchColor: item.color,
+          classId: item.id,
         }));
+      } else if (item?.id && activeParcelMatrixRef.current && parcelBoundsRef.current) {
+        const { matrix, rows, cols } = activeParcelMatrixRef.current;
+        const b = parcelBoundsRef.current;
+        const ring = activeOuterRingRef.current;
+        for (let gy = 0; gy < rows; gy++) {
+          const lat = b.maxLat - (gy / (rows - 1)) * (b.maxLat - b.minLat);
+          for (let gx = 0; gx < cols; gx++) {
+            const lng = b.minLng + (gx / (cols - 1)) * (b.maxLng - b.minLng);
+            if (!ring || isPointInPolygon(lng, lat, ring)) {
+              const val = matrix[gy][gx];
+              const cls = classifyActiveLayer(layer?.id, val, locale);
+              if (cls.classId === item.id) {
+                const isMulti = ["ndvi", "evi", "savi", "ndmi", "ndre", "bsi", "ndwi"].includes(layer?.id || "");
+                setClickedProbe({
+                  lng,
+                  lat,
+                  val: Number(val.toFixed(isMulti ? 3 : 2)),
+                  col: Math.floor((gx / cols) * 512),
+                  row: Math.floor((gy / rows) * 512),
+                  interpretation: cls.status,
+                  swatchColor: cls.color,
+                  classId: cls.classId,
+                });
+                return;
+              }
+            }
+          }
+        }
       }
     },
-    [layer?.id, centroidCoords]
+    [layer?.id, centroidCoords, locale]
   );
 
   return (

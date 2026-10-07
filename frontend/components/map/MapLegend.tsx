@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n/useI18n";
 import { DSMLayerConfig, ColorStop } from "@/types/gis";
 import { Sliders } from "lucide-react";
 import { getVegetationIndexStyle, isVegetationIndex as checkIsVegIndex } from "@/lib/gis/vegetationIndexStyles";
+import { getLayerClassificationDefinition } from "@/lib/gis/layerClassification";
 
 interface MapLegendProps {
   layer: DSMLayerConfig;
@@ -113,12 +114,16 @@ export const MapLegend: React.FC<MapLegendProps> = ({
   const isBoundaryOnly = layer.id === "farm_boundary";
   const isRgbComposite = layer.id === "kharif_rgb" || layer.id === "rabi_rgb";
   const isLulc = layer.id === "lulc";
+  const layerDef = getLayerClassificationDefinition(layer.id);
+  const hasDiscreteClasses = Boolean(layerDef && layerDef.classes.length > 0 && !layerDef.isContinuous);
   const vegStyle = getVegetationIndexStyle(layer.id);
   const isVegetationIndex = Boolean(vegStyle);
 
   // Stepped colors for the segmented pill bar
   const segments = isLulc
     ? QGIS_LULC_CLASSES.map((c) => c.color)
+    : hasDiscreteClasses && layerDef
+    ? layerDef.classes.map((c) => c.color)
     : vegStyle
     ? vegStyle.classes.map((c) => c.color)
     : getSteppedColors(layer.colorStops, 18);
@@ -243,11 +248,11 @@ export const MapLegend: React.FC<MapLegendProps> = ({
             ))}
           </div>
         </div>
-      ) : vegStyle ? (
+      ) : hasDiscreteClasses && layerDef ? (
         <div className="mt-2 space-y-2">
           {/* Segmented Color Pill Bar */}
           <div className="h-3.5 w-full rounded-full overflow-hidden flex shadow-inner border border-slate-200/60">
-            {vegStyle.classes.map((cls) => (
+            {layerDef.classes.map((cls) => (
               <div
                 key={cls.id}
                 className="flex-1 h-full"
@@ -259,20 +264,33 @@ export const MapLegend: React.FC<MapLegendProps> = ({
 
           {/* Fixed Index Discrete Class Swatches */}
           <div className="space-y-1 pt-0.5 text-[10.5px]">
-            {vegStyle.classes.map((cls) => (
-              <div key={cls.id} className="flex items-center justify-between gap-1 text-slate-700">
-                <div className="flex items-center gap-1.5 truncate">
-                  <span
-                    className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/15"
-                    style={{ backgroundColor: cls.color }}
-                  />
-                  <span className="truncate font-medium">{locale === "mr" ? cls.marathiLabel : cls.label}</span>
+            {layerDef.classes.map((cls) => {
+              let rangeStr = "";
+              if (cls.min === -Infinity || cls.min <= -0.9) {
+                rangeStr = `< ${cls.max}`;
+              } else if (cls.max === Infinity || (cls.max >= 0.9 && layerDef.unit === "index")) {
+                rangeStr = `> ${cls.min}`;
+              } else if (cls.max === Infinity) {
+                rangeStr = `> ${cls.min}`;
+              } else {
+                rangeStr = `${cls.min}–${cls.max}`;
+              }
+
+              return (
+                <div key={cls.id} className="flex items-center justify-between gap-1 text-slate-700">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <span
+                      className="w-2.5 h-2.5 rounded-xs shrink-0 border border-black/15"
+                      style={{ backgroundColor: cls.color }}
+                    />
+                    <span className="truncate font-medium">{locale === "mr" ? cls.marathiLabel : cls.label}</span>
+                  </div>
+                  <span className="font-mono text-[9.5px] text-slate-500 shrink-0">
+                    {rangeStr}
+                  </span>
                 </div>
-                <span className="font-mono text-[9.5px] text-slate-500 shrink-0">
-                  {cls.min <= -0.9 ? `< ${cls.max}` : cls.max >= 0.9 ? `> ${cls.min}` : `${cls.min}–${cls.max}`}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (
