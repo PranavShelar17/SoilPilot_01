@@ -12,6 +12,14 @@ export const metadata: Metadata = {
   title: "SoilPilot — Digital Soil Mapping & Soil Health Portal",
   description: "Farmer-friendly digital soil mapping, cadastral Gat-based field access, soil health cards, and crop recommendations.",
   keywords: ["Soil Health", "Digital Soil Mapping", "Farmer Portal", "Agriculture", "Soil Test", "Gat Number"],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
