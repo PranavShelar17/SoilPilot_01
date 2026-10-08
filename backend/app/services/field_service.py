@@ -224,10 +224,15 @@ class FieldService:
             if kml_gat and kml_gat.get("geometry"):
                 geojson_geom = kml_gat["geometry"]
 
+        tot_ha = field.area
+        tot_ac = round(tot_ha * 2.47105, 2) if tot_ha is not None else None
+
         return {
             "id": field.id,
             "gat_no": field.gat_no,
             "area": field.area,
+            "area_ha": tot_ha,
+            "area_acres": tot_ac,
             "area_unit": field.area_unit,
             "village": village.name if village else "",
             "taluka": taluka.name if taluka else "",

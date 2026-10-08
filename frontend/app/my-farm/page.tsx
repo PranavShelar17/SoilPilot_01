@@ -101,9 +101,15 @@ function MyFarmContent() {
   const area = liveField?.area ?? (gatNo === "13" ? 5.14 : (field?.area ?? 1.49));
   const isDemo = liveField?.is_demo ?? field?.is_demo ?? true;
 
-  const formattedArea =
+  const isAcreUnit = liveField?.area_unit?.toLowerCase().includes("acre") || field?.area_unit?.toLowerCase().includes("acre");
+  const areaInAcres =
     area !== null && area !== undefined && area > 0
-      ? `${area} ${t("myFarm.areaUnitHa") || "Ha"}`
+      ? (isAcreUnit ? area : Number((area * 2.47105).toFixed(2)))
+      : null;
+
+  const formattedArea =
+    areaInAcres !== null
+      ? `${areaInAcres} ${locale === "mr" ? "एकर" : "acres"}`
       : t("dashboard.notAvailable");
 
   return (

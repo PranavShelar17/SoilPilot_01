@@ -29,9 +29,15 @@ export const FarmSummaryCard: React.FC<FarmSummaryCardProps> = ({
   const { t, locale } = useI18n();
   const isMr = locale === "mr";
 
-  const formattedArea =
+  const isAcreUnit = areaUnit?.toLowerCase().includes("acre") || areaUnit?.toLowerCase() === "ac";
+  const areaInAcres =
     area !== null && area !== undefined && area > 0
-      ? `${area} ${translateUnit(areaUnit, isMr)}`
+      ? (isAcreUnit ? area : Number((area * 2.47105).toFixed(2)))
+      : null;
+
+  const formattedArea =
+    areaInAcres !== null
+      ? `${areaInAcres} ${isMr ? "एकर" : "acres"}`
       : t("dashboard.notAvailable");
 
   return (

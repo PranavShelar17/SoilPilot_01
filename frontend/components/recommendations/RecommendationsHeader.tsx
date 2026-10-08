@@ -65,7 +65,10 @@ export const RecommendationsHeader: React.FC<RecommendationsHeaderProps> = ({
             <>
               <span className="text-surface-borderStrong">•</span>
               <span className="text-text-muted">
-                {area} {locale === "mr" ? (areaUnit === "Ha" || areaUnit === "ha" ? "हेक्टर" : "एकर") : areaUnit}
+                {(areaUnit?.toLowerCase().includes("acre") || areaUnit?.toLowerCase() === "ac"
+                  ? area
+                  : Number((Number(area) * 2.47105).toFixed(2))
+                )} {locale === "mr" ? "एकर" : "acres"}
               </span>
             </>
           )}

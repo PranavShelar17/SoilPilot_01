@@ -370,7 +370,12 @@ export const GeographicSelector: React.FC<GeographicSelectorProps> = ({
             <div className="p-3 bg-white rounded-lg border border-surface-border">
               <span className="text-text-muted block">{t("geo.fieldArea")}</span>
               <span className="font-bold text-sm text-text-main mt-0.5 block">
-                {fieldResult.area ? `${fieldResult.area} ${locale === "mr" ? (fieldResult.area_unit === "Ha" || fieldResult.area_unit === "ha" ? "हेक्टर" : "एकर") : fieldResult.area_unit}` : "N/A"}
+                {fieldResult.area
+                  ? `${(fieldResult.area_unit?.toLowerCase().includes("acre") || fieldResult.area_unit?.toLowerCase() === "ac"
+                      ? fieldResult.area
+                      : Number((fieldResult.area * 2.47105).toFixed(2))
+                    )} ${locale === "mr" ? "एकर" : "acres"}`
+                  : "N/A"}
               </span>
             </div>
 

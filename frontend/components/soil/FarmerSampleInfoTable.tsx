@@ -30,10 +30,9 @@ export const FarmerSampleInfoTable: React.FC<FarmerSampleInfoTableProps> = ({
 
   const gatNumber = field?.gat_no || "22";
   const gatLabel = `${isMr ? "गट क्र." : "Gat No."} ${gatNumber}`;
-  const areaPart = field?.area
-    ? ` (${field.area} ${isMr ? "हेक्टर" : "hectare"})`
-    : gatNumber === "22"
-    ? ` (1.49 ${isMr ? "हेक्टर" : "hectare"})`
+  const rawArea = field?.area ? field.area : (gatNumber === "22" ? 1.49 : null);
+  const areaPart = rawArea
+    ? ` (${(rawArea * 2.47105).toFixed(2)} ${isMr ? "एकर" : "acres"})`
     : "";
 
   const villageName = translateGeoName(field?.village || "Malegaon Kh.", isMr);

@@ -123,7 +123,9 @@ export default function ReportsPage() {
   const rawDistrictName = report?.field?.district || location?.district || "Pune";
   const districtName = isMr ? translateGeoName(rawDistrictName) : rawDistrictName;
   const rawAreaNum = report?.field?.area != null ? report.field.area : (field?.area != null ? field.area : 1.96);
-  const fieldArea = `${rawAreaNum} ${isMr ? "हेक्टर" : "Ha"}`;
+  const isAcre = report?.field?.area_unit?.toLowerCase().includes("acre") || field?.area_unit?.toLowerCase().includes("acre");
+  const areaInAcres = isAcre ? rawAreaNum : Number((rawAreaNum * 2.47105).toFixed(2));
+  const fieldArea = `${areaInAcres} ${isMr ? "एकर" : "acres"}`;
   const reportDate = getLiveDateStr(report?.report?.report_date);
   const sampleDate = report?.report?.sample_date ? getLiveDateStr(report.report.sample_date) : getLiveSampleDateStr(5);
   const reportNo = report?.report?.report_no || "SPL/2026/SL-0104";

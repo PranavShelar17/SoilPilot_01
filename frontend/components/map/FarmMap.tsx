@@ -61,7 +61,8 @@ export const FarmMap: React.FC<FarmMapProps> = ({
   dsmOpacity = 0.75,
   selectedGat: propSelectedGat,
 }) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isMr = locale === "mr";
   const { field: authField, farmer: authFarmer, location: authLocation } = useAuth();
   const [fieldData, setFieldData] = useState<AuthorizedFieldResponse | null>(null);
   const [allPlots, setAllPlots] = useState<any>(null);
@@ -189,11 +190,13 @@ export const FarmMap: React.FC<FarmMapProps> = ({
         calculatedArea = data?.area ?? authField?.area ?? null;
       }
 
+      const calculatedAcres = calculatedArea ? Number((calculatedArea * 2.47105).toFixed(2)) : null;
       const enriched: AuthorizedFieldResponse = {
         ...(data || {}),
         id: data?.id || authField?.id || (cleanNum ? parseInt(cleanNum, 10) || 15 : 15),
         gat_no: cleanNum || rawTarget,
         area: calculatedArea,
+        area_acres: data?.area_acres ?? calculatedAcres,
         area_unit: data?.area_unit || authField?.area_unit || "hectare",
         village: data?.village || authLocation?.village || "Malegaon Kh",
         taluka: data?.taluka || authLocation?.taluka || "Baramati",
@@ -363,9 +366,17 @@ export const FarmMap: React.FC<FarmMapProps> = ({
     );
   }
 
-  // 4. Working Interactive Map
-  const formattedArea = fieldData.area
-    ? `${fieldData.area} ${t("myFarm.areaUnitHa") || "Ha"}`
+  // 4. Working Interactive Map (convert field area to acres)
+  const rawArea = fieldData.area ? Number(fieldData.area) : null;
+  const isAcreUnit = fieldData.area_unit?.toLowerCase().includes("acre") || fieldData.area_unit?.toLowerCase() === "ac";
+  const areaInAcres =
+    fieldData.area_acres ??
+    (rawArea && !isNaN(rawArea)
+      ? (isAcreUnit ? rawArea : Number((rawArea * 2.47105).toFixed(2)))
+      : null);
+
+  const formattedArea = areaInAcres !== null
+    ? `${areaInAcres} ${isMr ? "एकर" : "Acres"}`
     : undefined;
 
   return (

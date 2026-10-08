@@ -87,7 +87,14 @@ export const MapLibreWrapper: React.FC<MapLibreWrapperProps> = ({
       const plotVillage = props.village || villageName || "Malegaon";
       const plotTaluka = props.taluka || talukaName || "Baramati";
       const plotDistrict = props.district || districtName || "Pune";
-      const plotArea = props.area ? `${props.area} Ha` : areaText || "Not Available";
+      const areaNum = props.area ? Number(props.area) : null;
+      const isAcre = props.area_unit?.toLowerCase().includes("acre") || props.area_unit?.toLowerCase() === "ac";
+      const areaInAcres = areaNum && !isNaN(areaNum)
+        ? (isAcre ? areaNum : Number((areaNum * 2.47105).toFixed(2)))
+        : null;
+      const plotArea = areaInAcres !== null
+        ? `${areaInAcres} ${language === "mr" ? "एकर" : "Acres"}`
+        : areaText || (language === "mr" ? "उपलब्ध नाही" : "Not Available");
       const plotSource = props.source || "Demo GIS Data";
 
       const titleText = isSelected

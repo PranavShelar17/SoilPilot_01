@@ -42,6 +42,8 @@ class AuthorizedFieldDetailResponse(BaseModel):
     id: int
     gat_no: str
     area: Optional[float] = None
+    area_ha: Optional[float] = None
+    area_acres: Optional[float] = None
     area_unit: str = "hectare"
     village: str
     taluka: str

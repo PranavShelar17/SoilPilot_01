@@ -36,6 +36,8 @@ export interface AuthorizedFieldResponse {
   id: number;
   gat_no: string;
   area: number | null;
+  area_ha?: number | null;
+  area_acres?: number | null;
   area_unit: string;
   village: string;
   taluka: string;
