@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/client";
 import { SoilHealthReport, SoilHealthSummary, SoilParameter } from "@/types/soilHealth";
+import { getLiveDateStr, getLiveSampleDateStr } from "@/lib/dateUtils";
 
 export const DEFAULT_DEMO_SOIL_PARAMETERS: SoilParameter[] = [
   {
@@ -346,7 +347,7 @@ export const DEFAULT_DEMO_SOIL_PARAMETERS: SoilParameter[] = [
     category: "Physical",
     value: "Clay Vertisol",
     unit: "—",
-    interpretation: "Clayey (काळी माती)",
+    interpretation: "Clayey",
     interpretation_mr: "काळी चिकण माती (Vertisols)",
     reference_range: "USDA Class: Clay / Vertisols",
     reference_range_mr: "USDA वर्ग: काळी चिकण माती",
@@ -381,8 +382,8 @@ export function buildFallbackReport(fieldIdentifier: string | number): SoilHealt
       report_no: "SPL/2026/SL-0104",
       receipt_no: "REC-7842/26",
       sample_name: "Surface Soil Composite (0-15 cm)",
-      sample_date: "15-09-2026",
-      report_date: "20-09-2026",
+      sample_date: getLiveSampleDateStr(5),
+      report_date: getLiveDateStr(),
       crop_name: "Sugarcane (ऊस)",
       organization_name: "ADT AI Training Foundation",
       laboratory_name: "ADT AI Training Foundation — Agricultural Diagnostic & Digital Soil Testing Center, Baramati, Pune, Maharashtra",
@@ -471,6 +472,9 @@ export const soilHealthService = {
     try {
       const response = await api.get<SoilHealthReport>(`/soil-health/field/${fieldId}`);
       if (response.data && response.data.parameters && response.data.parameters.length > 0) {
+        if (response.data.report) {
+          response.data.report.report_date = getLiveDateStr(response.data.report.report_date);
+        }
         return response.data;
       }
       return buildFallbackReport(fieldId);
@@ -487,7 +491,10 @@ export const soilHealthService = {
     try {
       const response = await api.get<SoilHealthSummary>(`/soil-health/field/${fieldId}/summary`);
       if (response.data && response.data.has_report) {
-        return response.data;
+        return {
+          ...response.data,
+          report_date: getLiveDateStr(response.data.report_date),
+        };
       }
       const rep = buildFallbackReport(fieldId);
       return {
@@ -495,7 +502,7 @@ export const soilHealthService = {
         has_report: true,
         is_demo: true,
         report_no: rep.report?.report_no || "SPL/2026/SL-0104",
-        report_date: rep.report?.report_date || "03/10/2026",
+        report_date: getLiveDateStr(rep.report?.report_date),
         status: "Verified Laboratory Record",
         ph: 7.24,
         ph_status: "Suitable",
@@ -511,7 +518,7 @@ export const soilHealthService = {
         has_report: true,
         is_demo: true,
         report_no: rep.report?.report_no || "SPL/2026/SL-0104",
-        report_date: rep.report?.report_date || "03/10/2026",
+        report_date: getLiveDateStr(rep.report?.report_date),
         status: "Verified Laboratory Record",
         ph: 7.24,
         ph_status: "Suitable",

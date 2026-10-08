@@ -73,7 +73,9 @@ export const reportService = {
    */
   async downloadSoilHealthCardPdf(fieldId: string | number, lang: string = "en"): Promise<void> {
     const cleanGat = String(fieldId).replace(/[^\d]/g, "") || "18";
-    const filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}.pdf`;
+    const { formatReportDateIndia } = await import("@/lib/dateUtils");
+    const liveDate = formatReportDateIndia();
+    const filename = `SoilPilot_Soil_Health_Card_Gat_${cleanGat}_${liveDate}.pdf`;
     const directUrl = this.getSoilHealthCardPdfUrl(fieldId, lang);
 
     try {

@@ -154,21 +154,26 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
     );
   }
 
+  const splitThreshold = 18;
+  const hasMultiplePages = report.parameters && report.parameters.length > splitThreshold;
+  const page1Params = hasMultiplePages ? report.parameters.slice(0, splitThreshold) : report.parameters;
+  const page2Params = hasMultiplePages ? report.parameters.slice(splitThreshold) : [];
+
   return (
-    <div className="max-w-5xl mx-auto space-y-5 pb-12">
+    <div className="max-w-5xl mx-auto space-y-4 pb-12">
       {/* Clean Navigation & Parcel Identity Header */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-stone-200 shadow-xs flex flex-wrap items-center justify-between gap-3 print:hidden">
+      <div className="bg-white p-3 sm:p-3.5 rounded-lg border border-stone-200 shadow-2xs flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link
           href={`/soil-map?gat=${selectedGat}`}
-          className="text-xs font-bold text-soil-primary hover:text-soil-primaryHover flex items-center gap-1.5 transition-colors group"
+          className="text-xs font-bold text-[#214F3F] hover:text-[#1a3f33] flex items-center gap-1.5 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
           <span>{locale === "mr" ? `← माती नकाशा पहा (गट ${selectedGat})` : `← View Soil Map (Gat ${selectedGat})`}</span>
         </Link>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded-lg text-xs font-bold shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#EAF3ED] text-[#214F3F] border border-[#214F3F]/30 rounded-md text-xs font-bold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#2A7C13] animate-pulse" />
             <span>
               {(locale === "mr" ? translateGeoName(report?.field?.village || "Malegaon Kh") : (report?.field?.village || "Malegaon Kh"))} &bull; {t("geo.gatNo") || (locale === "mr" ? "गट क्र." : "Gat No.")} {selectedGat}
               {report?.field?.area ? ` (${report.field.area} ${locale === "mr" ? "हेक्टर" : "Ha"})` : ""}
@@ -177,13 +182,12 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
         </div>
       </div>
 
-
       {/* Top Action Bar: Laboratory Health Card & Download Buttons */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-stone-200 shadow-xs print:hidden">
-        {/* Only Laboratory Health Card View */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200/90 rounded-lg text-xs font-bold shadow-xs">
-          <FileText className="w-4 h-4 text-emerald-700" />
-          <span>{t("soilHealthCard.viewDetailed") || "Laboratory Health Card"}</span>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-lg border border-stone-200 shadow-2xs print:hidden">
+        {/* Laboratory Health Card Badge */}
+        <div className="flex items-center gap-2 px-3 py-1 bg-[#EAF3ED] text-[#214F3F] border border-[#214F3F]/30 rounded-md text-xs font-bold shadow-2xs">
+          <FileText className="w-4 h-4 text-[#214F3F]" />
+          <span>{t("soilHealthCard.viewDetailed") || "Laboratory Soil Test Report"}</span>
         </div>
 
         {/* Action Buttons: PDF Downloads & Print */}
@@ -202,7 +206,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
                 setDownloadingCard(false);
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-soil-primary text-white rounded-lg hover:bg-soil-primaryHover transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold bg-[#214F3F] hover:bg-[#1a3f33] text-white rounded-md transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
             title="Download Official Soil Health Card PDF"
           >
             {downloadingCard ? (
@@ -227,7 +231,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
                 setDownloadingDetailed(false);
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-stone-800 text-white rounded-lg hover:bg-stone-900 transition-colors shadow-xs disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-stone-700 hover:bg-stone-800 text-white rounded-md transition-colors shadow-2xs disabled:opacity-50 cursor-pointer"
             title="Download Detailed Laboratory Soil Report PDF"
           >
             {downloadingDetailed ? (
@@ -245,7 +249,7 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
           <button
             type="button"
             onClick={() => window.print()}
-            className="p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors border border-stone-200 cursor-pointer"
+            className="p-1.5 text-stone-700 hover:text-stone-900 hover:bg-stone-100 rounded-md transition-colors border border-stone-200 cursor-pointer"
             title={t("soilHealthCard.printReport")}
           >
             <Printer className="w-4 h-4" />
@@ -253,28 +257,28 @@ export const SoilHealthCardView: React.FC<SoilHealthCardViewProps> = ({ fieldIdO
         </div>
       </div>
 
-      {/* Main Content Area: Official Laboratory Soil Health Card */}
-      <div className="soil-report-card-container bg-white p-6 sm:p-8 rounded-2xl border border-stone-300 shadow-sm print:p-0 print:border-none print:shadow-none space-y-6 print:space-y-2.5 print:max-w-none">
-        {/* 1. Header Section */}
-        <SoilReportHeader isDemo={report.is_demo} />
-
-        {/* 2. Farmer & Sample Information Table */}
-        <FarmerSampleInfoTable
-          farmer={report.farmer}
-          field={report.field}
-          report={report.report}
-        />
-
-        {/* 3. Laboratory Chemical & Physical Soil Analysis Table */}
-        <SoilParameterTable parameters={report.parameters} />
-
-        {/* 4. Report Footer */}
-        <SoilReportFooter
-          isDemo={report.is_demo}
-          reportDate={report.report?.report_date}
-          reportNo={report.report?.report_no}
-          observations={report.observations || report.report?.observations}
-        />
+      {/* Main Content Area: Centered Professional A4 Soil Health Card Document (Single Page 1/1) */}
+      <div className="w-full overflow-x-auto pb-8 print:p-0 print:overflow-visible">
+        <div className="relative soil-report-page max-w-[850px] min-w-[760px] mx-auto bg-white p-6 sm:p-7 shadow-sm border border-[#d1d5db] text-stone-900 print:shadow-none print:border-none print:p-0 print:m-0 print:max-w-none print:min-w-0">
+          <SoilReportHeader isDemo={report.is_demo} />
+          <FarmerSampleInfoTable
+            farmer={report.farmer}
+            field={report.field}
+            report={report.report}
+          />
+          <SoilParameterTable
+            parameters={report.parameters}
+            startIndex={0}
+            showTitle={true}
+            showNote={true}
+          />
+          <SoilReportFooter
+            isDemo={report.is_demo}
+            reportDate={report.report?.report_date}
+            reportNo={report.report?.report_no}
+            observations={report.observations || report.report?.observations}
+          />
+        </div>
       </div>
     </div>
   );

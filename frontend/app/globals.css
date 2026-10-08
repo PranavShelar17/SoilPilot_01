@@ -101,10 +101,17 @@ body {
     margin: 0 !important;
     padding: 0 !important;
   }
-  header, footer, nav, .print\:hidden {
+  header, footer, nav, aside, .print\:hidden {
     display: none !important;
   }
-  .soil-report-card-container {
+  .soil-report-page {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    background: #ffffff !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }

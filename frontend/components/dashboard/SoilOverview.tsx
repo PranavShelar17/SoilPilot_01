@@ -8,6 +8,7 @@ import { soilHealthService } from "@/services/soilHealthService";
 import { SoilHealthSummary } from "@/types/soilHealth";
 import { FlaskConical, ArrowRight, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 import { translateStatus } from "@/i18n/marathiHelper";
+import { getLiveDateStr } from "@/lib/dateUtils";
 
 export const SoilOverview: React.FC = () => {
   const { t, locale } = useI18n();
@@ -120,7 +121,7 @@ export const SoilOverview: React.FC = () => {
         </p>
         {hasReport && summary?.report_no && (
           <span className="font-mono text-[11px] text-stone-500 font-medium">
-            {isMr ? "संदर्भ:" : "Ref:"} {summary.report_no} ({summary.report_date || "20-09-2026"})
+            {isMr ? "संदर्भ:" : "Ref:"} {summary.report_no} ({getLiveDateStr(summary.report_date)})
           </span>
         )}
       </div>

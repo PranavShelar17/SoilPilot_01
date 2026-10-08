@@ -4,7 +4,7 @@ Supports English and Marathi (Devanagari) typography with zero external PDF serv
 """
 import os
 import io
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 
 from reportlab.lib.pagesizes import A4
@@ -25,6 +25,12 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics.shapes import Drawing, Rect, Polygon, Line
 from reportlab.graphics.barcode.qr import QrCodeWidget
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def get_india_current_date_str() -> str:
+    """Format current runtime date in Asia/Kolkata timezone as DD-MM-YYYY."""
+    return datetime.now(IST).strftime("%d-%m-%Y")
 
 # ----------------------------------------------------------------------
 # Font Registration (Bilingual Devanagari & Latin)
@@ -306,10 +312,13 @@ class PDFService:
         styles = getSampleStyleSheet()
 
         # Color palette matching reference image
-        COLOR_DARK_GREEN = colors.HexColor("#1E5622")
+        COLOR_DARK_GREEN = colors.HexColor("#214F3F")
         COLOR_RED_DEMO = colors.HexColor("#D32F2F")
         COLOR_BORDER_GRAY = colors.HexColor("#D1D5DB")
         COLOR_LBL_BG = colors.HexColor("#F3F4F6")
+
+        # Live date in India timezone
+        live_date = get_india_current_date_str()
 
         # Custom typography styles scaled for exact single-page A4 perfection
         st_head_adt = ParagraphStyle(
@@ -319,7 +328,7 @@ class PDFService:
             fontSize=11,
             leading=13,
             alignment=1,
-            textColor=colors.HexColor("#000000"),
+            textColor=COLOR_DARK_GREEN,
         )
         st_head_loc = ParagraphStyle(
             "HeadLoc",
@@ -439,10 +448,10 @@ class PDFService:
         st_footnote = ParagraphStyle(
             "Footnote",
             parent=styles["Normal"],
-            fontName=FONT_REGULAR,
-            fontSize=6.5,
-            leading=8,
-            textColor=colors.HexColor("#374151"),
+            fontName=FONT_BOLD,
+            fontSize=7.2,
+            leading=8.6,
+            textColor=colors.HexColor("#111827"),
         )
         st_cert_head = ParagraphStyle(
             "CertHead",
@@ -552,16 +561,11 @@ class PDFService:
             ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ]))
         story.append(header_table)
-        story.append(Spacer(1, 1.2 * mm))
+        story.append(Spacer(1, 1.5 * mm))
 
         # --------------------------------------------------------------
-        # 2. FARMER & SAMPLE INFORMATION (4-Column Table)
+        # 2. FARMER & SAMPLE INFORMATION (4-Column Table directly below)
         # --------------------------------------------------------------
-        story.append(HRFlowable(width="100%", thickness=1.2, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.0 * mm))
-        sec_farmer_text = "शेतकरी व माती नमुना तपशील" if is_mr else "FARMER & SAMPLE INFORMATION"
-        story.append(Paragraph(f"<b>{sec_farmer_text}</b>", st_sec_head))
-        story.append(Spacer(1, 0.8 * mm))
-
         farmer_name = farmer.get("name") or ("रमेश पाटील" if is_mr else "Ramesh Patil (रमेश पाटील)")
         gat_no = field.get("gat_no", "22")
         area_unit = "हेक्टर" if is_mr else "hectare"
@@ -571,7 +575,7 @@ class PDFService:
         taluka_val = field.get("taluka") or ("बारामती" if is_mr else "Baramati")
         district_val = field.get("district") or ("पुणे" if is_mr else "Pune")
         village_val = field.get("village") or ("माळेगाव खुर्द" if is_mr else "Malegaon Kh.")
-        date_val = report_meta.get("report_date") or "20-09-2026"
+        date_val = live_date
 
         f_data = [
             [
@@ -598,8 +602,6 @@ class PDFService:
         info_table.setStyle(TableStyle([
             ("BOX", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
             ("INNERGRID", (0, 0), (-1, -1), 0.35, COLOR_BORDER_GRAY),
-            ("BACKGROUND", (0, 0), (0, -1), COLOR_LBL_BG),
-            ("BACKGROUND", (2, 0), (2, -1), COLOR_LBL_BG),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("TOPPADDING", (0, 0), (-1, -1), 1.0),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 1.0),
@@ -607,15 +609,11 @@ class PDFService:
             ("RIGHTPADDING", (0, 0), (-1, -1), 3),
         ]))
         story.append(info_table)
-        story.append(Spacer(1, 1.2 * mm))
+        story.append(Spacer(1, 1.5 * mm))
 
         # --------------------------------------------------------------
         # 3. LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS TABLE
         # --------------------------------------------------------------
-        sec_lab_text = "प्रयोगशाळा मृदा रासायनिक आणि पोषकतत्व विश्लेषण" if is_mr else "LABORATORY SOIL CHEMICAL & NUTRIENT ANALYSIS"
-        story.append(Paragraph(f"<b>{sec_lab_text}</b>", st_sec_head))
-        story.append(Spacer(1, 0.8 * mm))
-
         th_row = [
             Paragraph("<b>अ.क्र.</b>" if is_mr else "<b>SR.<br/>NO.</b>", st_th_c),
             Paragraph("<b>घटक</b>" if is_mr else "<b>PARAMETER</b>", st_th),
@@ -670,75 +668,75 @@ class PDFService:
         }
 
         clean_recs = {
-            "ph": "Maintain current pH.",
-            "ec": "No salinity action.",
-            "organic_carbon": "Maintain; no extra OC needed.",
-            "available_nitrogen": "Increase N; ~125% RDF*",
-            "available_phosphorus": "Normal RDF*",
-            "available_potassium": "Reduce K; ~75% RDF*",
-            "exchangeable_sodium": "Exchangeable sodium is within safe range. Maintain appropriate drainage.",
-            "esp": "Exchangeable sodium is within safe range. Maintain appropriate drainage.",
-            "free_lime": "Free lime is within normal bounds. Maintain balanced fertilization.",
-            "iron": "Apply Fe if needed",
-            "available_iron": "Apply Fe if needed",
-            "manganese": "Monitor Mn",
-            "available_manganese": "Monitor Mn",
-            "zinc": "Apply Zn if needed",
-            "available_zinc": "Apply Zn if needed",
-            "copper": "No Cu correction",
-            "available_copper": "No Cu correction",
-            "sulphur": "Apply S as needed",
-            "available_sulphur": "Apply S as needed",
-            "boron": "Apply B carefully",
-            "available_boron": "Apply B carefully",
-            "bd": "Soil physical condition and density are favorable for root penetration and moisture retention.",
-            "bulk_density": "Soil physical condition and density are favorable for root penetration and moisture retention.",
-            "total_nitrogen": "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
-            "total_n": "Total soil N reserve is moderate; maintain soil organic matter through regular compost & residue incorporation.",
-            "cec": "High nutrient retention capacity; excellent buffer against nutrient leaching.",
-            "cfvo": "Minimal gravel content; favorable tillage and root elongation zone.",
-            "coarse_fragments": "Minimal gravel content; favorable tillage and root elongation zone.",
-            "sand": "Adequate sand fraction ensuring baseline aeration and internal drainage.",
-            "silt": "Optimum silt content supporting available water capacity and nutrient retention.",
-            "clay": "High smectite clay vertisol; maintain proper drainage to prevent waterlogging.",
-            "soil_texture": "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
-            "soil_texture_class": "Deep black cotton soil (Vertisols); practice broad-bed furrow (BBF) and timely tillage.",
+            "ph": "Optimal neutral (6.5-7.5); maintain balanced fertigation.",
+            "ec": "Non-saline (<0.8 dS/m); no salinity hazard to crops.",
+            "organic_carbon": "High SOC; maintain via green manure & crop residue.",
+            "available_nitrogen": "Low: Increase N application to ~125% RDF (urea/FYM).",
+            "available_phosphorus": "Medium: Apply recommended dose of phosphorus (100% RDF).",
+            "available_potassium": "High: Economize potash; reduce application to ~75% RDF.",
+            "exchangeable_sodium": "Safe limit (<15%); maintain proper field drainage.",
+            "esp": "Safe limit (<15%); maintain proper field drainage.",
+            "free_lime": "Normal (<5%); balanced fertilization to avoid fixation.",
+            "iron": "Deficient: Soil apply FeSO4 @ 25 kg/ha or foliar 0.5%.",
+            "available_iron": "Deficient: Soil apply FeSO4 @ 25 kg/ha or foliar 0.5%.",
+            "manganese": "Sufficient: Routine monitoring; avoid over-liming.",
+            "available_manganese": "Sufficient: Routine monitoring; avoid over-liming.",
+            "zinc": "Deficient: Soil apply ZnSO4 @ 20-25 kg/ha or foliar 0.5%.",
+            "available_zinc": "Deficient: Soil apply ZnSO4 @ 20-25 kg/ha or foliar 0.5%.",
+            "copper": "Sufficient (>0.4 ppm); no copper corrective dose needed.",
+            "available_copper": "Sufficient (>0.4 ppm); no copper corrective dose needed.",
+            "sulphur": "Deficient: Apply elemental sulphur or gypsum @ 20-25 kg/ha.",
+            "available_sulphur": "Deficient: Apply elemental sulphur or gypsum @ 20-25 kg/ha.",
+            "boron": "Deficient: Apply borax @ 5-10 kg/ha or 0.1% foliar spray.",
+            "available_boron": "Deficient: Apply borax @ 5-10 kg/ha or 0.1% foliar spray.",
+            "bd": "Soil density favorable for root penetration & water retention.",
+            "bulk_density": "Soil density favorable for root penetration & water retention.",
+            "total_nitrogen": "Moderate N reserve; incorporate FYM & crop residues.",
+            "total_n": "Moderate N reserve; incorporate FYM & crop residues.",
+            "cec": "High nutrient retention capacity; buffers nutrient leaching.",
+            "cfvo": "Minimal gravel content; favorable tillage & root zone.",
+            "coarse_fragments": "Minimal gravel content; favorable tillage & root zone.",
+            "sand": "Adequate sand fraction ensuring baseline aeration & drainage.",
+            "silt": "Optimum silt content supporting available water capacity.",
+            "clay": "High smectite clay vertisol; maintain drainage channels.",
+            "soil_texture": "Deep black vertisol; practice broad-bed furrow & timely tillage.",
+            "soil_texture_class": "Deep black vertisol; practice broad-bed furrow & timely tillage.",
         }
 
         clean_recs_mr = {
-            "ph": "सध्याचा सामू कायम ठेवावा.",
-            "ec": "क्षारतेबाबत उपाययोजनेची गरज नाही.",
-            "organic_carbon": "सेंद्रिय कर्ब टिकवून ठेवावा; अतिरिक्त सेंद्रिय खतांची गरज नाही.",
-            "available_nitrogen": "नत्र वाढवा; ~१२५% RDF*",
-            "available_phosphorus": "सामान्य १००% RDF*",
-            "available_potassium": "पालाश कमी करा; ~७५% RDF*",
-            "exchangeable_sodium": "सोडियम सुरक्षित मर्यादेत आहे. पाण्याचा योग्य निचरा ठेवावा.",
-            "esp": "सोडियम सुरक्षित मर्यादेत आहे. पाण्याचा योग्य निचरा ठेवावा.",
-            "free_lime": "मुक्त चुनखडी सामान्य मर्यादेत आहे. संतुलित खत व्यवस्थापन ठेवा.",
-            "iron": "गरज भासल्यास फेरस सल्फेट किंवा चिलेटेड लोह द्या.",
-            "available_iron": "गरज भासल्यास फेरस सल्फेट किंवा चिलेटेड लोह द्या.",
-            "manganese": "मँगनीजचे निरीक्षण ठेवा.",
-            "available_manganese": "मँगनीजचे निरीक्षण ठेवा.",
-            "zinc": "गरज भासल्यास झिंक सल्फेट द्या.",
-            "available_zinc": "गरज भासल्यास झिंक सल्फेट द्या.",
-            "copper": "तांबे सुधारणेची गरज नाही.",
-            "available_copper": "तांबे सुधारणेची गरज नाही.",
-            "sulphur": "गरजेनुसार गंधक खते द्या.",
-            "available_sulphur": "गरजेनुसार गंधक खते द्या.",
-            "boron": "काळजीपूर्वक बोरॉन वापरा.",
-            "available_boron": "काळजीपूर्वक बोरॉन वापरा.",
-            "bd": "मातीची घनता व भौतिक स्थिती मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
-            "bulk_density": "मातीची घनता व भौतिक स्थिती मुळांच्या वाढीसाठी व ओलावा टिकवण्यासाठी अनुकूल आहे.",
-            "total_nitrogen": "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
-            "total_n": "जमिनीतील एकूण नत्र साठा मध्यम आहे; शेणखत व सेंद्रिय अवशेषांच्या वापराने नत्र साठा टिकवून ठेवावा.",
-            "cec": "धनायन विनिमय क्षमता उच्च आहे; खते धरून ठेवण्याची क्षमता उत्कृष्ट आहे.",
-            "cfvo": "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
-            "coarse_fragments": "दगड-गोट्यांचे प्रमाण अत्यल्प आहे; मुळांच्या वाढीसाठी व मशागतीसाठी जमीन अत्यंत अनुकूल आहे.",
-            "sand": "वाळूचे प्रमाण संतुलित असून जमिनीत हवा खेळती राहण्यास व निचरा होण्यास मदत होते.",
-            "silt": "गाळाचे प्रमाण योग्य असून ओलावा व अन्नद्रव्ये टिकवून ठेवण्यास मदत करते.",
-            "clay": "काळी कसदार चिकणमाती; अति पावसात पाणी साचू नये म्हणून योग्य निचरा व्यवस्था ठेवावी.",
-            "soil_texture": "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
-            "soil_texture_class": "खोल काळी चिकण जमीन (व्हर्टिसॉल); रुंद वरंबा-सरी (BBF) पद्धत आणि योग्य ओलाव्यावर मशागत करावी.",
+            "ph": "योग्य सामू (६.५-७.५); संतुलित पाणी व खत व्यवस्थापन ठेवा.",
+            "ec": "अक्षारयुक्त (<०.८ dS/m); पिकांसाठी क्षारतेचा धोका नाही.",
+            "organic_carbon": "सेंद्रिय कर्ब उत्तम; हिरवळीची खते व पिकांचे अवशेष वापरा.",
+            "available_nitrogen": "कमी: नत्र मात्रा ~१२५% RDF (युरिया/शेणखत) पर्यंत वाढवावी.",
+            "available_phosphorus": "मध्यम: शिफारशीत १००% स्फुरद मात्रा (सिंगल सुपर फॉस्फेट) द्या.",
+            "available_potassium": "जास्त: पालाश मात्रा ~७५% RDF पर्यंत कमी करून बचत करा.",
+            "exchangeable_sodium": "सुरक्षित मर्यादा (<१५%); शेतातील पाण्याचा योग्य निचरा ठेवा.",
+            "esp": "सुरक्षित मर्यादा (<१५%); शेतातील पाण्याचा योग्य निचरा ठेवा.",
+            "free_lime": "सामान्य (<५%); अन्नद्रव्ये स्थिर न होण्यासाठी संतुलित खते द्या.",
+            "iron": "कमतरता: फेरस सल्फेट २५ किलो/हेक्टर किंवा ०.५% फवारणी करा.",
+            "available_iron": "कमतरता: फेरस सल्फेट २५ किलो/हेक्टर किंवा ०.५% फवारणी करा.",
+            "manganese": "पुरेसे प्रमाण; नियमित निरीक्षण ठेवा, जास्त चुना टाळा.",
+            "available_manganese": "पुरेसे प्रमाण; नियमित निरीक्षण ठेवा, जास्त चुना टाळा.",
+            "zinc": "कमतरता: झिंक सल्फेट २०-२५ किलो/हेक्टर किंवा ०.५% फवारणी करा.",
+            "available_zinc": "कमतरता: झिंक सल्फेट २०-२५ किलो/हेक्टर किंवा ०.५% फवारणी करा.",
+            "copper": "पुरेसे प्रमाण (>०.४ ppm); अतिरिक्त तांबे खतांची गरज नाही.",
+            "available_copper": "पुरेसे प्रमाण (>०.४ ppm); अतिरिक्त तांबे खतांची गरज नाही.",
+            "sulphur": "कमतरता: गंधक किंवा जिप्सम २०-२५ किलो/हेक्टर जमिनीत द्या.",
+            "available_sulphur": "कमतरता: गंधक किंवा जिप्सम २०-२५ किलो/हेक्टर जमिनीत द्या.",
+            "boron": "कमतरता: बोरॅक्स ५-१० किलो/हेक्टर किंवा ०.१% सोल्यूबोर फवारा.",
+            "available_boron": "कमतरता: बोरॅक्स ५-१० किलो/हेक्टर किंवा ०.१% सोल्यूबोर फवारा.",
+            "bd": "मातीची घनता अनुकूल; मुळांची वाढ व ओलावा टिकून राहतो.",
+            "bulk_density": "मातीची घनता अनुकूल; मुळांची वाढ व ओलावा टिकून राहतो.",
+            "total_nitrogen": "मध्यम नत्र साठा; शेणखत व सेंद्रिय अवशेष मिसळावेत.",
+            "total_n": "मध्यम नत्र साठा; शेणखत व सेंद्रिय अवशेष मिसळावेत.",
+            "cec": "धनायन विनिमय क्षमता उच्च; खते वाहून न जाता टिकून राहतात.",
+            "cfvo": "दगड-गोट्यांचे प्रमाण कमी; मुळांच्या वाढीसाठी जमीन अनुकूल.",
+            "coarse_fragments": "दगड-गोट्यांचे प्रमाण कमी; मुळांच्या वाढीसाठी जमीन अनुकूल.",
+            "sand": "वाळूचे प्रमाण योग्य; जमिनीत हवा खेळती राहण्यास मदत होते.",
+            "silt": "गाळाचे प्रमाण योग्य; ओलावा टिकवून ठेवण्यास मदत करते.",
+            "clay": "काळी कसदार चिकणमाती; पाणी साचू नये म्हणून चर काढावेत.",
+            "soil_texture": "खोल काळी जमीन; रुंद वरंबा-सरी (BBF) पद्धतीने पेरणी करावी.",
+            "soil_texture_class": "खोल काळी जमीन; रुंद वरंबा-सरी (BBF) पद्धतीने पेरणी करावी.",
         }
 
         param_rows = [th_row]
@@ -758,13 +756,26 @@ class PDFService:
                 ref_range = clean_ref_ranges.get(pkey, p.get("reference_range", "—"))
                 rec_text = clean_recs.get(pkey, p.get("recommendation", "—"))
 
+            if pkey in ["soil_texture", "texture"] and not is_mr:
+                raw_interp = "Clayey"
+
             interp_flowable = _format_interp(raw_interp)
+
+            if pkey in ["soil_texture", "texture"] or "clay vertisol" in str(val_str).lower():
+                val_flowable = Paragraph("<b>Clay<br/>Vertisol</b>", st_td_val)
+            else:
+                val_flowable = Paragraph(f"<b>{val_str}</b>", st_td_val)
+
+            if pkey == "cec" or "cmol(c)/kg" in str(unit_str):
+                unit_flowable = Paragraph("cmol(c)/<br/>kg", st_td_unit)
+            else:
+                unit_flowable = Paragraph(unit_str, st_td_unit)
 
             row = [
                 Paragraph(str(p.get("sr_no") or idx), st_td_sr),
                 Paragraph(p_name, st_td_param),
-                Paragraph(f"<b>{val_str}</b>", st_td_val),
-                Paragraph(unit_str, st_td_unit),
+                val_flowable,
+                unit_flowable,
                 interp_flowable,
                 Paragraph(ref_range, st_td_range),
                 Paragraph(rec_text, st_td_rec),
@@ -800,9 +811,6 @@ class PDFService:
         # --------------------------------------------------------------
         # 4. REPORT INFORMATION & LABORATORY CERTIFICATION
         # --------------------------------------------------------------
-        cert_head_text = "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" if is_mr else "REPORT INFORMATION & LABORATORY CERTIFICATION"
-        story.append(Paragraph(f"<b>{cert_head_text}</b>", st_cert_head))
-        story.append(Spacer(1, 0.5 * mm))
         story.append(HRFlowable(width="100%", thickness=1.0, color=COLOR_DARK_GREEN, spaceBefore=0, spaceAfter=1.0 * mm))
 
         cert_sub_text = (
@@ -811,11 +819,10 @@ class PDFService:
             else "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra"
         )
         report_no = report_meta.get("report_no", "SPL/2026/SL-0104")
-        report_date = report_meta.get("report_date") or "20-09-2026"
         cert_ref_text = (
-            f"अहवाल संदर्भ: {report_no} • दिनांक: {report_date}"
+            f"अहवाल संदर्भ: {report_no} • दिनांक: {live_date}"
             if is_mr
-            else f"Report Ref: {report_no} • Date: {report_date}"
+            else f"Report Ref: {report_no} • Date: {live_date}"
         )
 
         sign_name_text = report_meta.get("chemist_name") or ("ए.बी.सी (मुख्य रसायनशास्त्रज्ञ)" if is_mr else "A.B.C (Chief Chemist)")

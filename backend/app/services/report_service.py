@@ -10,7 +10,7 @@ from app.models.field import Field
 from app.models.farmer import Farmer
 from app.models.soil_health import SoilReport
 from app.services.soil_health_service import soil_health_service
-from app.services.pdf_service import pdf_service
+from app.services.pdf_service import pdf_service, get_india_current_date_str
 
 
 def sanitize_filename_part(text: str) -> str:
@@ -32,6 +32,9 @@ class ReportService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Field with ID or Gat '{field_identifier}' not found.",
             )
+        # Ensure report_date reflects dynamic live generation date in India timezone
+        if "report" in data and isinstance(data["report"], dict):
+            data["report"]["report_date"] = get_india_current_date_str()
         return data
 
     def verify_field_access(
@@ -91,11 +94,8 @@ class ReportService:
         )
 
         gat_no = sanitize_filename_part(str(data.get("field", {}).get("gat_no", "104")))
-        farmer_name = sanitize_filename_part(str(data.get("farmer", {}).get("name", "")))
-        if farmer_name and farmer_name.lower() != "farmer":
-            filename = f"SoilPilot_Soil_Health_Card_{farmer_name}_Gat_{gat_no}.pdf"
-        else:
-            filename = f"SoilPilot_Soil_Health_Card_Gat_{gat_no}.pdf"
+        live_date = get_india_current_date_str()
+        filename = f"SoilPilot_Soil_Health_Card_Gat_{gat_no}_{live_date}.pdf"
 
         return pdf_bytes, filename
 
@@ -112,7 +112,7 @@ class ReportService:
         report_no = report_meta.get("report_no", "SPL/2026/SL-0104")
         verify_url = f"{base_url}/reports?verify={report_no}"
 
-        pdf_bytes = pdf_service.generate_detailed_soil_report_pdf(
+        pdf_bytes = pdf_service.generate_soil_health_card_pdf(
             report_data=data,
             lang=lang,
             verify_url=verify_url,

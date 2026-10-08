@@ -32,6 +32,7 @@ import {
   getCleanReferenceRangeMr,
 } from "@/lib/soilRecommendations";
 import { translateGeoName, translateFarmerName, translateStatus } from "@/i18n/marathiHelper";
+import { getLiveDateStr, getLiveSampleDateStr } from "@/lib/dateUtils";
 
 type ButtonState = "idle" | "loading" | "success" | "error";
 
@@ -123,8 +124,8 @@ export default function ReportsPage() {
   const districtName = isMr ? translateGeoName(rawDistrictName) : rawDistrictName;
   const rawAreaNum = report?.field?.area != null ? report.field.area : (field?.area != null ? field.area : 1.96);
   const fieldArea = `${rawAreaNum} ${isMr ? "हेक्टर" : "Ha"}`;
-  const reportDate = report?.report?.report_date || "20-09-2026";
-  const sampleDate = report?.report?.sample_date || "15-09-2026";
+  const reportDate = getLiveDateStr(report?.report?.report_date);
+  const sampleDate = report?.report?.sample_date ? getLiveDateStr(report.report.sample_date) : getLiveSampleDateStr(5);
   const reportNo = report?.report?.report_no || "SPL/2026/SL-0104";
   const isDemo = report?.is_demo ?? true;
 

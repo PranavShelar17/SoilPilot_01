@@ -36,7 +36,9 @@ export async function GET(request: NextRequest) {
     const pdfBuffer = await backendRes.arrayBuffer();
     const dispositionHeader = backendRes.headers.get("content-disposition");
 
-    let cleanFilename = `SoilPilot_Soil_Health_Card_Gat_${String(fieldId).replace(/^demo-field-gat-/, "")}.pdf`;
+    const { formatReportDateIndia } = await import("@/lib/dateUtils");
+    const liveDate = formatReportDateIndia();
+    let cleanFilename = `SoilPilot_Soil_Health_Card_Gat_${String(fieldId).replace(/^demo-field-gat-/, "")}_${liveDate}.pdf`;
     if (dispositionHeader) {
       const match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i.exec(dispositionHeader);
       if (match && match[1]) {

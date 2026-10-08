@@ -80,5 +80,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Scratch scripts
+# Scratch scripts & temporary test artifacts
 scratch/
+*.pdf
+cookies.txt
+frontend/test_capture_*.js

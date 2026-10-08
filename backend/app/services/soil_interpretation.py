@@ -266,7 +266,7 @@ SOIL_THRESHOLDS: Dict[str, Dict[str, Any]] = {
         "unit": "—",
         "name": "Soil Texture Class",
         "name_mr": "मातीचा पोत वर्ग",
-        "interpret": lambda v: ("Clayey (काळी माती)", "काळी चिकण माती (Vertisols)"),
+        "interpret": lambda v: ("Clayey", "काळी चिकण माती (Vertisols)"),
         "reference_range": "USDA Class: Clay / Vertisols",
         "reference_range_mr": "USDA वर्ग: काळी चिकण माती",
     },

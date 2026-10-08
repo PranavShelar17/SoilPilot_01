@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-10-06T11:07:06+00:00",
+  "generatedAt": "2026-10-08T05:33:42+00:00",
   "crs": "EPSG:4326",
   "bounds": [
     74.49423224,
@@ -1193,38 +1193,38 @@
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(239, 68, 68)",
-          "hex": "#EF4444",
+          "color": "rgb(186, 230, 253)",
+          "hex": "#BAE6FD",
           "value": -0.54,
-          "label": "< -0.08: Very Dry / Severe Stress"
+          "label": "< -0.08: Low Moisture (Sky Blue)"
         },
         {
           "pct": 25,
-          "color": "rgb(249, 115, 22)",
-          "hex": "#F97316",
+          "color": "rgb(56, 189, 248)",
+          "hex": "#38BDF8",
           "value": -0.08,
-          "label": "-0.08–0.02: Dry / Moisture Stressed"
+          "label": "-0.08–0.02: Mild Moisture"
         },
         {
           "pct": 50,
-          "color": "rgb(250, 204, 21)",
-          "hex": "#FACC15",
+          "color": "rgb(2, 132, 199)",
+          "hex": "#0284C7",
           "value": 0.02,
           "label": "0.02–0.12: Moderate Moisture"
         },
         {
           "pct": 75,
-          "color": "rgb(74, 222, 128)",
-          "hex": "#4ADE80",
+          "color": "rgb(29, 78, 216)",
+          "hex": "#1D4ED8",
           "value": 0.12,
-          "label": "0.12–0.24: Good Moisture"
+          "label": "0.12–0.24: High Moisture"
         },
         {
           "pct": 100,
-          "color": "rgb(22, 163, 74)",
-          "hex": "#16A34A",
+          "color": "rgb(23, 37, 84)",
+          "hex": "#172554",
           "value": 0.24,
-          "label": "> 0.24: High Moisture"
+          "label": "> 0.24: High Moisture (Dark Blue)"
         }
       ]
     },
@@ -1378,38 +1378,38 @@
       "legendStops": [
         {
           "pct": 0,
-          "color": "rgb(249, 115, 22)",
-          "hex": "#F97316",
+          "color": "rgb(186, 230, 253)",
+          "hex": "#BAE6FD",
           "value": -0.79,
-          "label": "< -0.50: Very Low / Dry"
+          "label": "< -0.50: Very Low / Dry (Sky Blue)"
         },
         {
           "pct": 25,
-          "color": "rgb(250, 204, 21)",
-          "hex": "#FACC15",
+          "color": "rgb(56, 189, 248)",
+          "hex": "#38BDF8",
           "value": -0.5,
           "label": "-0.50–-0.38: Low Water Presence"
         },
         {
           "pct": 50,
-          "color": "rgb(74, 222, 128)",
-          "hex": "#4ADE80",
+          "color": "rgb(2, 132, 199)",
+          "hex": "#0284C7",
           "value": -0.38,
           "label": "-0.38–-0.20: Moderate Water"
         },
         {
           "pct": 75,
-          "color": "rgb(56, 189, 248)",
-          "hex": "#38BDF8",
+          "color": "rgb(29, 78, 216)",
+          "hex": "#1D4ED8",
           "value": -0.2,
           "label": "-0.20–0.00: High Water"
         },
         {
           "pct": 100,
-          "color": "rgb(37, 99, 235)",
-          "hex": "#2563EB",
+          "color": "rgb(23, 37, 84)",
+          "hex": "#172554",
           "value": 0.0,
-          "label": "> 0.00: Very High / Surface Water"
+          "label": "> 0.00: Surface Water (Dark Blue)"
         }
       ]
     }

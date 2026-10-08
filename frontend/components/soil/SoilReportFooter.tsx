@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useI18n } from "@/i18n/useI18n";
+import { getLiveDateStr } from "@/lib/dateUtils";
 
 interface SoilReportFooterProps {
   isDemo?: boolean;
@@ -18,35 +19,30 @@ export const SoilReportFooter: React.FC<SoilReportFooterProps> = ({
   const isMr = locale === "mr";
 
   const displayRef = reportNo || "SPL/2026/SL-0104";
-  const displayDate = reportDate || "20-09-2026";
+  const displayDate = getLiveDateStr(reportDate);
 
   return (
-    <div className="pt-3 print:pt-2 break-inside-avoid page-break-inside-avoid">
-      {/* 1. Section Header */}
-      <h3 className="text-xs font-black text-[#1e5622] uppercase tracking-wider mb-1.5 print:mb-1">
-        {isMr ? "अहवाल तपशील व प्रयोगशाळा प्रमाणीकरण" : "REPORT INFORMATION & LABORATORY CERTIFICATION"}
-      </h3>
+    <div className="pt-1 print:pt-0.5 break-inside-avoid page-break-inside-avoid">
+      {/* Thin Divider Line */}
+      <div className="w-full border-t border-[#214F3F] mb-2.5 print:mb-1.5" />
 
-      {/* 2. Solid Green Divider Line */}
-      <div className="w-full border-t-2 border-[#1e5622] mb-2.5 print:mb-1.5" />
-
-      {/* 3. Report Info & Chemist Sign-Off (2-Column Balanced Layout) */}
-      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 text-xs text-stone-800">
-        <div className="space-y-0.5 max-w-md">
+      {/* Report Info & Chemist Sign-Off (2-Column Balanced Layout) */}
+      <div className="flex flex-row items-start justify-between gap-4 text-xs text-stone-800">
+        <div className="space-y-0.5">
           <p className="font-bold text-stone-900 text-xs">
             {isMr ? "एडीटी एआय ट्रेनिंग फाउंडेशन, बारामती" : "ADT AI TRAINING FOUNDATION, BARAMATI"}
           </p>
-          <p className="font-medium text-stone-700 text-[11px] print:text-[10px]">
+          <p className="text-stone-600 text-[11px] print:text-[9.5px]">
             {isMr
               ? "कृषी निदान व डिजिटल मृदा परीक्षण केंद्र, बारामती / पुणे, महाराष्ट्र"
               : "Agricultural Diagnostic & Digital Soil Testing Center, Baramati / Pune, Maharashtra"}
           </p>
-          <p className="text-stone-600 font-mono text-[11px] print:text-[9.5px]">
+          <p className="text-stone-600 text-[11px] print:text-[9.5px]">
             {isMr ? "अहवाल संदर्भ" : "Report Ref"}: {displayRef} &bull; {isMr ? "दिनांक" : "Date"}: {displayDate}
           </p>
         </div>
 
-        <div className="sm:text-right space-y-0.5">
+        <div className="text-right space-y-0.5">
           <p className="font-bold text-stone-900 text-xs">
             {isMr ? "ए.बी.सी (मुख्य रसायनशास्त्रज्ञ)" : "A.B.C (Chief Chemist)"}
           </p>

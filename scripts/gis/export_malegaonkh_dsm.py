@@ -142,11 +142,11 @@ INDEX_CLASSES = {
         {"min": 0.40, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.40: Dense Vegetation"},
     ],
     "ndmi": [
-        {"min": -10.0, "max": -0.08, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< -0.08: Very Dry / Severe Stress"},
-        {"min": -0.08, "max": 0.02, "rgb": (249, 115, 22), "hex": "#F97316", "label": "-0.08–0.02: Dry / Moisture Stressed"},
-        {"min": 0.02, "max": 0.12, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "0.02–0.12: Moderate Moisture"},
-        {"min": 0.12, "max": 0.24, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "0.12–0.24: Good Moisture"},
-        {"min": 0.24, "max": 10.0, "rgb": (22, 163, 74), "hex": "#16A34A", "label": "> 0.24: High Moisture"},
+        {"min": -10.0, "max": -0.08, "rgb": (186, 230, 253), "hex": "#BAE6FD", "label": "< -0.08: Low Moisture (Sky Blue)"},
+        {"min": -0.08, "max": 0.02, "rgb": (56, 189, 248), "hex": "#38BDF8", "label": "-0.08–0.02: Mild Moisture"},
+        {"min": 0.02, "max": 0.12, "rgb": (2, 132, 199), "hex": "#0284C7", "label": "0.02–0.12: Moderate Moisture"},
+        {"min": 0.12, "max": 0.24, "rgb": (29, 78, 216), "hex": "#1D4ED8", "label": "0.12–0.24: High Moisture"},
+        {"min": 0.24, "max": 10.0, "rgb": (23, 37, 84), "hex": "#172554", "label": "> 0.24: High Moisture (Dark Blue)"},
     ],
     "ndre": [
         {"min": -10.0, "max": 0.12, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "< 0.12: Low / Stressed"},
@@ -162,11 +162,11 @@ INDEX_CLASSES = {
         {"min": 0.12, "max": 10.0, "rgb": (239, 68, 68), "hex": "#EF4444", "label": "> 0.12: Bare / Exposed Soil"},
     ],
     "ndwi": [
-        {"min": -10.0, "max": -0.50, "rgb": (249, 115, 22), "hex": "#F97316", "label": "< -0.50: Very Low / Dry"},
-        {"min": -0.50, "max": -0.38, "rgb": (250, 204, 21), "hex": "#FACC15", "label": "-0.50–-0.38: Low Water Presence"},
-        {"min": -0.38, "max": -0.20, "rgb": (74, 222, 128), "hex": "#4ADE80", "label": "-0.38–-0.20: Moderate Water"},
-        {"min": -0.20, "max": 0.00, "rgb": (56, 189, 248), "hex": "#38BDF8", "label": "-0.20–0.00: High Water"},
-        {"min": 0.00, "max": 10.0, "rgb": (37, 99, 235), "hex": "#2563EB", "label": "> 0.00: Very High / Surface Water"},
+        {"min": -10.0, "max": -0.50, "rgb": (186, 230, 253), "hex": "#BAE6FD", "label": "< -0.50: Very Low / Dry (Sky Blue)"},
+        {"min": -0.50, "max": -0.38, "rgb": (56, 189, 248), "hex": "#38BDF8", "label": "-0.50–-0.38: Low Water Presence"},
+        {"min": -0.38, "max": -0.20, "rgb": (2, 132, 199), "hex": "#0284C7", "label": "-0.38–-0.20: Moderate Water"},
+        {"min": -0.20, "max": 0.00, "rgb": (29, 78, 216), "hex": "#1D4ED8", "label": "-0.20–0.00: High Water"},
+        {"min": 0.00, "max": 10.0, "rgb": (23, 37, 84), "hex": "#172554", "label": "> 0.00: Surface Water (Dark Blue)"},
     ],
 }
 
